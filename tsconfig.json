@@ -8,10 +8,14 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "lib": ["dom", "es6"],
-    "moduleResolution": "node", // 모듈 해석 방식 명시
-    "allowSyntheticDefaultImports": true, // 기본 내보내기 허용
-    "forceConsistentCasingInFileNames": true
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/renderer/*"]
+    }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules"] // node_modules 제외 명시
+  "exclude": ["node_modules", "dist"]
 }

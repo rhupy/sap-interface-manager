@@ -4,12 +4,10 @@
   "description": "",
   "main": "dist/main/main.js",
   "scripts": {
-    "_개발용": "---------------------------------------------------------------------",
     "dev:main": "tsc --watch",
     "dev:renderer": "vite",
-    "dev:electron": "cross-env NODE_ENV=development electron dist/main/main.js",
+    "dev:electron": "wait-on http://localhost:5173 && electron dist/main/main.js",
     "dev": "concurrently \"npm run dev:main\" \"npm run dev:renderer\" \"npm run dev:electron\"",
-    "_운영용": "---------------------------------------------------------------------",
     "build:renderer": "vite build",
     "build:main": "tsc",
     "build": "npm run build:renderer && npm run build:main && electron-builder"
@@ -37,8 +35,8 @@
     "typescript": "^5.7.3"
   },
   "devDependencies": {
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
     "@types/styled-components": "^5.1.34",
     "@typescript-eslint/eslint-plugin": "^8.24.1",
     "@typescript-eslint/parser": "^8.24.1",
@@ -53,6 +51,7 @@
     "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.1.0",
     "prettier": "^3.5.1",
-    "vite": "^6.1.1"
+    "vite": "^6.1.1",
+    "wait-on": "^8.0.2"
   }
 }

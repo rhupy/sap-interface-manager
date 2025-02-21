@@ -12,20 +12,22 @@ function createWindow() {
     },
   });
 
-  // 개발 모드와 빌드 모드 구분
   const isDev = !app.isPackaged;
-  console.log('Is development mode?', isDev);
-
-  const indexPath = isDev
-    ? path.join(__dirname, '../../public/index.html') // src/main -> public
-    : path.join(__dirname, '../public/index.html'); // dist/main -> public
-
-  console.log('Loading index.html from:', indexPath);
-
-  win
-    .loadFile(indexPath)
-    .then(() => console.log('Window loaded successfully'))
-    .catch((err) => console.error('Failed to load window:', err));
+  if (isDev) {
+    // 개발 모드: Vite 개발 서버 로드
+    win
+      .loadURL('http://localhost:5173/')
+      .then(() => console.log('Loaded Vite dev server'))
+      .catch((err) => console.error('Failed to load Vite dev server:', err));
+    win.webContents.openDevTools(); // 개발 모드에서 디버깅 용이성
+  } else {
+    // 빌드 모드: 정적 파일 로드
+    const indexPath = path.join(__dirname, '../renderer/index.html');
+    win
+      .loadFile(indexPath)
+      .then(() => console.log('Loaded production build'))
+      .catch((err) => console.error('Failed to load production build:', err));
+  }
 }
 
 app.whenReady().then(() => {
