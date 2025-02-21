@@ -15,15 +15,13 @@ function createWindow() {
   // 개발 모드와 빌드 모드 구분
   const isDev = !app.isPackaged;
   console.log('Is development mode?', isDev);
-  console.log('__dirname:', __dirname);
 
-  // 여기서 En dash(–)나 Em dash(—) 대신
-  // 일반 하이픈(-)을 써야 합니다.
   const indexPath = isDev
     ? path.join(__dirname, '../../public/index.html') // src/main -> public
     : path.join(__dirname, '../public/index.html'); // dist/main -> public
 
   console.log('Loading index.html from:', indexPath);
+
   win
     .loadFile(indexPath)
     .then(() => console.log('Window loaded successfully'))
