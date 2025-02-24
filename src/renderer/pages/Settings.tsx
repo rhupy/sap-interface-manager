@@ -233,6 +233,7 @@ export default function Settings() {
           <Select
             value={selectedRfc}
             onChange={(e) => setSelectedRfc(e.target.value)}
+            aria-label="RFC 연결 목록 선택" // 접근성 속성 추가
           >
             {rfcList.length === 0 && (
               <option value="">(등록된 RFC 없음)</option>
@@ -269,6 +270,7 @@ export default function Settings() {
           <Select
             value={selectedDbId}
             onChange={(e) => setSelectedDbId(e.target.value)}
+            aria-label="DB 연결 목록 선택" // 접근성 속성 추가
           >
             {dbConnections.length === 0 && (
               <option value="">(등록된 DB 없음)</option>

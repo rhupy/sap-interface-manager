@@ -1,37 +1,32 @@
-import { app, BrowserWindow } from 'electron';
-import * as path from 'path';
+import { app, BrowserWindow, ipcMain } from 'electron';
+import path from 'path';
+import 'dotenv/config'; // .env 로딩
+import { testOracleConnection } from './oracleService';
+import type { OracleDbConfig } from './oracleService';
 
 function createWindow() {
-  const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+  const mainWindow = new BrowserWindow({
+    width: 1800,
+    height: 1200,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      // preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
+      // 필요 시 ipcRenderer를 사용하기 위해 preload나 contextBridge 설정
     },
   });
 
-  const isDev = !app.isPackaged;
-  if (isDev) {
-    // 개발 모드: Vite 개발 서버 로드
-    win
-      .loadURL('http://localhost:5173/')
-      .then(() => console.log('Loaded Vite dev server'))
-      .catch((err) => console.error('Failed to load Vite dev server:', err));
-    win.webContents.openDevTools(); // 개발 모드에서 디버깅 용이성
+  if (process.env.NODE_ENV === 'development') {
+    mainWindow.loadURL('http://localhost:5173'); // Vite dev server
+    mainWindow.webContents.openDevTools();
   } else {
-    // 빌드 모드: 정적 파일 로드
-    const indexPath = path.join(__dirname, '../renderer/index.html');
-    win
-      .loadFile(indexPath)
-      .then(() => console.log('Loaded production build'))
-      .catch((err) => console.error('Failed to load production build:', err));
+    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
 }
 
 app.whenReady().then(() => {
   createWindow();
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -40,3 +35,18 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
+
+// -------------------------------------
+// IPC 핸들러 등록 (Oracle DB 테스트용)
+// -------------------------------------
+ipcMain.handle(
+  'test-oracle-connection',
+  async (event, dbConfig: OracleDbConfig) => {
+    try {
+      await testOracleConnection(dbConfig);
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, message: error.message };
+    }
+  }
+);
