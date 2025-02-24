@@ -16,6 +16,6 @@
       "@/*": ["src/renderer/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "src/types/**/*.d.ts"], // 타입 선언 파일 포함
   "exclude": ["node_modules", "dist"]
 }

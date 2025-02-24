@@ -3,14 +3,15 @@ import path from 'path';
 import fs from 'fs/promises'; // Node.js 파일 시스템 (Promise 기반)
 import 'dotenv/config';
 import { testOracleConnection } from './oracleService';
-import type { OracleDbConfig } from './oracleService';
+import { OracleDbConfig } from '../renderer/types/index';
+import { Settings } from '../renderer/types/index';
 
-const SETTINGS_FILE = path.join(app.getPath('userData'), 'settings.json');
+const SETTINGS_FILE = path.join(app.getPath('userData'), 'setting.json');
 
-async function loadSettings() {
+async function loadSettings(): Promise<Settings> {
   try {
     const data = await fs.readFile(SETTINGS_FILE, 'utf-8');
-    return JSON.parse(data);
+    return JSON.parse(data) as Settings;
   } catch (error) {
     return {
       rfcList: [],
@@ -21,7 +22,7 @@ async function loadSettings() {
   }
 }
 
-async function saveSettings(settings: any) {
+async function saveSettings(settings: Settings): Promise<void> {
   await fs.writeFile(SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf-8');
 }
 
@@ -70,7 +71,7 @@ ipcMain.handle(
 );
 
 // 설정 저장 IPC
-ipcMain.handle('save-settings', async (event, settings) => {
+ipcMain.handle('save-settings', async (event, settings: Settings) => {
   await saveSettings(settings);
   return { success: true };
 });

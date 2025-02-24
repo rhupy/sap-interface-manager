@@ -16,19 +16,17 @@ import {
   DbConnectionConfig,
   RfcConnectionDetail,
 } from '../types';
-import { OracleDbConfig } from 'src/main/oracleService';
+import { OracleDbConfig } from '../types/index';
 
 // window 객체에 대한 타입 확장 (preload.ts에서 contextBridge로 노출했다고 가정)
 declare global {
   interface Window {
-    electron?: {
-      invoke: (channel: string, ...args: any[]) => Promise<any>;
-    };
     api: {
       testOracleConnection: (
         dbConfig: OracleDbConfig
       ) => Promise<{ success: boolean; message?: string }>;
-      // 필요 시 다른 api 메서드도 추가 (sendMessage, onMessage, getVersion 등)
+      saveSettings: (settings: any) => Promise<{ success: boolean }>;
+      loadSettings: () => Promise<any>;
     };
   }
 }
@@ -53,12 +51,23 @@ export default function Settings() {
   const [newDbUser, setNewDbUser] = useState('');
   const [newDbPassword, setNewDbPassword] = useState('');
 
-  // 컴포넌트 마운트 시 RFC 목록 불러오기
+  // 컴포넌트 마운트 시 설정 로드 및 RFC 목록 불러오기
   useEffect(() => {
+    // 설정 파일에서 데이터 로드
+    window.api
+      .loadSettings()
+      .then((settings) => {
+        if (settings.rfcList) setRfcList(settings.rfcList);
+        if (settings.dbConnections) setDbConnections(settings.dbConnections);
+        if (settings.selectedRfc) setSelectedRfc(settings.selectedRfc);
+        if (settings.selectedDbId) setSelectedDbId(settings.selectedDbId);
+      })
+      .catch((err) => console.error('설정 로드 오류:', err));
+
+    // RFC 목록 불러오기 (기존 로직 유지)
     fetch('http://localhost:5239/connections')
       .then((res) => res.json())
       .then((data: Record<string, RfcConnectionDetail>) => {
-        // data 는 { "DEV_SAP": { ... }, "PRD_SAP": { ... } } 형태
         const rfcArray: RfcConnectionInfo[] = Object.entries(data).map(
           ([connectionName, detail]) => ({
             connectionName,
@@ -66,13 +75,34 @@ export default function Settings() {
           })
         );
         setRfcList(rfcArray);
-
-        // 나머지 로직
       })
       .catch((err) => {
         console.error('RFC 목록 불러오기 오류:', err);
       });
   }, []);
+
+  // 설정 저장 함수
+  const saveSettings = () => {
+    const settings = {
+      rfcList,
+      dbConnections,
+      selectedRfc,
+      selectedDbId,
+    };
+    window.api
+      .saveSettings(settings)
+      .then((result) => {
+        if (result.success) {
+          alert('설정이 저장되었습니다.');
+        } else {
+          alert('설정 저장에 실패했습니다.');
+        }
+      })
+      .catch((err) => {
+        console.error('설정 저장 오류:', err);
+        alert('설정 저장에 오류가 발생했습니다.');
+      });
+  };
 
   // ---------------------------------
   // 미들웨어 동작 확인 (ping)
@@ -119,7 +149,7 @@ export default function Settings() {
   // RFC 선택 저장
   // ---------------------------------
   const handleSaveRfc = () => {
-    localStorage.setItem('selectedRfc', selectedRfc);
+    saveSettings();
     alert(`RFC 연결 [${selectedRfc}]가 저장되었습니다.`);
   };
 
@@ -152,6 +182,8 @@ export default function Settings() {
     setNewDbSid('');
     setNewDbUser('');
     setNewDbPassword('');
+
+    saveSettings(); // DB 추가 후 설정 저장
   };
 
   // ---------------------------------
@@ -166,6 +198,7 @@ export default function Settings() {
       } else {
         setSelectedDbId('');
       }
+      saveSettings(); // DB 삭제 후 설정 저장
       return filtered;
     });
   };

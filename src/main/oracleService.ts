@@ -1,16 +1,5 @@
 import oracledb from 'oracledb';
-
-/**
- * DB 연결 설정
- */
-export interface OracleDbConfig {
-  host: string;
-  port: string;
-  sid: string;
-  user: string;
-  password: string;
-}
-
+import { OracleDbConfig } from '../renderer/types/index';
 /**
  * 오라클에 단순 접속/쿼리 테스트
  */

@@ -1,3 +1,4 @@
+// src/types/index.ts
 // RFC
 export interface RfcConnectionDetail {
   appServerHost: string;
@@ -18,6 +19,25 @@ export interface RfcConnectionInfo extends RfcConnectionDetail {
 export interface DbConnectionConfig {
   id: string;
   name: string;
+  host: string;
+  port: string;
+  sid: string;
+  user: string;
+  password: string;
+}
+
+// Settings
+export interface Settings {
+  rfcList: RfcConnectionInfo[];
+  dbConnections: DbConnectionConfig[];
+  selectedRfc: string;
+  selectedDbId: string;
+}
+
+/**
+ * DB 연결 설정
+ */
+export interface OracleDbConfig {
   host: string;
   port: string;
   sid: string;
