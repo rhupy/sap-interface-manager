@@ -29,12 +29,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^16.4.7",
+    "oracledb": "^6.7.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "styled-components": "^5.3.11",
     "typescript": "^5.7.3"
   },
   "devDependencies": {
+    "@types/oracledb": "^6.5.3",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@types/styled-components": "^5.1.34",
