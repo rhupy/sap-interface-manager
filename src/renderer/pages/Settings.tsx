@@ -16,12 +16,19 @@ import {
   DbConnectionConfig,
   RfcConnectionDetail,
 } from '../types';
+import { OracleDbConfig } from 'src/main/oracleService';
 
 // window 객체에 대한 타입 확장 (preload.ts에서 contextBridge로 노출했다고 가정)
 declare global {
   interface Window {
     electron?: {
       invoke: (channel: string, ...args: any[]) => Promise<any>;
+    };
+    api: {
+      testOracleConnection: (
+        dbConfig: OracleDbConfig
+      ) => Promise<{ success: boolean; message?: string }>;
+      // 필요 시 다른 api 메서드도 추가 (sendMessage, onMessage, getVersion 등)
     };
   }
 }
@@ -167,8 +174,8 @@ export default function Settings() {
   // DB 테스트 (IPC)
   // ---------------------------------
   const handleTestDb = async () => {
-    if (!window.electron?.invoke) {
-      setDbTestResult('Electron IPC를 사용할 수 없습니다.');
+    if (!window.api) {
+      setDbTestResult('Electron API를 사용할 수 없습니다.');
       return;
     }
     if (!selectedDbId) {
@@ -183,8 +190,7 @@ export default function Settings() {
 
     setDbTestResult('DB 테스트 중...');
     try {
-      // IPC 호출
-      const result = await window.electron.invoke('test-oracle-connection', {
+      const result = await window.api.testOracleConnection({
         host: targetDb.host,
         port: targetDb.port,
         sid: targetDb.sid,

@@ -1,23 +1,43 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
-import 'dotenv/config'; // .env 로딩
+import fs from 'fs/promises'; // Node.js 파일 시스템 (Promise 기반)
+import 'dotenv/config';
 import { testOracleConnection } from './oracleService';
 import type { OracleDbConfig } from './oracleService';
+
+const SETTINGS_FILE = path.join(app.getPath('userData'), 'settings.json');
+
+async function loadSettings() {
+  try {
+    const data = await fs.readFile(SETTINGS_FILE, 'utf-8');
+    return JSON.parse(data);
+  } catch (error) {
+    return {
+      rfcList: [],
+      dbConnections: [],
+      selectedRfc: '',
+      selectedDbId: '',
+    };
+  }
+}
+
+async function saveSettings(settings: any) {
+  await fs.writeFile(SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf-8');
+}
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1800,
     height: 1200,
     webPreferences: {
-      // preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
-      // 필요 시 ipcRenderer를 사용하기 위해 preload나 contextBridge 설정
     },
   });
 
   if (process.env.NODE_ENV === 'development') {
-    mainWindow.loadURL('http://localhost:5173'); // Vite dev server
+    mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
@@ -36,9 +56,7 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
-// -------------------------------------
-// IPC 핸들러 등록 (Oracle DB 테스트용)
-// -------------------------------------
+// 기존 Oracle DB 테스트 IPC
 ipcMain.handle(
   'test-oracle-connection',
   async (event, dbConfig: OracleDbConfig) => {
@@ -50,3 +68,14 @@ ipcMain.handle(
     }
   }
 );
+
+// 설정 저장 IPC
+ipcMain.handle('save-settings', async (event, settings) => {
+  await saveSettings(settings);
+  return { success: true };
+});
+
+// 설정 로드 IPC
+ipcMain.handle('load-settings', async () => {
+  return await loadSettings();
+});
