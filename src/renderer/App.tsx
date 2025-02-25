@@ -1,4 +1,3 @@
-// src/renderer/App.tsx
 import React, { useState } from 'react';
 import { GlobalStyle } from './styles/GlobalStyle';
 import {
@@ -10,49 +9,60 @@ import {
   Description,
 } from './styles/CommonStyles';
 import SettingsComponent from './pages/SettingsComponent';
+import { SettingsProvider } from './context/SettingContext';
+import { Settings } from './types/index';
 
 export default function App() {
+  const [settings, setSettings] = useState<Settings>({
+    rfcList: [],
+    dbConnections: [],
+    selectedRfc: '',
+    selectedDbId: '',
+  });
+
   const [activeTab, setActiveTab] = useState<
     'dashboard' | 'interface' | 'sql' | 'settings'
   >('dashboard');
 
   return (
     <>
-      <GlobalStyle /> {/* GlobalStyle이 제대로 적용되는지 확인 */}
-      <AppContainer>
-        <TabContainer>
-          <TabButton
-            active={activeTab === 'dashboard'}
-            onClick={() => setActiveTab('dashboard')}
-          >
-            대시 보드
-          </TabButton>
-          <TabButton
-            active={activeTab === 'interface'}
-            onClick={() => setActiveTab('interface')}
-          >
-            인터페이스 관리
-          </TabButton>
-          <TabButton
-            active={activeTab === 'sql'}
-            onClick={() => setActiveTab('sql')}
-          >
-            SQL 관리
-          </TabButton>
-          <TabButton
-            active={activeTab === 'settings'}
-            onClick={() => setActiveTab('settings')}
-          >
-            환경 설정
-          </TabButton>
-        </TabContainer>
-        <ContentContainer>
-          {activeTab === 'dashboard' && <Dashboard />}
-          {activeTab === 'interface' && <InterfaceManagement />}
-          {activeTab === 'sql' && <SqlManagement />}
-          {activeTab === 'settings' && <SettingsComponent />}
-        </ContentContainer>
-      </AppContainer>
+      <GlobalStyle />
+      <SettingsProvider settings={settings}>
+        <AppContainer>
+          <TabContainer>
+            <TabButton
+              active={activeTab === 'dashboard'}
+              onClick={() => setActiveTab('dashboard')}
+            >
+              대시 보드
+            </TabButton>
+            <TabButton
+              active={activeTab === 'interface'}
+              onClick={() => setActiveTab('interface')}
+            >
+              인터페이스 관리
+            </TabButton>
+            <TabButton
+              active={activeTab === 'sql'}
+              onClick={() => setActiveTab('sql')}
+            >
+              SQL 관리
+            </TabButton>
+            <TabButton
+              active={activeTab === 'settings'}
+              onClick={() => setActiveTab('settings')}
+            >
+              환경 설정
+            </TabButton>
+          </TabContainer>
+          <ContentContainer>
+            {activeTab === 'dashboard' && <Dashboard />}
+            {activeTab === 'interface' && <InterfaceManagement />}
+            {activeTab === 'sql' && <SqlManagement />}
+            {activeTab === 'settings' && <SettingsComponent />}
+          </ContentContainer>
+        </AppContainer>
+      </SettingsProvider>
     </>
   );
 }

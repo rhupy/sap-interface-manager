@@ -61,6 +61,8 @@ export default function SettingsComponent() {
     password: '',
   });
   const [message, setMessage] = useState<string>('');
+  const [tempSelectedRfc, setTempSelectedRfc] = useState<string>(''); // 임시 선택된 RFC
+  const [tempSelectedDbId, setTempSelectedDbId] = useState<string>(''); // 임시 선택된 DB
 
   useEffect(() => {
     if (window.api) {
@@ -86,8 +88,16 @@ export default function SettingsComponent() {
     }
   }, [settings]);
 
+  // RFC 연결 추가 (중복 체크)
   const addRfcConnection = () => {
     if (newRfc.connectionName && newRfc.appServerHost) {
+      const isDuplicate = settings.rfcList.some(
+        (rfc) => rfc.connectionName === newRfc.connectionName
+      );
+      if (isDuplicate) {
+        setMessage('이미 존재하는 연결 이름입니다.');
+        return;
+      }
       setSettings({
         ...settings,
         rfcList: [...settings.rfcList, newRfc],
@@ -109,8 +119,16 @@ export default function SettingsComponent() {
     }
   };
 
+  // DB 연결 추가 (중복 체크)
   const addDbConnection = () => {
     if (newDb.name && newDb.host) {
+      const isDuplicate = settings.dbConnections.some(
+        (db) => db.name === newDb.name
+      );
+      if (isDuplicate) {
+        setMessage('이미 존재하는 연결 이름입니다.');
+        return;
+      }
       const newId = `db-${Date.now()}`;
       setSettings({
         ...settings,
@@ -140,6 +158,7 @@ export default function SettingsComponent() {
       selectedRfc:
         settings.selectedRfc === connectionName ? '' : settings.selectedRfc, // 선택 해제
     });
+    setTempSelectedRfc(''); // 임시 선택 해제
     setMessage('RFC 연결이 삭제되었습니다.');
   };
 
@@ -149,27 +168,54 @@ export default function SettingsComponent() {
       dbConnections: settings.dbConnections.filter((db) => db.id !== id),
       selectedDbId: settings.selectedDbId === id ? '' : settings.selectedDbId, // 선택 해제
     });
+    setTempSelectedDbId(''); // 임시 선택 해제
     setMessage('DB 연결이 삭제되었습니다.');
   };
 
-  // RFC 선택 처리
+  // RFC 선택 (임시 저장, 선택 버튼으로 확인)
   const handleRfcSelect = (connectionName: string) => {
-    setSettings({
-      ...settings,
-      selectedRfc: connectionName,
-    });
-    setMessage(`RFC "${connectionName}"이 선택되었습니다.`);
+    setTempSelectedRfc(connectionName);
+    setMessage(
+      `RFC "${connectionName}"을 선택하려면 "선택" 버튼을 눌러주세요.`
+    );
   };
 
-  // DB 선택 처리
+  // DB 선택 (임시 저장, 선택 버튼으로 확인)
   const handleDbSelect = (id: string) => {
-    setSettings({
-      ...settings,
-      selectedDbId: id,
-    });
+    setTempSelectedDbId(id);
     setMessage(
-      `DB "${settings.dbConnections.find((db) => db.id === id)?.name}"이 선택되었습니다.`
+      `DB "${settings.dbConnections.find((db) => db.id === id)?.name}"을 선택하려면 "선택" 버튼을 눌러주세요.`
     );
+  };
+
+  // RFC 선택 확인 (저장)
+  const confirmRfcSelect = () => {
+    if (tempSelectedRfc) {
+      setSettings({
+        ...settings,
+        selectedRfc: tempSelectedRfc,
+      });
+      setTempSelectedRfc('');
+      setMessage(`RFC "${tempSelectedRfc}"이 선택되었습니다.`);
+    } else {
+      setMessage('선택된 RFC가 없습니다.');
+    }
+  };
+
+  // DB 선택 확인 (저장)
+  const confirmDbSelect = () => {
+    if (tempSelectedDbId) {
+      setSettings({
+        ...settings,
+        selectedDbId: tempSelectedDbId,
+      });
+      setTempSelectedDbId('');
+      setMessage(
+        `DB "${settings.dbConnections.find((db) => db.id === tempSelectedDbId)?.name}"이 선택되었습니다.`
+      );
+    } else {
+      setMessage('선택된 DB가 없습니다.');
+    }
   };
 
   // RFC 테스트 (플레이스홀더, 나중에 구현)
@@ -204,6 +250,92 @@ export default function SettingsComponent() {
     }
   };
 
+  // RFC 수정
+  const updateRfcConnection = () => {
+    if (settings.selectedRfc && newRfc.connectionName && newRfc.appServerHost) {
+      const isDuplicate = settings.rfcList.some(
+        (rfc) =>
+          rfc.connectionName === newRfc.connectionName &&
+          rfc.connectionName !== settings.selectedRfc
+      );
+      if (isDuplicate) {
+        setMessage('이미 존재하는 연결 이름입니다.');
+        return;
+      }
+      setSettings({
+        ...settings,
+        rfcList: settings.rfcList.map((rfc) =>
+          rfc.connectionName === settings.selectedRfc ? newRfc : rfc
+        ),
+      });
+      setNewRfc({
+        connectionName: '',
+        appServerHost: '',
+        systemNumber: '',
+        systemID: '',
+        user: '',
+        password: '',
+        client: '',
+        language: '',
+        poolSize: '',
+      });
+      setMessage('RFC 연결이 수정되었습니다.');
+    } else {
+      setMessage('선택된 RFC 연결과 연결 이름, 호스트를 입력하세요.');
+    }
+  };
+
+  // DB 수정
+  const updateDbConnection = () => {
+    if (settings.selectedDbId && newDb.name && newDb.host) {
+      const isDuplicate = settings.dbConnections.some(
+        (db) => db.name === newDb.name && db.id !== settings.selectedDbId
+      );
+      if (isDuplicate) {
+        setMessage('이미 존재하는 연결 이름입니다.');
+        return;
+      }
+      setSettings({
+        ...settings,
+        dbConnections: settings.dbConnections.map((db) =>
+          db.id === settings.selectedDbId ? { ...newDb, id: db.id } : db
+        ),
+      });
+      setNewDb({
+        id: '',
+        name: '',
+        host: '',
+        port: '',
+        sid: '',
+        user: '',
+        password: '',
+      });
+      setMessage('DB 연결이 수정되었습니다.');
+    } else {
+      setMessage('선택된 DB 연결과 연결 이름, 호스트를 입력하세요.');
+    }
+  };
+
+  // 셀렉트박스 선택 시 INPUT에 값 반영
+  useEffect(() => {
+    if (settings.selectedRfc) {
+      const rfc = settings.rfcList.find(
+        (r) => r.connectionName === settings.selectedRfc
+      );
+      if (rfc) {
+        setNewRfc(rfc);
+      }
+    }
+    if (settings.selectedDbId) {
+      const db = settings.dbConnections.find(
+        (d) => d.id === settings.selectedDbId
+      );
+      if (db) {
+        setNewDb(db);
+      }
+    }
+  }, [settings.selectedRfc, settings.selectedDbId]);
+
   return (
     <>
       <Title>환경 설정</Title>
@@ -213,13 +345,11 @@ export default function SettingsComponent() {
         <Section>
           <SectionTitle>RFC 연결 설정</SectionTitle>
           <div style={{ marginTop: '20px' }}>
-            {' '}
-            {/* 간격 추가로 레이아웃 개선 */}
             <Label>RFC 선택</Label>
             <Select
-              value={settings.selectedRfc}
+              value={tempSelectedRfc}
               onChange={(e) => handleRfcSelect(e.target.value)}
-              style={{ width: '200px', marginRight: '10px' }} // 스타일 추가
+              style={{ width: '200px', marginRight: '10px' }}
             >
               <option value="">RFC 선택</option>
               {settings.rfcList.map((rfc) => (
@@ -233,20 +363,13 @@ export default function SettingsComponent() {
             </Button>
             <Button
               onClick={() =>
-                settings.selectedRfc &&
-                deleteRfcConnection(settings.selectedRfc)
+                tempSelectedRfc && deleteRfcConnection(tempSelectedRfc)
               }
               style={{ marginRight: '10px' }}
             >
               삭제
             </Button>
-            <Button
-              onClick={() =>
-                settings.selectedRfc && handleRfcSelect(settings.selectedRfc)
-              }
-            >
-              선택
-            </Button>
+            <Button onClick={confirmRfcSelect}>선택</Button>
           </div>
           <div>
             <Label>연결 이름</Label>
@@ -257,7 +380,7 @@ export default function SettingsComponent() {
               }
               placeholder="연결 이름 입력"
             />
-            <Label>애플리케이션 서버 호스트</Label>
+            <Label>서버 호스트</Label>
             <Input
               value={newRfc.appServerHost}
               onChange={(e) =>
@@ -318,20 +441,22 @@ export default function SettingsComponent() {
               }
               placeholder="풀 크기 입력"
             />
-            <Button onClick={addRfcConnection}>RFC 연결 추가</Button>
+            <br />
+            <Button onClick={addRfcConnection} style={{ marginRight: '10px' }}>
+              RFC 연결 추가
+            </Button>
+            <Button onClick={updateRfcConnection}>수정</Button>
           </div>
         </Section>
 
         <Section>
           <SectionTitle>DB 연결 설정</SectionTitle>
           <div style={{ marginTop: '20px' }}>
-            {' '}
-            {/* 간격 추가로 레이아웃 개선 */}
             <Label>DB 선택</Label>
             <Select
-              value={settings.selectedDbId}
+              value={tempSelectedDbId}
               onChange={(e) => handleDbSelect(e.target.value)}
-              style={{ width: '200px', marginRight: '10px' }} // 스타일 추가
+              style={{ width: '200px', marginRight: '10px' }}
             >
               <option value="">DB 선택</option>
               {settings.dbConnections.map((db) => (
@@ -345,20 +470,13 @@ export default function SettingsComponent() {
             </Button>
             <Button
               onClick={() =>
-                settings.selectedDbId &&
-                deleteDbConnection(settings.selectedDbId)
+                tempSelectedDbId && deleteDbConnection(tempSelectedDbId)
               }
               style={{ marginRight: '10px' }}
             >
               삭제
             </Button>
-            <Button
-              onClick={() =>
-                settings.selectedDbId && handleDbSelect(settings.selectedDbId)
-              }
-            >
-              선택
-            </Button>
+            <Button onClick={confirmDbSelect}>선택</Button>
           </div>
           <div>
             <Label>연결 이름</Label>
@@ -398,7 +516,11 @@ export default function SettingsComponent() {
               onChange={(e) => setNewDb({ ...newDb, password: e.target.value })}
               placeholder="비밀번호 입력"
             />
-            <Button onClick={addDbConnection}>DB 연결 추가</Button>
+            <br />
+            <Button onClick={addDbConnection} style={{ marginRight: '10px' }}>
+              DB 연결 추가
+            </Button>
+            <Button onClick={updateDbConnection}>수정</Button>
           </div>
         </Section>
 
