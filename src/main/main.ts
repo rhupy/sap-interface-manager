@@ -10,7 +10,7 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false, // nodeIntegration을 false로 설정
       contextIsolation: true, // contextIsolation을 true로 설정
-      preload: path.join(__dirname, '../dist/main/preload.js'), // dist 디렉토리에서 preload.js 로드
+      preload: path.join(__dirname, '../dist/main/preload.js'), // 경로 수정
       webSecurity: true,
     },
   });

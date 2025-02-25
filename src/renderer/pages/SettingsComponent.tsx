@@ -9,7 +9,6 @@ import {
   Description,
   Button,
   Input,
-  Select,
   Label,
   Message,
   Section,
@@ -21,10 +20,10 @@ import {
   Settings,
 } from '../types/index';
 
-// preload.ts에서 노출된 API 사용을 위한 타입 정의
+// preload.ts에서 노출된 API 사용을 위한 타입 정의 (옵셔널로 수정)
 declare global {
   interface Window {
-    api: {
+    api?: {
       saveSettings: (settings: any) => Promise<void>;
       loadSettings: () => Promise<Settings | null>;
     };
@@ -63,18 +62,27 @@ export default function SettingsComponent() {
   const [message, setMessage] = useState<string>('');
 
   useEffect(() => {
-    window.api
-      .loadSettings()
-      .then((savedSettings: Settings | null) => {
-        setSettings(savedSettings || initialSettings);
-      })
-      .catch((error) => console.error('설정 불러오기 실패:', error));
+    if (window.api) {
+      window.api
+        .loadSettings()
+        .then((savedSettings: Settings | null) => {
+          setSettings(savedSettings || initialSettings);
+        })
+        .catch((error) => console.error('설정 불러오기 실패:', error));
+    } else {
+      console.error('window.api가 정의되지 않았습니다.');
+      setSettings(initialSettings); // 기본값으로 설정
+    }
   }, []);
 
   useEffect(() => {
-    window.api
-      .saveSettings(settings)
-      .catch((error) => console.error('설정 저장 실패:', error));
+    if (window.api) {
+      window.api
+        .saveSettings(settings)
+        .catch((error) => console.error('설정 저장 실패:', error));
+    } else {
+      console.error('window.api가 정의되지 않았습니다.');
+    }
   }, [settings]);
 
   const addRfcConnection = () => {
