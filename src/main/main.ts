@@ -14,7 +14,7 @@ function createWindow() {
 
   const win = new BrowserWindow({
     width: 1400,
-    height: 1000,
+    height: 1100,
     webPreferences: {
       nodeIntegration: false, // nodeIntegration을 false로 설정
       contextIsolation: true, // contextIsolation을 true로 설정
