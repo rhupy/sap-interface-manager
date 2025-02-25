@@ -87,7 +87,15 @@ export default function SettingsComponent() {
       window.api
         .loadSettings()
         .then((savedSettings) => {
-          setSettings(savedSettings || initialSettings);
+          // 만약 저장된 설정이 있다면 목록(rfcList, dbConnections)은 사용하되
+          // selectedRfc, selectedDbId는 강제로 비워서 (""로) 시작
+          const loaded = savedSettings || initialSettings;
+          const forcedEmptySelection: Settings = {
+            ...loaded,
+            selectedRfc: '',
+            selectedDbId: '',
+          };
+          setSettings(forcedEmptySelection);
         })
         .catch((err) => console.error('설정 불러오기 실패:', err))
         .finally(() => setIsInitialLoad(false));
@@ -451,10 +459,6 @@ export default function SettingsComponent() {
                 <Button onClick={updateRfcConnection}>수정</Button>
               </>
             )}
-            {/* 
-              만약 "RFC가 선택되지 않아도 새로 추가가 가능"하게 만들고 싶다면
-              여기서 조건을 지우고 항상 "RFC 연결 추가" 버튼이 노출되도록 조정하면 됨
-            */}
             {!settings.selectedRfc && (
               <>
                 <Button onClick={addRfcConnection}>RFC 연결 추가</Button>
