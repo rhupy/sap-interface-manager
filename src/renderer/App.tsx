@@ -1,3 +1,4 @@
+// src/renderer/App.tsx
 import React, { useState } from 'react';
 import { GlobalStyle } from './styles/GlobalStyle';
 import {
@@ -8,8 +9,7 @@ import {
   Title,
   Description,
 } from './styles/CommonStyles';
-// 다른 페이지(컴포넌트) import
-import Settings from './pages/Settings';
+import SettingsComponent from './pages/SettingsComponent';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<
@@ -18,7 +18,7 @@ export default function App() {
 
   return (
     <>
-      <GlobalStyle />
+      <GlobalStyle /> {/* GlobalStyle이 제대로 적용되는지 확인 */}
       <AppContainer>
         <TabContainer>
           <TabButton
@@ -50,7 +50,7 @@ export default function App() {
           {activeTab === 'dashboard' && <Dashboard />}
           {activeTab === 'interface' && <InterfaceManagement />}
           {activeTab === 'sql' && <SqlManagement />}
-          {activeTab === 'settings' && <Settings />}
+          {activeTab === 'settings' && <SettingsComponent />}
         </ContentContainer>
       </AppContainer>
     </>

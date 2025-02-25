@@ -1,3 +1,4 @@
+// vite.config.ts
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
@@ -15,4 +16,6 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src/renderer'),
     },
   },
+  // 엔트리 포인트 명시 (필요 시)
+  publicDir: 'public',
 });

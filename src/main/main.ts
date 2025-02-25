@@ -1,82 +1,55 @@
+// src/main/main.ts
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
-import fs from 'fs/promises'; // Node.js 파일 시스템 (Promise 기반)
-import 'dotenv/config';
-import { testOracleConnection } from './oracleService';
-import { OracleDbConfig } from '../renderer/types/index';
-import { Settings } from '../renderer/types/index';
-
-const SETTINGS_FILE = path.join(app.getPath('userData'), 'settings.json');
-
-async function loadSettings(): Promise<Settings> {
-  try {
-    const data = await fs.readFile(SETTINGS_FILE, 'utf-8');
-    return JSON.parse(data) as Settings;
-  } catch (error) {
-    return {
-      rfcList: [],
-      dbConnections: [],
-      selectedRfc: '',
-      selectedDbId: '',
-    };
-  }
-}
-
-async function saveSettings(settings: Settings): Promise<void> {
-  await fs.writeFile(SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf-8');
-}
+import fs from 'fs/promises';
 
 function createWindow() {
-  const mainWindow = new BrowserWindow({
-    width: 1800,
-    height: 1200,
+  const win = new BrowserWindow({
+    width: 1400,
+    height: 1000,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: false,
-      contextIsolation: true,
+      nodeIntegration: false, // nodeIntegration을 false로 설정
+      contextIsolation: true, // contextIsolation을 true로 설정
+      preload: path.join(__dirname, '../dist/main/preload.js'), // dist 디렉토리에서 preload.js 로드
+      webSecurity: true,
     },
   });
 
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.loadURL('http://localhost:5173');
-    mainWindow.webContents.openDevTools();
-  } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
-  }
+  win.loadFile(path.join(__dirname, '../renderer/index.html'));
+
+  // 설정 저장/불러오기 처리
+  const settingsFilePath = path.join(app.getPath('userData'), 'settings.json');
+
+  ipcMain.handle('save-settings', async (event, settings) => {
+    try {
+      await fs.writeFile(settingsFilePath, JSON.stringify(settings, null, 2));
+    } catch (error) {
+      console.error('설정 저장 실패:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('load-settings', async () => {
+    try {
+      const data = await fs.readFile(settingsFilePath, 'utf8');
+      return JSON.parse(data);
+    } catch (error) {
+      console.error('설정 불러오기 실패:', error);
+      return null;
+    }
+  });
 }
 
-app.whenReady().then(() => {
-  createWindow();
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
-});
+app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
-});
-
-// 기존 Oracle DB 테스트 IPC
-ipcMain.handle(
-  'test-oracle-connection',
-  async (event, dbConfig: OracleDbConfig) => {
-    try {
-      await testOracleConnection(dbConfig);
-      return { success: true };
-    } catch (error: any) {
-      return { success: false, message: error.message };
-    }
+  if (process.platform !== 'darwin') {
+    app.quit();
   }
-);
-
-// 설정 저장 IPC
-ipcMain.handle('save-settings', async (event, settings: Settings) => {
-  await saveSettings(settings);
-  return { success: true };
 });
 
-// 설정 로드 IPC
-ipcMain.handle('load-settings', async () => {
-  return await loadSettings();
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
 });

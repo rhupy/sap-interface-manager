@@ -1,3 +1,4 @@
+// src/main/preload.ts
 import { contextBridge, ipcRenderer } from 'electron';
 import { OracleDbConfig } from '../renderer/types/index';
 
