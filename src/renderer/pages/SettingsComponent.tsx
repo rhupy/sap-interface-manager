@@ -9,6 +9,7 @@ import {
   Description,
   Button,
   Input,
+  Select,
   Label,
   Message,
   Section,
@@ -33,8 +34,8 @@ declare global {
 const initialSettings: Settings = {
   rfcList: [],
   dbConnections: [],
-  selectedRfc: '',
-  selectedDbId: '',
+  selectedRfc: '', // 선택된 RFC 연결 이름
+  selectedDbId: '', // 선택된 DB 연결 ID
 };
 
 export default function SettingsComponent() {
@@ -70,7 +71,7 @@ export default function SettingsComponent() {
         })
         .catch((error) => console.error('설정 불러오기 실패:', error));
     } else {
-      console.error('window.api가 정의되지 않았습니다.');
+      console.warn('window.api가 정의되지 않았습니다. 기본 설정을 사용합니다.');
       setSettings(initialSettings); // 기본값으로 설정
     }
   }, []);
@@ -81,7 +82,7 @@ export default function SettingsComponent() {
         .saveSettings(settings)
         .catch((error) => console.error('설정 저장 실패:', error));
     } else {
-      console.error('window.api가 정의되지 않았습니다.');
+      console.warn('window.api가 정의되지 않았습니다. 설정 저장을 생략합니다.');
     }
   }, [settings]);
 
@@ -136,6 +137,8 @@ export default function SettingsComponent() {
       rfcList: settings.rfcList.filter(
         (rfc) => rfc.connectionName !== connectionName
       ),
+      selectedRfc:
+        settings.selectedRfc === connectionName ? '' : settings.selectedRfc, // 선택 해제
     });
     setMessage('RFC 연결이 삭제되었습니다.');
   };
@@ -144,8 +147,61 @@ export default function SettingsComponent() {
     setSettings({
       ...settings,
       dbConnections: settings.dbConnections.filter((db) => db.id !== id),
+      selectedDbId: settings.selectedDbId === id ? '' : settings.selectedDbId, // 선택 해제
     });
     setMessage('DB 연결이 삭제되었습니다.');
+  };
+
+  // RFC 선택 처리
+  const handleRfcSelect = (connectionName: string) => {
+    setSettings({
+      ...settings,
+      selectedRfc: connectionName,
+    });
+    setMessage(`RFC "${connectionName}"이 선택되었습니다.`);
+  };
+
+  // DB 선택 처리
+  const handleDbSelect = (id: string) => {
+    setSettings({
+      ...settings,
+      selectedDbId: id,
+    });
+    setMessage(
+      `DB "${settings.dbConnections.find((db) => db.id === id)?.name}"이 선택되었습니다.`
+    );
+  };
+
+  // RFC 테스트 (플레이스홀더, 나중에 구현)
+  const testRfcConnection = () => {
+    if (settings.selectedRfc) {
+      const rfc = settings.rfcList.find(
+        (r) => r.connectionName === settings.selectedRfc
+      );
+      if (rfc) {
+        setMessage(`RFC "${rfc.connectionName}" 테스트 (미구현)`);
+      } else {
+        setMessage('선택된 RFC 연결이 없습니다.');
+      }
+    } else {
+      setMessage('RFC 연결을 선택하세요.');
+    }
+  };
+
+  // DB 테스트 (플레이스홀더, 나중에 구현)
+  const testDbConnection = () => {
+    if (settings.selectedDbId) {
+      const db = settings.dbConnections.find(
+        (d) => d.id === settings.selectedDbId
+      );
+      if (db) {
+        setMessage(`DB "${db.name}" 테스트 (미구현)`);
+      } else {
+        setMessage('선택된 DB 연결이 없습니다.');
+      }
+    } else {
+      setMessage('DB 연결을 선택하세요.');
+    }
   };
 
   return (
@@ -156,6 +212,42 @@ export default function SettingsComponent() {
       <ContentContainer>
         <Section>
           <SectionTitle>RFC 연결 설정</SectionTitle>
+          <div style={{ marginTop: '20px' }}>
+            {' '}
+            {/* 간격 추가로 레이아웃 개선 */}
+            <Label>RFC 선택</Label>
+            <Select
+              value={settings.selectedRfc}
+              onChange={(e) => handleRfcSelect(e.target.value)}
+              style={{ width: '200px', marginRight: '10px' }} // 스타일 추가
+            >
+              <option value="">RFC 선택</option>
+              {settings.rfcList.map((rfc) => (
+                <option key={rfc.connectionName} value={rfc.connectionName}>
+                  {rfc.connectionName}
+                </option>
+              ))}
+            </Select>
+            <Button onClick={testRfcConnection} style={{ marginRight: '10px' }}>
+              테스트
+            </Button>
+            <Button
+              onClick={() =>
+                settings.selectedRfc &&
+                deleteRfcConnection(settings.selectedRfc)
+              }
+              style={{ marginRight: '10px' }}
+            >
+              삭제
+            </Button>
+            <Button
+              onClick={() =>
+                settings.selectedRfc && handleRfcSelect(settings.selectedRfc)
+              }
+            >
+              선택
+            </Button>
+          </div>
           <div>
             <Label>연결 이름</Label>
             <Input
@@ -228,20 +320,46 @@ export default function SettingsComponent() {
             />
             <Button onClick={addRfcConnection}>RFC 연결 추가</Button>
           </div>
-          <div>
-            {settings.rfcList.map((rfc) => (
-              <div key={rfc.connectionName}>
-                {rfc.connectionName} - {rfc.appServerHost}
-                <Button onClick={() => deleteRfcConnection(rfc.connectionName)}>
-                  삭제
-                </Button>
-              </div>
-            ))}
-          </div>
         </Section>
 
         <Section>
           <SectionTitle>DB 연결 설정</SectionTitle>
+          <div style={{ marginTop: '20px' }}>
+            {' '}
+            {/* 간격 추가로 레이아웃 개선 */}
+            <Label>DB 선택</Label>
+            <Select
+              value={settings.selectedDbId}
+              onChange={(e) => handleDbSelect(e.target.value)}
+              style={{ width: '200px', marginRight: '10px' }} // 스타일 추가
+            >
+              <option value="">DB 선택</option>
+              {settings.dbConnections.map((db) => (
+                <option key={db.id} value={db.id}>
+                  {db.name}
+                </option>
+              ))}
+            </Select>
+            <Button onClick={testDbConnection} style={{ marginRight: '10px' }}>
+              테스트
+            </Button>
+            <Button
+              onClick={() =>
+                settings.selectedDbId &&
+                deleteDbConnection(settings.selectedDbId)
+              }
+              style={{ marginRight: '10px' }}
+            >
+              삭제
+            </Button>
+            <Button
+              onClick={() =>
+                settings.selectedDbId && handleDbSelect(settings.selectedDbId)
+              }
+            >
+              선택
+            </Button>
+          </div>
           <div>
             <Label>연결 이름</Label>
             <Input
@@ -282,20 +400,14 @@ export default function SettingsComponent() {
             />
             <Button onClick={addDbConnection}>DB 연결 추가</Button>
           </div>
-          <div>
-            {settings.dbConnections.map((db) => (
-              <div key={db.id}>
-                {db.name} - {db.host}
-                <Button onClick={() => deleteDbConnection(db.id)}>삭제</Button>
-              </div>
-            ))}
-          </div>
         </Section>
 
         {message && (
           <Message
             color={
-              message.includes('추가') || message.includes('삭제')
+              message.includes('추가') ||
+              message.includes('삭제') ||
+              message.includes('선택')
                 ? '#4A90E2'
                 : '#E41E1E'
             }

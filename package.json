@@ -6,8 +6,8 @@
   "scripts": {
     "dev:main": "tsc --watch",
     "dev:renderer": "vite",
-    "dev:electron": "wait-on http://localhost:5173 && electron dist/main/main.js",
-    "dev": "concurrently \"npm run dev:main\" \"npm run dev:renderer\" \"npm run dev:electron\"",
+    "dev:electron": "wait-on http://localhost:5174 && electron dist/main/main.js",
+    "dev": "cross-env NODE_ENV=development concurrently \"npm run dev:main\" \"npm run dev:renderer\" \"npm run dev:electron\"",
     "build:renderer": "vite build",
     "build:main": "tsc",
     "build": "npm run build:renderer && npm run build:main && electron-builder"
@@ -37,6 +37,7 @@
     "typescript": "^5.7.3"
   },
   "devDependencies": {
+    "@types/node": "^22.13.5",
     "@types/oracledb": "^6.5.3",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
