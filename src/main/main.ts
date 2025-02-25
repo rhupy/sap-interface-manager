@@ -6,7 +6,7 @@ import { testOracleConnection } from './oracleService';
 import { OracleDbConfig } from '../renderer/types/index';
 import { Settings } from '../renderer/types/index';
 
-const SETTINGS_FILE = path.join(app.getPath('userData'), 'setting.json');
+const SETTINGS_FILE = path.join(app.getPath('userData'), 'settings.json');
 
 async function loadSettings(): Promise<Settings> {
   try {
