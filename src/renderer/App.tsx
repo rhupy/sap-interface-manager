@@ -11,16 +11,8 @@ import {
 import SqlManagement from './pages/SqlManagement';
 import SettingsComponent from './pages/SettingsComponent';
 import { SettingsProvider } from './context/SettingContext';
-import { Settings } from './types/index';
 
 export default function App() {
-  const [settings, setSettings] = useState<Settings>({
-    rfcList: [],
-    dbConnections: [],
-    selectedRfc: '',
-    selectedDbId: '',
-  });
-
   const [activeTab, setActiveTab] = useState<
     'profile' | 'interface' | 'sql' | 'process' | 'settings'
   >('profile');
@@ -28,7 +20,7 @@ export default function App() {
   return (
     <>
       <GlobalStyle />
-      <SettingsProvider settings={settings}>
+      <SettingsProvider>
         <AppContainer>
           <TabContainer>
             <TabButton

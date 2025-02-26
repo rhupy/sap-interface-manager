@@ -17,16 +17,8 @@ import {
   SectionTitle,
   FixedMessage,
 } from '../styles/CommonStyles';
-import { Settings } from '../types';
+import { useSettingsContext } from '../context/SettingContext';
 import { RfcConnectionInfo, DbConnectionConfig } from '../types';
-
-// 초기 Settings
-const initialSettings: Settings = {
-  rfcList: [],
-  dbConnections: [],
-  selectedRfc: '',
-  selectedDbId: '',
-};
 
 // RFC/DB를 비웠을 때 사용하기 위한 객체
 const emptyRfc: RfcConnectionInfo = {
@@ -55,10 +47,11 @@ export default function SettingsComponent() {
   // -------------------------
   // 상태 관리
   // -------------------------
-  const [settings, setSettings] = useState<Settings>(initialSettings);
-
-  // 처음 설정 불러오기인지 여부 (초기화 방지)
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const {
+    settings,
+    updateSettings,
+    isLoading: isSettingsLoading,
+  } = useSettingsContext();
 
   // 메시지 출력
   const [message, setMessage] = useState<string>('');
@@ -66,47 +59,6 @@ export default function SettingsComponent() {
   // 현재 편집 중인 RFC/DB 정보
   const [newRfc, setNewRfc] = useState<RfcConnectionInfo>(emptyRfc);
   const [newDb, setNewDb] = useState<DbConnectionConfig>(emptyDb);
-
-  // -------------------------
-  // 1) 초기 로딩 시 Settings 불러오기
-  // -------------------------
-
-  useEffect(() => {
-    // 1) 윈도우 api 체크
-    if (!window.api?.loadSettings) {
-      console.warn('window.api.loadSettings가 정의되지 않았습니다.');
-      setIsInitialLoad(false);
-      return;
-    }
-
-    // 2) loadSettings가 존재하므로 안전하게 호출
-    window.api
-      .loadSettings()
-      .then((savedSettings: Settings | null) => {
-        const loaded = savedSettings || initialSettings;
-        const forcedEmpty: Settings = {
-          ...loaded,
-          selectedRfc: '',
-          selectedDbId: '',
-        };
-        setSettings(forcedEmpty);
-      })
-      .catch((err: unknown) => console.error('설정 불러오기 실패:', err))
-      .finally(() => setIsInitialLoad(false));
-  }, []);
-
-  // -------------------------
-  // 2) Settings 변경 시 자동 저장
-  //    (처음 불러올 때는 제외)
-  // -------------------------
-  useEffect(() => {
-    if (!isInitialLoad) {
-      // 이미 위에서 window.api?.saveSettings가 있는지 체크하는 식으로 작성 가능
-      if (window.api?.saveSettings) {
-        window.api.saveSettings(settings).catch((err) => console.error(err));
-      }
-    }
-  }, [settings, isInitialLoad]);
 
   // -------------------------
   // 3) selectedRfc, selectedDbId 변화에 따라
@@ -142,11 +94,11 @@ export default function SettingsComponent() {
   // 4) 이벤트 핸들러(드롭다운)
   // -------------------------
   const handleRfcSelect = (value: string) => {
-    setSettings({ ...settings, selectedRfc: value });
+    updateSettings({ selectedRfc: value });
   };
 
   const handleDbSelect = (value: string) => {
-    setSettings({ ...settings, selectedDbId: value });
+    updateSettings({ selectedDbId: value });
   };
 
   // -------------------------
@@ -162,8 +114,7 @@ export default function SettingsComponent() {
         setMessage('이미 존재하는 연결 이름입니다.');
         return;
       }
-      setSettings({
-        ...settings,
+      updateSettings({
         rfcList: [...settings.rfcList, newRfc],
       });
       setNewRfc(emptyRfc);
@@ -179,15 +130,14 @@ export default function SettingsComponent() {
       setMessage('삭제할 RFC 연결이 선택되지 않았습니다.');
       return;
     }
-    setSettings({
-      ...settings,
-      rfcList: settings.rfcList.filter(
+    updateSettings((prev) => ({
+      ...prev, // 기존 모든 속성 유지
+      rfcList: prev.rfcList.filter(
         (rfc) => rfc.connectionName !== connectionName
       ),
       // 현재 선택된 RFC가 삭제 대상이면 selectedRfc 비우기
-      selectedRfc:
-        settings.selectedRfc === connectionName ? '' : settings.selectedRfc,
-    });
+      selectedRfc: prev.selectedRfc === connectionName ? '' : prev.selectedRfc,
+    }));
     setMessage('RFC 연결이 삭제되었습니다.');
   };
 
@@ -204,14 +154,14 @@ export default function SettingsComponent() {
         setMessage('이미 존재하는 연결 이름입니다.');
         return;
       }
-      setSettings({
-        ...settings,
-        rfcList: settings.rfcList.map((rfc) =>
-          rfc.connectionName === settings.selectedRfc ? newRfc : rfc
+      updateSettings((prev) => ({
+        ...prev, // 기존 모든 속성 유지
+        rfcList: prev.rfcList.map((rfc) =>
+          rfc.connectionName === prev.selectedRfc ? newRfc : rfc
         ),
         // 새 이름으로 바뀌었으면 selectedRfc도 갱신
         selectedRfc: newRfc.connectionName,
-      });
+      }));
       setMessage('RFC 연결이 수정되었습니다.');
     } else {
       setMessage('선택된 RFC가 없거나 연결 이름/호스트가 비어 있습니다.');
@@ -276,8 +226,7 @@ export default function SettingsComponent() {
         return;
       }
       const newId = `db-${Date.now()}`;
-      setSettings({
-        ...settings,
+      updateSettings({
         dbConnections: [...settings.dbConnections, { ...newDb, id: newId }],
       });
       setNewDb(emptyDb);
@@ -293,12 +242,12 @@ export default function SettingsComponent() {
       setMessage('삭제할 DB 연결이 선택되지 않았습니다.');
       return;
     }
-    setSettings({
-      ...settings,
-      dbConnections: settings.dbConnections.filter((db) => db.id !== dbId),
+    updateSettings((prev) => ({
+      ...prev, // 기존 모든 속성 유지
+      dbConnections: prev.dbConnections.filter((db) => db.id !== dbId),
       // 현재 선택된 DB가 삭제 대상이면 selectedDbId 비우기
-      selectedDbId: settings.selectedDbId === dbId ? '' : settings.selectedDbId,
-    });
+      selectedDbId: prev.selectedDbId === dbId ? '' : prev.selectedDbId,
+    }));
     setMessage('DB 연결이 삭제되었습니다.');
   };
 
@@ -313,12 +262,12 @@ export default function SettingsComponent() {
         setMessage('이미 존재하는 연결 이름입니다.');
         return;
       }
-      setSettings({
-        ...settings,
-        dbConnections: settings.dbConnections.map((db) =>
-          db.id === settings.selectedDbId ? { ...newDb, id: db.id } : db
+      updateSettings((prev) => ({
+        ...prev, // 기존 모든 속성 유지
+        dbConnections: prev.dbConnections.map((db) =>
+          db.id === prev.selectedDbId ? { ...newDb, id: db.id } : db
         ),
-      });
+      }));
       setMessage('DB 연결이 수정되었습니다.');
     } else {
       setMessage('선택된 DB가 없거나 연결 이름/호스트가 비어 있습니다.');
@@ -368,7 +317,7 @@ export default function SettingsComponent() {
   // -------------------------
   // 로딩 중 처리
   // -------------------------
-  if (isInitialLoad) {
+  if (isSettingsLoading) {
     return <div>설정을 불러오는 중...</div>;
   }
 
