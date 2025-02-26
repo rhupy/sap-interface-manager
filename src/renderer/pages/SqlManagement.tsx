@@ -1,5 +1,5 @@
 // src/renderer/pages/SqlManagement.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Section,
   SectionTitle,
@@ -29,6 +29,11 @@ import {
 import { format } from 'sql-formatter';
 import { useSettingsContext } from '../context/SettingContext';
 import { SqlInfo } from '../types';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import Prism from 'prismjs';
+import 'prismjs/themes/prism-tomorrow.css';
+import 'prismjs/components/prism-sql';
 
 const emptySqlInfo: SqlInfo = {
   id: '',
@@ -40,10 +45,21 @@ const emptySqlInfo: SqlInfo = {
   parameters: [],
 };
 
+// 커스텀 CSS 스타일
+const customStyles = `
+  .token.parameter {
+    color: #e74c3c !important;
+    font-weight: bold !important;
+  }
+`;
+
 // 정렬 타입 정의
 type SortType = 'name' | 'createdAt' | 'updatedAt';
 
 export default function SqlManagement() {
+  const [showHighlighter, setShowHighlighter] = useState(false);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+
   const { settings, updateSettings, isLoading } = useSettingsContext();
   const [message, setMessage] = useState('');
   const [newSql, setNewSql] = useState<SqlInfo>(emptySqlInfo);
@@ -51,6 +67,53 @@ export default function SqlManagement() {
 
   // 정렬 상태 추가
   const [sortType, setSortType] = useState<SortType>('name');
+
+  // 구문 강조 적용
+  useEffect(() => {
+    if (showHighlighter) {
+      // 파라미터 강조를 위한 커스텀 토큰 추가
+      if (!(Prism.languages.sql as any).parameter) {
+        (Prism.languages.sql as any).parameter = {
+          pattern: /::([A-Za-z0-9_]+)/g,
+          greedy: true,
+        };
+      }
+
+      // 구문 강조 적용
+      Prism.highlightAll();
+    }
+  }, [showHighlighter, newSql.sqlText]);
+
+  // 커스텀 스타일 적용
+  useEffect(() => {
+    // 스타일 요소가 이미 있는지 확인
+    const existingStyle = document.getElementById('prism-custom-styles');
+    if (!existingStyle) {
+      // 새 스타일 요소 생성 및 추가
+      const styleElement = document.createElement('style');
+      styleElement.id = 'prism-custom-styles';
+      styleElement.textContent = customStyles;
+      document.head.appendChild(styleElement);
+    }
+
+    return () => {
+      // 컴포넌트 언마운트 시 스타일 제거
+      const styleElement = document.getElementById('prism-custom-styles');
+      if (styleElement) {
+        document.head.removeChild(styleElement);
+      }
+    };
+  }, []);
+
+  // 구문 강조 토글
+  const toggleHighlighter = () => {
+    setShowHighlighter(!showHighlighter);
+  };
+
+  // 텍스트 영역 포커스 처리
+  const handleTextAreaFocus = () => {
+    setShowHighlighter(false);
+  };
 
   // -----------------------------
   // 3) selectedSqlId -> newSql
@@ -398,11 +461,53 @@ export default function SqlManagement() {
             )}
 
             <LeftAlignedLabel>SQL 문</LeftAlignedLabel>
-            <TextArea
-              value={newSql.sqlText}
-              onChange={handleSqlTextChange}
-              placeholder="SELECT * FROM ..."
-            />
+            <div style={{ position: 'relative', flex: 1, minHeight: '150px' }}>
+              {showHighlighter ? (
+                <div
+                  onClick={() => setShowHighlighter(false)}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    overflow: 'auto',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    cursor: 'text',
+                    backgroundColor: 'white',
+                    padding: '10px',
+                  }}
+                >
+                  <pre style={{ margin: 0, height: '100%' }}>
+                    <code className="language-sql">{newSql.sqlText}</code>
+                  </pre>
+                </div>
+              ) : null}
+
+              <TextArea
+                ref={textAreaRef}
+                value={newSql.sqlText}
+                onChange={handleSqlTextChange}
+                onFocus={handleTextAreaFocus}
+                placeholder="SELECT * FROM ..."
+                style={{
+                  display: showHighlighter ? 'none' : 'block',
+                  height: '100%',
+                  width: '100%', // 가로 크기 100%로 설정
+                  boxSizing: 'border-box', // 패딩과 테두리를 너비에 포함
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', marginTop: '5px' }}>
+              <Button
+                onClick={toggleHighlighter}
+                style={{ padding: '4px 8px', fontSize: '0.9rem' }}
+              >
+                {showHighlighter ? '편집 모드' : '구문 강조 모드'}
+              </Button>
+            </div>
 
             {/* 파라미터 목록 표시 */}
             {paramList.length > 0 && (
