@@ -132,15 +132,29 @@ export default function SqlManagement() {
       return;
     }
     try {
-      const formatted = format(newSql.sqlText, {
+      // 파라미터를 임시 문자열로 변환 (::param -> '__PARAM__param') : 파라미터가 포함된 경우 정렬 오류때문
+      const paramPlaceholderRegex = /::([A-Za-z0-9_]+)/g;
+      const tempSql = newSql.sqlText.replace(
+        paramPlaceholderRegex,
+        "'__PARAM__$1'"
+      );
+
+      // SQL 포맷팅
+      const formatted = format(tempSql, {
         language: 'sql',
         keywordCase: 'upper',
         indentStyle: 'standard',
         tabWidth: 2,
       });
 
-      setNewSql({ ...newSql, sqlText: formatted });
-      const extracted = extractParamsFromSql(formatted);
+      // 임시 문자열을 다시 파라미터로 변환 ('__PARAM__param' -> ::param)
+      const restoredSql = formatted.replace(
+        /'__PARAM__([A-Za-z0-9_]+)'/g,
+        '::$1'
+      );
+
+      setNewSql({ ...newSql, sqlText: restoredSql });
+      const extracted = extractParamsFromSql(restoredSql);
       setParamList(extracted);
       setMessage('SQL이 정렬되었습니다.');
     } catch (error) {
