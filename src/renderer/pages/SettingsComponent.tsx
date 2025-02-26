@@ -15,28 +15,10 @@ import {
   Message,
   Section,
   SectionTitle,
+  FixedMessage,
 } from '../styles/CommonStyles';
-import {
-  RfcConnectionInfo,
-  DbConnectionConfig,
-  Settings,
-} from '../types/index';
-
-// preload.ts에서 노출된 API 사용을 위한 타입 정의
-declare global {
-  interface Window {
-    api?: {
-      saveSettings: (settings: any) => Promise<void>;
-      loadSettings: () => Promise<Settings | null>;
-      testDbConnection?: (
-        dbConfig: any
-      ) => Promise<{ success: boolean; message?: string }>;
-      testRfcConnection?: (
-        rfcConfig: any
-      ) => Promise<{ success: boolean; message?: string }>;
-    };
-  }
-}
+import { Settings } from '../types';
+import { RfcConnectionInfo, DbConnectionConfig } from '../types';
 
 // 초기 Settings
 const initialSettings: Settings = {
@@ -88,27 +70,29 @@ export default function SettingsComponent() {
   // -------------------------
   // 1) 초기 로딩 시 Settings 불러오기
   // -------------------------
+
   useEffect(() => {
-    if (window.api) {
-      window.api
-        .loadSettings()
-        .then((savedSettings) => {
-          // 만약 저장된 설정이 있다면 목록(rfcList, dbConnections)은 사용하되
-          // selectedRfc, selectedDbId는 강제로 비워서 (""로) 시작
-          const loaded = savedSettings || initialSettings;
-          const forcedEmptySelection: Settings = {
-            ...loaded,
-            selectedRfc: '',
-            selectedDbId: '',
-          };
-          setSettings(forcedEmptySelection);
-        })
-        .catch((err) => console.error('설정 불러오기 실패:', err))
-        .finally(() => setIsInitialLoad(false));
-    } else {
-      console.warn('window.api가 정의되지 않았습니다. 기본 설정을 사용합니다.');
+    // 1) 윈도우 api 체크
+    if (!window.api?.loadSettings) {
+      console.warn('window.api.loadSettings가 정의되지 않았습니다.');
       setIsInitialLoad(false);
+      return;
     }
+
+    // 2) loadSettings가 존재하므로 안전하게 호출
+    window.api
+      .loadSettings()
+      .then((savedSettings: Settings | null) => {
+        const loaded = savedSettings || initialSettings;
+        const forcedEmpty: Settings = {
+          ...loaded,
+          selectedRfc: '',
+          selectedDbId: '',
+        };
+        setSettings(forcedEmpty);
+      })
+      .catch((err: unknown) => console.error('설정 불러오기 실패:', err))
+      .finally(() => setIsInitialLoad(false));
   }, []);
 
   // -------------------------
@@ -116,10 +100,11 @@ export default function SettingsComponent() {
   //    (처음 불러올 때는 제외)
   // -------------------------
   useEffect(() => {
-    if (!isInitialLoad && window.api) {
-      window.api
-        .saveSettings(settings)
-        .catch((err) => console.error('설정 저장 실패:', err));
+    if (!isInitialLoad) {
+      // 이미 위에서 window.api?.saveSettings가 있는지 체크하는 식으로 작성 가능
+      if (window.api?.saveSettings) {
+        window.api.saveSettings(settings).catch((err) => console.error(err));
+      }
     }
   }, [settings, isInitialLoad]);
 
@@ -624,7 +609,7 @@ export default function SettingsComponent() {
 
         {/* 메시지 출력 */}
         {message && (
-          <Message
+          <FixedMessage
             color={
               message.includes('추가') ||
               message.includes('삭제') ||
@@ -635,7 +620,7 @@ export default function SettingsComponent() {
             }
           >
             {message}
-          </Message>
+          </FixedMessage>
         )}
       </ContentContainer>
     </>

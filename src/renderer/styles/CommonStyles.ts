@@ -112,3 +112,17 @@ export const SectionTitle = styled.h2`
   margin-bottom: 1rem;
   color: #333;
 `;
+
+export const FixedMessage = styled.div<{ color?: string }>`
+  position: fixed; /* 화면에 고정 */
+  bottom: 0; /* 화면 하단 */
+  left: 0; /* 화면 왼쪽 기준 */
+  width: 100%; /* 가로폭 전체 */
+  text-align: center; /* 텍스트 중앙 정렬 */
+  background-color: #f0f0f0;
+  padding: 10px;
+  border-top: 1px solid #ccc;
+  z-index: 9999; /* 다른 요소 위에 표시 */
+
+  color: ${({ color }) => color || '#333'};
+`;

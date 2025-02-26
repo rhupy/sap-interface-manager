@@ -8,6 +8,7 @@ import {
   Title,
   Description,
 } from './styles/CommonStyles';
+import SqlManagement from './pages/SqlManagement';
 import SettingsComponent from './pages/SettingsComponent';
 import { SettingsProvider } from './context/SettingContext';
 import { Settings } from './types/index';
@@ -78,7 +79,7 @@ function Profile() {
   return (
     <>
       <Title>프로파일</Title>
-      <Description>인터페이스 프로 파일...</Description>
+      <Description>프로파일 프로 파일...</Description>
     </>
   );
 }
@@ -92,20 +93,11 @@ function InterfaceManagement() {
   );
 }
 
-function SqlManagement() {
-  return (
-    <>
-      <Title>SQL 관리</Title>
-      <Description>인터페이스 목록 및 설정...</Description>
-    </>
-  );
-}
-
 function ProcessManagement() {
   return (
     <>
       <Title>프로세스 관리</Title>
-      <Description>인터페이스 목록 및 설정...</Description>
+      <Description>프로세스 목록 및 설정...</Description>
     </>
   );
 }
