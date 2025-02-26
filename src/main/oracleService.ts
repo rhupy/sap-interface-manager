@@ -1,14 +1,9 @@
+// src/main/oracleService.ts
 import oracledb from 'oracledb';
-import { OracleDbConfig } from '../renderer/types/index';
-/**
- * 오라클에 단순 접속/쿼리 테스트
- */
-export async function testOracleConnection(
-  dbConfig: OracleDbConfig
-): Promise<void> {
-  const { host, port, sid, user, password } = dbConfig;
+// 타입 정의는 프로젝트 구조에 맞게, 예) import { OracleDbConfig } from '../renderer/types';
 
-  // EX) host=127.0.0.1, port=1521, sid=ORCL
+export async function testOracleConnection(dbConfig: any): Promise<void> {
+  const { host, port, sid, user, password } = dbConfig;
   const connectString = `${host}:${port}/${sid}`;
 
   let connection;
@@ -18,15 +13,44 @@ export async function testOracleConnection(
       password,
       connectString,
     });
-    // 간단 테스트 쿼리
     const result = await connection.execute('SELECT 1 FROM DUAL');
-    // 실제 결과 확인은 result.rows 등을 체크
     if (!result.rows || result.rows.length === 0) {
-      throw new Error('쿼리 결과가 비어 있음');
+      throw new Error('쿼리 결과가 비어 있습니다.');
     }
   } finally {
     if (connection) {
       await connection.close();
+    }
+  }
+}
+
+// src/main/rfcService.ts (예시)
+import { Client } from 'node-rfc';
+// import { RfcConnectionInfo } from '../renderer/types'; // 실제 타입 위치에 맞추어 임포트
+
+export async function testSapRfcConnection(rfcConfig: any): Promise<void> {
+  const client = new Client({
+    user: rfcConfig.user,
+    passwd: rfcConfig.password,
+    ashost: rfcConfig.appServerHost,
+    sysnr: rfcConfig.systemNumber,
+    client: rfcConfig.client,
+    lang: rfcConfig.language,
+    // 필요 시 다른 파라미터 추가
+  });
+
+  try {
+    await client.open();
+    // 간단하게 Ping 테스트 (SAP에서 자주 쓰는 함수명: STFC_CONNECTION)
+    const result = await client.call('STFC_CONNECTION', {
+      REQUTEXT: 'Hello SAP',
+    });
+    if (!result?.ECHOTEXT) {
+      throw new Error('RFC Ping 실패');
+    }
+  } finally {
+    if (client.alive) {
+      await client.close();
     }
   }
 }

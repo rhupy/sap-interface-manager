@@ -21,8 +21,8 @@ export default function App() {
   });
 
   const [activeTab, setActiveTab] = useState<
-    'dashboard' | 'interface' | 'sql' | 'settings'
-  >('dashboard');
+    'profile' | 'interface' | 'sql' | 'process' | 'settings'
+  >('profile');
 
   return (
     <>
@@ -31,10 +31,10 @@ export default function App() {
         <AppContainer>
           <TabContainer>
             <TabButton
-              active={activeTab === 'dashboard'}
-              onClick={() => setActiveTab('dashboard')}
+              active={activeTab === 'profile'}
+              onClick={() => setActiveTab('profile')}
             >
-              대시 보드
+              프로파일
             </TabButton>
             <TabButton
               active={activeTab === 'interface'}
@@ -49,6 +49,12 @@ export default function App() {
               SQL 관리
             </TabButton>
             <TabButton
+              active={activeTab === 'process'}
+              onClick={() => setActiveTab('process')}
+            >
+              프로세스 관리
+            </TabButton>
+            <TabButton
               active={activeTab === 'settings'}
               onClick={() => setActiveTab('settings')}
             >
@@ -56,9 +62,10 @@ export default function App() {
             </TabButton>
           </TabContainer>
           <ContentContainer>
-            {activeTab === 'dashboard' && <Dashboard />}
+            {activeTab === 'profile' && <Profile />}
             {activeTab === 'interface' && <InterfaceManagement />}
             {activeTab === 'sql' && <SqlManagement />}
+            {activeTab === 'process' && <ProcessManagement />}
             {activeTab === 'settings' && <SettingsComponent />}
           </ContentContainer>
         </AppContainer>
@@ -67,11 +74,11 @@ export default function App() {
   );
 }
 
-function Dashboard() {
+function Profile() {
   return (
     <>
-      <Title>대시보드</Title>
-      <Description>인터페이스 목록 및 설정...</Description>
+      <Title>프로파일</Title>
+      <Description>인터페이스 프로 파일...</Description>
     </>
   );
 }
@@ -89,6 +96,15 @@ function SqlManagement() {
   return (
     <>
       <Title>SQL 관리</Title>
+      <Description>인터페이스 목록 및 설정...</Description>
+    </>
+  );
+}
+
+function ProcessManagement() {
+  return (
+    <>
+      <Title>프로세스 관리</Title>
       <Description>인터페이스 목록 및 설정...</Description>
     </>
   );

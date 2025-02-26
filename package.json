@@ -30,6 +30,7 @@
   "license": "ISC",
   "dependencies": {
     "dotenv": "^16.4.7",
+    "node-rfc": "^3.3.1",
     "oracledb": "^6.7.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

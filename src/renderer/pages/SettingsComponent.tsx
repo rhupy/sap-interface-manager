@@ -28,6 +28,12 @@ declare global {
     api?: {
       saveSettings: (settings: any) => Promise<void>;
       loadSettings: () => Promise<Settings | null>;
+      testDbConnection?: (
+        dbConfig: any
+      ) => Promise<{ success: boolean; message?: string }>;
+      testRfcConnection?: (
+        rfcConfig: any
+      ) => Promise<{ success: boolean; message?: string }>;
     };
   }
 }
@@ -227,16 +233,44 @@ export default function SettingsComponent() {
     }
   };
 
-  // (4) RFC 테스트 (미구현)
-  const testRfcConnection = () => {
+  // (4) RFC 테스트 (구현)
+  const testRfcConnection = async () => {
+    if (!window.api?.testRfcConnection) {
+      setMessage('RFC 테스트 기능이 지원되지 않습니다.');
+      return;
+    }
+
     if (settings.selectedRfc) {
       const rfc = settings.rfcList.find(
         (r) => r.connectionName === settings.selectedRfc
       );
-      if (rfc) {
-        setMessage(`RFC "${rfc.connectionName}" 테스트 (미구현)`);
-      } else {
-        setMessage('선택된 RFC 연결이 없습니다.');
+      if (!rfc) {
+        setMessage('선택된 RFC 연결 정보를 찾지 못했습니다.');
+        return;
+      }
+      try {
+        const result = await window.api.testRfcConnection({
+          // 필요한 필드만 전달
+          appServerHost: rfc.appServerHost,
+          systemNumber: rfc.systemNumber,
+          systemID: rfc.systemID,
+          user: rfc.user,
+          password: rfc.password,
+          client: rfc.client,
+          language: rfc.language,
+          poolSize: rfc.poolSize,
+        });
+        if (result.success) {
+          setMessage(`RFC "${rfc.connectionName}" 연결 테스트 성공`);
+        } else {
+          setMessage(
+            `RFC "${rfc.connectionName}" 연결 테스트 실패: ${result.message || ''}`
+          );
+        }
+      } catch (error: any) {
+        setMessage(
+          `RFC "${rfc.connectionName}" 연결 테스트 에러: ${error?.message || error}`
+        );
       }
     } else {
       setMessage('RFC 연결을 선택하세요.');
@@ -306,16 +340,40 @@ export default function SettingsComponent() {
     }
   };
 
-  // (4) DB 테스트 (미구현)
-  const testDbConnection = () => {
+  // (4) DB 테스트 (구현)
+  const testDbConnection = async () => {
+    if (!window.api?.testDbConnection) {
+      setMessage('DB 테스트 기능이 지원되지 않습니다.');
+      return;
+    }
+
     if (settings.selectedDbId) {
       const db = settings.dbConnections.find(
         (d) => d.id === settings.selectedDbId
       );
-      if (db) {
-        setMessage(`DB "${db.name}" 테스트 (미구현)`);
-      } else {
-        setMessage('선택된 DB 연결이 없습니다.');
+      if (!db) {
+        setMessage('선택된 DB 연결 정보를 찾지 못했습니다.');
+        return;
+      }
+      try {
+        const result = await window.api.testDbConnection({
+          host: db.host,
+          port: db.port,
+          sid: db.sid,
+          user: db.user,
+          password: db.password,
+        });
+        if (result.success) {
+          setMessage(`DB "${db.name}" 연결 테스트 성공`);
+        } else {
+          setMessage(
+            `DB "${db.name}" 연결 테스트 실패: ${result.message || ''}`
+          );
+        }
+      } catch (error: any) {
+        setMessage(
+          `DB "${db.name}" 연결 테스트 에러: ${error?.message || error}`
+        );
       }
     } else {
       setMessage('DB 연결을 선택하세요.');

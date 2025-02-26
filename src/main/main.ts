@@ -3,6 +3,10 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import fs from 'fs/promises'; // ErrnoException 제거
 
+// (추가) DB/RFC 테스트용 서비스 임포트 (원하는 위치/이름으로 작성 가능)
+import { testOracleConnection } from './oracleService';
+import { testSapRfcConnection } from './rfcService';
+
 // NodeJS.ErrnoException 타입 정의 (임포트 없이 직접 사용)
 type ErrnoException = NodeJS.ErrnoException;
 
@@ -23,13 +27,16 @@ function createWindow() {
     },
   });
 
+  // 개발 모드라면 http://localhost:5174 로, 프로덕션 모드라면 dist/renderer/index.html 로 로드
   win.loadURL(
     isDev
       ? 'http://localhost:5174'
       : path.join(__dirname, '../renderer/index.html')
   );
 
-  // 설정 저장/불러오기 처리
+  // -------------------------------
+  // 1) 설정 저장/불러오기 처리
+  // -------------------------------
   const settingsFilePath = path.join(app.getPath('userData'), 'settings.json');
 
   ipcMain.handle('save-settings', async (event, settings) => {
@@ -90,6 +97,34 @@ function createWindow() {
         selectedRfc: '',
         selectedDbId: '',
       }; // 초기값 반환
+    }
+  });
+
+  // -------------------------------
+  // 2) DB 테스트 & RFC 테스트 IPC 핸들러 추가
+  // -------------------------------
+
+  // (A) DB 테스트
+  //  - Renderer 쪽에서 ipcRenderer.invoke('test-db-connection', dbConfig) 호출 시 실행
+  ipcMain.handle('test-db-connection', async (event, dbConfig) => {
+    try {
+      // oracleService.ts 안의 testOracleConnection 을 호출
+      await testOracleConnection(dbConfig);
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, message: error?.message || String(error) };
+    }
+  });
+
+  // (B) RFC 테스트
+  //  - Renderer 쪽에서 ipcRenderer.invoke('test-rfc-connection', rfcConfig) 호출 시 실행
+  ipcMain.handle('test-rfc-connection', async (event, rfcConfig) => {
+    try {
+      // rfcService.ts 안의 testSapRfcConnection 을 호출
+      await testSapRfcConnection(rfcConfig);
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, message: error?.message || String(error) };
     }
   });
 }
