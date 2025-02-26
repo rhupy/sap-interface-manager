@@ -57,6 +57,8 @@ const customStyles = `
 type SortType = 'name' | 'createdAt' | 'updatedAt';
 
 export default function SqlManagement() {
+  const [searchTerm, setSearchTerm] = useState('');
+
   const [showHighlighter, setShowHighlighter] = useState(false);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -67,6 +69,39 @@ export default function SqlManagement() {
 
   // 정렬 상태 추가
   const [sortType, setSortType] = useState<SortType>('name');
+
+  // 정렬 및 검색 적용된 SQL 목록
+  const filteredAndSortedSqlList = React.useMemo(() => {
+    // 검색어로 필터링
+    const filtered = (settings.sqlList || []).filter(
+      (item) =>
+        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // 정렬 적용
+    return [...filtered].sort((a, b) => {
+      switch (sortType) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'createdAt':
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        case 'updatedAt':
+          return (
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          );
+        default:
+          return 0;
+      }
+    });
+  }, [settings.sqlList, searchTerm, sortType]);
+
+  // 검색어 변경 핸들러
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
 
   // 구문 강조 적용
   useEffect(() => {
@@ -370,25 +405,52 @@ export default function SqlManagement() {
         {/* 왼쪽 SQL 목록 패널 */}
         <SidePanel>
           <SidePanelHeader>
-            <SelectGroup>
-              <SmallLabel>정렬:</SmallLabel>
-              <SmallSelect value={sortType} onChange={handleSortTypeChange}>
-                <option value="name">이름순</option>
-                <option value="createdAt">생성시간순</option>
-                <option value="updatedAt">수정시간순</option>
-              </SmallSelect>
-            </SelectGroup>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                width: '100%',
+              }}
+            >
+              <SelectGroup style={{ marginBottom: 0 }}>
+                <SmallLabel>정렬:</SmallLabel>
+                <SmallSelect value={sortType} onChange={handleSortTypeChange}>
+                  <option value="name">이름순</option>
+                  <option value="createdAt">생성시간순</option>
+                  <option value="updatedAt">수정시간순</option>
+                </SmallSelect>
+              </SelectGroup>
+
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <Input
+                  type="text"
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  placeholder="검색..."
+                  style={{
+                    width: '120px',
+                    padding: '5px',
+                    fontSize: '0.9rem',
+                    height: '28px',
+                    marginBottom: 0,
+                  }}
+                />
+              </div>
+            </div>
           </SidePanelHeader>
 
           <SidePanelContent>
-            {sortedSqlList.length === 0 ? (
+            {filteredAndSortedSqlList.length === 0 ? (
               <div
                 style={{ padding: '15px', textAlign: 'center', color: '#999' }}
               >
-                등록된 SQL이 없습니다.
+                {searchTerm
+                  ? '검색 결과가 없습니다.'
+                  : '등록된 SQL이 없습니다.'}
               </div>
             ) : (
-              sortedSqlList.map((item) => (
+              filteredAndSortedSqlList.map((item) => (
                 <ListItem
                   key={item.id}
                   active={item.id === settings.selectedSqlId}
