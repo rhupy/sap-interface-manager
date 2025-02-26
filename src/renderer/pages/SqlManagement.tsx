@@ -6,115 +6,121 @@ import {
   Label,
   Input,
   Button,
-  Message,
   Title,
   Description,
   FixedMessage,
+  FlexContainer,
+  SidePanel,
+  SidePanelHeader,
+  SidePanelContent,
+  ListItem,
+  MainPanel,
+  TextArea,
+  ButtonGroup,
+  SelectGroup,
+  SmallLabel,
+  SmallSelect,
+  MetaInfo,
+  FullPageContainer,
+  DeleteButton,
+  LeftAlignedLabel,
 } from '../styles/CommonStyles';
 
 import { format } from 'sql-formatter';
-
-interface SqlInfo {
-  id: string;
-  name: string;
-  description: string;
-  sqlText: string;
-  // 파라미터 리스트를 저장하고 싶다면 아래처럼 필드를 추가해도 됨.
-  // params?: string[];
-}
-
-interface SqlSettings {
-  sqlList: SqlInfo[];
-  selectedSqlId: string;
-}
-
-const initialSqlSettings: SqlSettings = {
-  sqlList: [],
-  selectedSqlId: '',
-};
+import { useSettingsContext } from '../context/SettingContext';
+import { SqlInfo } from '../types';
 
 const emptySqlInfo: SqlInfo = {
   id: '',
   name: '',
   description: '',
   sqlText: '',
+  createdAt: '',
+  updatedAt: '',
+  parameters: [],
 };
 
+// 정렬 타입 정의
+type SortType = 'name' | 'createdAt' | 'updatedAt';
+
 export default function SqlManagement() {
-  const [sqlSettings, setSqlSettings] =
-    useState<SqlSettings>(initialSqlSettings);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const { settings, updateSettings, isLoading } = useSettingsContext();
   const [message, setMessage] = useState('');
   const [newSql, setNewSql] = useState<SqlInfo>(emptySqlInfo);
-
-  // 추가) SQL 내 파라미터 목록을 추출해 보여주기 위한 state
   const [paramList, setParamList] = useState<string[]>([]);
 
-  // -----------------------------
-  // 1) 초기 로딩
-  // -----------------------------
-  useEffect(() => {
-    if (window.api?.loadSqlSettings) {
-      window.api
-        .loadSqlSettings()
-        .then((saved) => {
-          setSqlSettings(saved || initialSqlSettings);
-        })
-        .catch((err) => console.error('SQL 설정 불러오기 실패:', err))
-        .finally(() => setIsInitialLoad(false));
-    } else {
-      setIsInitialLoad(false);
-    }
-  }, []);
-
-  // -----------------------------
-  // 2) 자동 저장
-  // -----------------------------
-  useEffect(() => {
-    if (!isInitialLoad && window.api?.saveSqlSettings) {
-      window.api
-        .saveSqlSettings(sqlSettings)
-        .catch((err) => console.error('SQL 설정 저장 실패:', err));
-    }
-  }, [sqlSettings, isInitialLoad]);
+  // 정렬 상태 추가
+  const [sortType, setSortType] = useState<SortType>('name');
 
   // -----------------------------
   // 3) selectedSqlId -> newSql
   // -----------------------------
   useEffect(() => {
-    if (!sqlSettings.selectedSqlId) {
+    if (!settings.selectedSqlId) {
       setNewSql(emptySqlInfo);
       setParamList([]);
       return;
     }
-    const found = sqlSettings.sqlList.find(
-      (sql) => sql.id === sqlSettings.selectedSqlId
-    );
+
+    // settings.sqlList가 없을 경우 빈 배열로 처리
+    const sqlList = settings.sqlList || [];
+
+    const found = sqlList.find((sql) => sql.id === settings.selectedSqlId);
     if (found) {
       setNewSql(found);
-      // SQL 텍스트에서 파라미터 추출하여 표시
-      const extracted = extractParamsFromSql(found.sqlText);
-      setParamList(extracted);
+      // 저장된 파라미터가 있으면 사용, 없으면 추출
+      if (found.parameters && found.parameters.length > 0) {
+        setParamList(found.parameters);
+      } else {
+        // SQL 텍스트에서 파라미터 추출하여 표시
+        const extracted = extractParamsFromSql(found.sqlText);
+        setParamList(extracted);
+      }
     } else {
       setNewSql(emptySqlInfo);
       setParamList([]);
     }
-  }, [sqlSettings.selectedSqlId, sqlSettings.sqlList]);
+  }, [settings.selectedSqlId, settings.sqlList]);
 
   // -----------------------------
   // 파라미터 추출 (정규식)
-  // 예: ::파라미터 형태를 인식
   // -----------------------------
   function extractParamsFromSql(sqlText: string) {
-    // "::" 뒤에 알파벳·숫자·언더스코어 등을 파라미터명으로 인식
-    // 예) ::PARAM_1 → PARAM_1
     const regex = /::([A-Za-z0-9_]+)/g;
     const results: string[] = [];
     let match;
     while ((match = regex.exec(sqlText)) !== null) {
-      results.push(match[1]); // match[1]이 그룹 1(파라미터명)
+      // 중복 제거
+      if (!results.includes(match[1])) {
+        results.push(match[1]);
+      }
     }
     return results;
+  }
+
+  // -----------------------------
+  // 현재 시간 포맷팅 함수
+  // -----------------------------
+  function getCurrentFormattedTime() {
+    const now = new Date();
+    return now.toISOString();
+  }
+
+  // -----------------------------
+  // 시간 표시 포맷팅 함수
+  // -----------------------------
+  function formatDateTime(isoString: string) {
+    if (!isoString) return '';
+
+    const date = new Date(isoString);
+    return date.toLocaleString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
   }
 
   // -----------------------------
@@ -126,7 +132,6 @@ export default function SqlManagement() {
       return;
     }
     try {
-      // 기본 옵션
       const formatted = format(newSql.sqlText, {
         language: 'sql',
         keywordCase: 'upper',
@@ -134,13 +139,9 @@ export default function SqlManagement() {
         tabWidth: 2,
       });
 
-      // 정렬된 SQL로 업데이트
       setNewSql({ ...newSql, sqlText: formatted });
-
-      // 파라미터 다시 추출
       const extracted = extractParamsFromSql(formatted);
       setParamList(extracted);
-
       setMessage('SQL이 정렬되었습니다.');
     } catch (error) {
       console.error('SQL 정렬 오류:', error);
@@ -150,7 +151,7 @@ export default function SqlManagement() {
 
   // (좌측 목록 선택)
   const handleSelectSql = (id: string) => {
-    setSqlSettings({ ...sqlSettings, selectedSqlId: id });
+    updateSettings({ selectedSqlId: id });
   };
 
   // (추가)
@@ -159,26 +160,39 @@ export default function SqlManagement() {
       setMessage('SQL명을 입력하세요.');
       return;
     }
-    const isDuplicate = sqlSettings.sqlList.some(
-      (item) => item.name === newSql.name
-    );
+
+    const sqlList = settings.sqlList || [];
+
+    const isDuplicate = sqlList.some((item) => item.name === newSql.name);
     if (isDuplicate) {
       setMessage('이미 존재하는 SQL명입니다.');
       return;
     }
+
+    const currentTime = getCurrentFormattedTime();
+    const parameters = extractParamsFromSql(newSql.sqlText);
+
     const newId = `sql-${Date.now()}`;
-    const newItem: SqlInfo = { ...newSql, id: newId };
-    setSqlSettings({
-      ...sqlSettings,
-      sqlList: [...sqlSettings.sqlList, newItem],
+    const newItem: SqlInfo = {
+      ...newSql,
+      id: newId,
+      createdAt: currentTime,
+      updatedAt: currentTime,
+      parameters: parameters,
+    };
+
+    updateSettings((prev) => ({
+      ...prev,
+      sqlList: [...(prev.sqlList || []), newItem],
       selectedSqlId: newId,
-    });
+    }));
+
     setMessage('SQL이 추가되었습니다.');
   };
 
   // (수정)
   const handleUpdateSql = () => {
-    if (!sqlSettings.selectedSqlId) {
+    if (!settings.selectedSqlId) {
       setMessage('수정할 SQL이 선택되지 않았습니다.');
       return;
     }
@@ -186,36 +200,52 @@ export default function SqlManagement() {
       setMessage('SQL명을 입력하세요.');
       return;
     }
-    const isDuplicate = sqlSettings.sqlList.some(
-      (item) =>
-        item.name === newSql.name && item.id !== sqlSettings.selectedSqlId
+
+    const sqlList = settings.sqlList || [];
+
+    const isDuplicate = sqlList.some(
+      (item) => item.name === newSql.name && item.id !== settings.selectedSqlId
     );
     if (isDuplicate) {
       setMessage('이미 존재하는 SQL명입니다.');
       return;
     }
-    setSqlSettings({
-      ...sqlSettings,
-      sqlList: sqlSettings.sqlList.map((item) =>
-        item.id === sqlSettings.selectedSqlId ? { ...item, ...newSql } : item
+
+    const currentTime = getCurrentFormattedTime();
+    const parameters = extractParamsFromSql(newSql.sqlText);
+
+    updateSettings((prev) => ({
+      ...prev,
+      sqlList: (prev.sqlList || []).map((item) =>
+        item.id === settings.selectedSqlId
+          ? {
+              ...item,
+              ...newSql,
+              updatedAt: currentTime,
+              parameters: parameters,
+            }
+          : item
       ),
-    });
+    }));
+
     setMessage('SQL이 수정되었습니다.');
   };
 
   // (삭제)
   const handleDeleteSql = () => {
-    if (!sqlSettings.selectedSqlId) {
+    if (!settings.selectedSqlId) {
       setMessage('삭제할 SQL이 선택되지 않았습니다.');
       return;
     }
-    setSqlSettings({
-      ...sqlSettings,
-      sqlList: sqlSettings.sqlList.filter(
-        (item) => item.id !== sqlSettings.selectedSqlId
+
+    updateSettings((prev) => ({
+      ...prev,
+      sqlList: (prev.sqlList || []).filter(
+        (item) => item.id !== settings.selectedSqlId
       ),
       selectedSqlId: '',
-    });
+    }));
+
     setMessage('SQL이 삭제되었습니다.');
   };
 
@@ -223,137 +253,183 @@ export default function SqlManagement() {
   const handleSqlTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = e.target.value;
     setNewSql({ ...newSql, sqlText: newText });
-    // 입력 중에도 실시간 파라미터 추출
     const extracted = extractParamsFromSql(newText);
     setParamList(extracted);
   };
 
-  if (isInitialLoad) {
+  // 정렬 타입 변경 핸들러
+  const handleSortTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSortType(e.target.value as SortType);
+  };
+
+  if (isLoading) {
     return <div>SQL 설정을 불러오는 중...</div>;
   }
 
-  // 리스트 정렬(예시): 생성순, 이름순 등은 향후 확장
-  // 여기서는 간단히 “이름 오름차순” 정렬 예시
-  const sortedSqlList = [...sqlSettings.sqlList].sort((a, b) =>
-    a.name.localeCompare(b.name)
-  );
+  // SQL 목록 정렬
+  const sortedSqlList = [...(settings.sqlList || [])].sort((a, b) => {
+    switch (sortType) {
+      case 'name':
+        return a.name.localeCompare(b.name);
+      case 'createdAt':
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      case 'updatedAt':
+        return (
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        );
+      default:
+        return 0;
+    }
+  });
 
   return (
-    <>
+    <FullPageContainer>
       <Title>SQL 관리</Title>
       <Description>등록된 SQL 목록 및 수정/추가/삭제 기능</Description>
 
-      <div style={{ display: 'flex' }}>
-        {/* 왼쪽 목록 (정렬된 목록 표시) */}
-        <div style={{ width: '300px', marginRight: '20px' }}>
-          <SectionTitle>SQL 목록 (이름순 정렬)</SectionTitle>
-          <div style={{ overflowY: 'auto' }}>
-            {sortedSqlList.map((item) => (
+      <FlexContainer>
+        {/* 왼쪽 SQL 목록 패널 */}
+        <SidePanel>
+          <SidePanelHeader>
+            <SelectGroup>
+              <SmallLabel>정렬:</SmallLabel>
+              <SmallSelect value={sortType} onChange={handleSortTypeChange}>
+                <option value="name">이름순</option>
+                <option value="createdAt">생성시간순</option>
+                <option value="updatedAt">수정시간순</option>
+              </SmallSelect>
+            </SelectGroup>
+          </SidePanelHeader>
+
+          <SidePanelContent>
+            {sortedSqlList.length === 0 ? (
               <div
-                key={item.id}
-                style={{
-                  padding: '8px',
-                  margin: '5px 0',
-                  backgroundColor:
-                    item.id === sqlSettings.selectedSqlId
-                      ? '#cce4f7'
-                      : '#f0f0f0',
-                  cursor: 'pointer',
-                }}
-                onClick={() => handleSelectSql(item.id)}
+                style={{ padding: '15px', textAlign: 'center', color: '#999' }}
               >
-                <strong>{item.name}</strong>
-                <br />
-                <span style={{ fontSize: '0.9rem', color: '#777' }}>
-                  {item.description.slice(0, 20)}
-                </span>
+                등록된 SQL이 없습니다.
               </div>
-            ))}
-          </div>
-        </div>
+            ) : (
+              sortedSqlList.map((item) => (
+                <ListItem
+                  key={item.id}
+                  active={item.id === settings.selectedSqlId}
+                  onClick={() => handleSelectSql(item.id)}
+                >
+                  <strong>{item.name}</strong>
+                  <div style={{ fontSize: '0.9rem', color: '#777' }}>
+                    {item.description.slice(0, 30)}
+                    {item.description.length > 30 ? '...' : ''}
+                  </div>
+                  <MetaInfo>
+                    {sortType === 'name' ? (
+                      <>생성: {formatDateTime(item.createdAt)}</>
+                    ) : sortType === 'createdAt' ? (
+                      <>생성: {formatDateTime(item.createdAt)}</>
+                    ) : (
+                      <>수정: {formatDateTime(item.updatedAt)}</>
+                    )}
+                  </MetaInfo>
+                </ListItem>
+              ))
+            )}
+          </SidePanelContent>
+        </SidePanel>
 
-        {/* 오른쪽: 상세/수정/추가 */}
-        <Section style={{ flex: 1 }}>
-          <SectionTitle>SQL 정보</SectionTitle>
+        {/* 오른쪽 SQL 정보 패널 */}
+        <MainPanel>
+          <Section>
+            <SectionTitle>SQL 정보</SectionTitle>
 
-          <Label>SQL 명</Label>
-          <Input
-            value={newSql.name}
-            onChange={(e) => setNewSql({ ...newSql, name: e.target.value })}
-            placeholder="예) CUSTOMER_SELECT"
-          />
-
-          <Label>설명</Label>
-          <Input
-            value={newSql.description}
-            onChange={(e) =>
-              setNewSql({ ...newSql, description: e.target.value })
-            }
-            placeholder="SQL에 대한 간단한 설명"
-          />
-
-          <Label>SQL 문</Label>
-          <textarea
-            style={{
-              width: '100%',
-              height: '150px',
-              margin: '5px 0',
-              padding: '8px',
-              resize: 'vertical',
-            }}
-            value={newSql.sqlText}
-            onChange={handleSqlTextChange}
-            placeholder="SELECT * FROM ..."
-          />
-
-          {/* 파라미터 목록 표시 */}
-          {paramList.length > 0 && (
-            <div style={{ marginBottom: '10px' }}>
-              <SectionTitle>파라미터 목록</SectionTitle>
-              <ul style={{ paddingLeft: '20px' }}>
-                {paramList.map((p) => (
-                  <li key={p}>{p}</li>
-                ))}
-              </ul>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+              <div style={{ flex: 1 }}>
+                <LeftAlignedLabel>SQL 명</LeftAlignedLabel>
+                <Input
+                  value={newSql.name}
+                  onChange={(e) =>
+                    setNewSql({ ...newSql, name: e.target.value })
+                  }
+                  placeholder="예) CUSTOMER_SELECT"
+                  style={{ width: '100%', maxWidth: 'none' }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <LeftAlignedLabel>설명</LeftAlignedLabel>
+                <Input
+                  value={newSql.description}
+                  onChange={(e) =>
+                    setNewSql({ ...newSql, description: e.target.value })
+                  }
+                  placeholder="SQL에 대한 간단한 설명"
+                  style={{ width: '100%', maxWidth: 'none' }}
+                />
+              </div>
             </div>
-          )}
 
-          <div style={{ marginTop: '10px' }}>
-            {/* 선택된 SQL이 없으면 '추가' 버튼만 */}
-            {!sqlSettings.selectedSqlId && (
-              <Button onClick={handleAddSql} style={{ marginRight: '5px' }}>
-                추가
-              </Button>
+            {/* 생성/수정 시간 표시 */}
+            {newSql.createdAt && (
+              <div
+                style={{
+                  marginBottom: '5px',
+                  fontSize: '0.9rem',
+                  color: '#666',
+                }}
+              >
+                <div>생성: {formatDateTime(newSql.createdAt)}</div>
+                {newSql.updatedAt && newSql.updatedAt !== newSql.createdAt && (
+                  <div>수정: {formatDateTime(newSql.updatedAt)}</div>
+                )}
+              </div>
             )}
 
-            {/* 선택된 SQL이 있으면 수정/삭제 */}
-            {sqlSettings.selectedSqlId && (
-              <>
-                <Button onClick={handleAddSql} style={{ marginRight: '5px' }}>
-                  새 SQL 추가
-                </Button>
-                <Button
-                  onClick={handleUpdateSql}
-                  style={{ marginRight: '5px' }}
-                >
-                  수정
-                </Button>
-                <Button
-                  onClick={handleDeleteSql}
-                  style={{ marginRight: '5px' }}
-                >
-                  삭제
-                </Button>
-              </>
+            <LeftAlignedLabel>SQL 문</LeftAlignedLabel>
+            <TextArea
+              value={newSql.sqlText}
+              onChange={handleSqlTextChange}
+              placeholder="SELECT * FROM ..."
+            />
+
+            {/* 파라미터 목록 표시 */}
+            {paramList.length > 0 && (
+              <div style={{ margin: '10px 0' }}>
+                <SectionTitle>
+                  파라미터 목록 ({paramList.length}개)
+                </SectionTitle>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                  {paramList.map((p) => (
+                    <div
+                      key={p}
+                      style={{
+                        padding: '3px 8px',
+                        backgroundColor: '#f0f0f0',
+                        borderRadius: '4px',
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      {p}
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
 
-            {/* SQL 정렬 버튼 */}
-            <Button onClick={handleFormatSql} style={{ marginRight: '5px' }}>
-              정렬
-            </Button>
-          </div>
-        </Section>
-      </div>
+            <ButtonGroup>
+              {/* 선택된 SQL이 없으면 '추가' 버튼만 */}
+              {!settings.selectedSqlId ? (
+                <Button onClick={handleAddSql}>새 SQL 추가</Button>
+              ) : (
+                <>
+                  <Button onClick={handleAddSql}>새 SQL 추가</Button>
+                  <Button onClick={handleFormatSql}>SQL 정렬</Button>
+                  <Button onClick={handleUpdateSql}>수정</Button>
+                  <DeleteButton onClick={handleDeleteSql}>삭제</DeleteButton>
+                </>
+              )}
+            </ButtonGroup>
+          </Section>
+        </MainPanel>
+      </FlexContainer>
 
       {message && (
         <FixedMessage
@@ -369,6 +445,6 @@ export default function SqlManagement() {
           {message}
         </FixedMessage>
       )}
-    </>
+    </FullPageContainer>
   );
 }

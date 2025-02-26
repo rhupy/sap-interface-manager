@@ -32,6 +32,8 @@ export const ContentContainer = styled.div`
   flex: 1;
   padding: 20px;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 `;
 
 export const Title = styled.h1`
@@ -101,10 +103,11 @@ export const Section = styled.div`
   padding: 15px;
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  max-width: 800px; // 섹션 최대 너비 제한
-  width: 100%; // 부모 크기에 맞춤
-  margin-left: auto;
-  margin-right: auto; // 중앙 정렬
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 `;
 
 export const SectionTitle = styled.h2`
@@ -125,4 +128,121 @@ export const FixedMessage = styled.div<{ color?: string }>`
   z-index: 9999; /* 다른 요소 위에 표시 */
 
   color: ${({ color }) => color || '#333'};
+`;
+
+// 전체 화면 컨테이너 추가
+export const FullPageContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+`;
+
+// 새로운 스타일 추가
+export const FlexContainer = styled.div`
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  gap: 20px;
+`;
+
+export const SidePanel = styled.div`
+  width: 300px;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+`;
+
+export const SidePanelHeader = styled.div`
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+  background-color: #f8f8f8;
+`;
+
+export const SidePanelContent = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 5px;
+`;
+
+export const ListItem = styled.div<{ active?: boolean }>`
+  padding: 10px;
+  margin: 5px 0;
+  background-color: ${({ active }) => (active ? '#cce4f7' : '#f0f0f0')};
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: ${({ active }) => (active ? '#b3d7f0' : '#e5e5e5')};
+  }
+`;
+
+export const MainPanel = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+`;
+
+export const TextArea = styled.textarea`
+  flex: 1;
+  margin: 5px 0;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: none;
+  font-family: monospace;
+  font-size: 14px;
+  min-height: 100px;
+  overflow-y: auto;
+`;
+
+export const ButtonGroup = styled.div`
+  display: flex;
+  gap: 5px;
+  margin-top: 10px;
+`;
+
+export const SelectGroup = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+`;
+
+export const SmallLabel = styled.label`
+  font-size: 0.9rem;
+  margin-right: 5px;
+`;
+
+export const SmallSelect = styled.select`
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+`;
+
+export const MetaInfo = styled.div`
+  font-size: 0.8rem;
+  color: #777;
+  margin-top: 3px;
+`;
+
+export const DeleteButton = styled(Button)`
+  background-color: #e74c3c;
+  margin-left: auto; /* 오른쪽 정렬을 위해 */
+
+  &:hover {
+    background-color: #c0392b;
+  }
+`;
+
+export const LeftAlignedLabel = styled(Label)`
+  text-align: left;
+  width: auto;
+  min-width: auto;
 `;
