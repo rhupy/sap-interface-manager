@@ -58,7 +58,7 @@ export default function AboutComponent() {
         SAP Interface Manager 는 비개발자를 포함한 누구나 쉽고 빠르게 데이터
         인터페이스를 구현하기 위해 만들었습니다.
         <br />
-        별도의 개발 과정이나 소스코드 수정, 배포 과정 없이도 SAP와 Database간의
+        별도의 개발 과정이나 소스 코드 수정, 빌드 과정 없이도 SAP와 Database간의
         로직을 손 쉽게 구현 / 테스트 / 적용 / 모니터링 / 유지보수 할 수
         있습니다.
         <br />
