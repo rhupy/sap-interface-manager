@@ -1,4 +1,26 @@
 // src/types/index.ts
+// API 인터페이스
+export interface ElectronAPI {
+  saveSettings?: (settings: Settings) => Promise<void>;
+  loadSettings?: () => Promise<Settings>;
+  loadSqlSettings?: () => Promise<any>;
+  saveSqlSettings?: (settings: any) => Promise<void>;
+  testDbConnection?: (
+    dbConfig: OracleDbConfig
+  ) => Promise<{ success: boolean; message?: string }>;
+  testRfcConnection?: (
+    rfcConfig: RfcConnectionDetail
+  ) => Promise<{ success: boolean; message?: string }>;
+  openSettingsFile?: () => Promise<{ success: boolean; message?: string }>;
+}
+
+// Window 인터페이스 확장
+declare global {
+  interface Window {
+    api?: ElectronAPI;
+  }
+}
+
 // RFC
 export interface RfcConnectionDetail {
   appServerHost: string;

@@ -2,9 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  AppContainer,
-  TabContainer,
-  TabButton,
   ContentContainer,
   Title,
   Description,
@@ -12,7 +9,6 @@ import {
   Input,
   Select,
   Label,
-  Message,
   Section,
   SectionTitle,
   FixedMessage,
@@ -314,6 +310,25 @@ export default function SettingsComponent() {
     }
   };
 
+  // 설정 파일 열기 함수 추가
+  const openSettingsFile = async () => {
+    if (!window.api?.openSettingsFile) {
+      setMessage('설정 파일 열기 기능이 지원되지 않습니다.');
+      return;
+    }
+
+    try {
+      const result = await window.api.openSettingsFile();
+      if (result.success) {
+        setMessage('설정 파일을 열었습니다.');
+      } else {
+        setMessage(`설정 파일 열기 실패: ${result.message || ''}`);
+      }
+    } catch (error: any) {
+      setMessage(`설정 파일 열기 에러: ${error?.message || error}`);
+    }
+  };
+
   // -------------------------
   // 로딩 중 처리
   // -------------------------
@@ -326,14 +341,34 @@ export default function SettingsComponent() {
   // -------------------------
   return (
     <>
-      <Title>환경 설정</Title>
-      <Description>RFC 및 DB 연결 설정을 관리하세요.</Description>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '10px',
+        }}
+      >
+        <Title>환경 설정</Title>
+        {/* 설정 파일 열기 버튼 */}
+        <Button
+          onClick={openSettingsFile}
+          style={{
+            backgroundColor: '#6c757d', // 회색 계열 색상으로 변경
+            padding: '6px 12px', // 버튼 크기 축소
+            fontSize: '0.9rem', // 글자 크기 축소
+          }}
+        >
+          설정 파일 열기
+        </Button>
+      </div>
+      {/* <Description>RFC 및 DB 연결 설정을 관리하세요.</Description> */}
 
-      <ContentContainer>
+      <ContentContainer style={{ flex: 'none' }}>
         {/* ---------- RFC 영역 ---------- */}
-        <Section>
+        <Section style={{ width: '800px', height: '380px' }}>
           <SectionTitle>RFC 연결 설정</SectionTitle>
-          <div style={{ marginTop: '20px' }}>
+          <div>
             <Label>RFC 선택</Label>
             <Select
               value={settings.selectedRfc}
@@ -460,9 +495,9 @@ export default function SettingsComponent() {
         </Section>
 
         {/* ---------- DB 영역 ---------- */}
-        <Section>
+        <Section style={{ width: '800px', height: '300px' }}>
           <SectionTitle>DB 연결 설정</SectionTitle>
-          <div style={{ marginTop: '20px' }}>
+          <div>
             <Label>DB 선택</Label>
             <Select
               value={settings.selectedDbId}

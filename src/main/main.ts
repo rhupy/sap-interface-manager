@@ -1,5 +1,5 @@
 // src/main/main.ts
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import path from 'path';
 import fs from 'fs/promises';
 
@@ -37,6 +37,20 @@ function createWindow() {
   // 1) 환경 설정 저장/불러오기 (기존)
   // --------------------------------
   const settingsFilePath = path.join(app.getPath('userData'), 'settings.json');
+
+  // 설정 파일 직접 실행하기 핸들러 추가
+  ipcMain.handle('open-settings-file', async () => {
+    try {
+      // 파일이 존재하는지 확인
+      await fs.access(settingsFilePath);
+      // 파일 열기
+      await shell.openPath(settingsFilePath);
+      return { success: true };
+    } catch (error) {
+      console.error('설정 파일 열기 실패:', error);
+      return { success: false, message: (error as Error).message };
+    }
+  });
 
   ipcMain.handle('save-settings', async (event, settings) => {
     try {

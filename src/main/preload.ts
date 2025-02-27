@@ -21,4 +21,7 @@ contextBridge.exposeInMainWorld('api', {
   async testRfcConnection(rfcConfig: any) {
     return ipcRenderer.invoke('test-rfc-connection', rfcConfig);
   },
+
+  // 설정 파일 열기
+  openSettingsFile: () => ipcRenderer.invoke('open-settings-file'),
 });
