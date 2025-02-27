@@ -32,3 +32,35 @@ export async function testSapRfcConnection(
     }
   }
 }
+
+// RFC 함수 테스트 함수
+export async function testSapRfcFunction(params: {
+  connection: RfcConnectionInfo;
+  functionName: string;
+  parameters: Record<string, any>;
+}): Promise<any> {
+  const { connection, functionName, parameters } = params;
+
+  const client = new Client({
+    user: connection.user,
+    passwd: connection.password,
+    ashost: connection.appServerHost,
+    sysnr: connection.systemNumber,
+    client: connection.client,
+    lang: connection.language,
+  });
+
+  try {
+    await client.open();
+    console.log(`RFC 함수 호출: ${functionName}`, parameters);
+
+    // 실제 RFC 함수 호출
+    const result = await client.call(functionName, parameters);
+    console.log('RFC 함수 호출 결과:', result);
+    return result;
+  } finally {
+    if (client.alive) {
+      await client.close();
+    }
+  }
+}

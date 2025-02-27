@@ -12,6 +12,12 @@ export interface ElectronAPI {
     rfcConfig: RfcConnectionDetail
   ) => Promise<{ success: boolean; message?: string }>;
   openSettingsFile?: () => Promise<{ success: boolean; message?: string }>;
+  // RFC 함수 테스트 API 추가
+  testRfcFunction?: (params: {
+    connection: RfcConnectionInfo;
+    functionName: string;
+    parameters: Record<string, any>;
+  }) => Promise<{ success: boolean; message?: string; data?: any }>;
 }
 
 // Window 인터페이스 확장

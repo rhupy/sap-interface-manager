@@ -1,204 +1,158 @@
 // src/main/main.ts
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
-import path from 'path';
-import fs from 'fs/promises';
-
-// (추가) DB/RFC 테스트용 서비스 (기존대로)
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import * as path from 'path';
+import * as fs from 'fs';
+import { testSapRfcConnection, testSapRfcFunction } from './rfcService';
 import { testOracleConnection } from './oracleService';
-import { testSapRfcConnection } from './rfcService';
 
-type ErrnoException = NodeJS.ErrnoException;
+// 설정 파일 경로
+const settingsPath = path.join(app.getPath('userData'), 'settings.json');
 
+// 메인 윈도우 참조 유지
+let mainWindow: BrowserWindow | null = null;
+
+// 메인 윈도우 생성 함수
 function createWindow() {
-  const isDev = process.env.NODE_ENV !== 'production';
-  const preloadPath = isDev
-    ? path.join(__dirname, '../main/preload.js')
-    : path.join(__dirname, '../dist/main/preload.js');
-
-  const win = new BrowserWindow({
-    width: 1400,
-    height: 1100,
+  mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
     webPreferences: {
-      nodeIntegration: false,
+      preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      preload: preloadPath,
-      webSecurity: true,
+      nodeIntegration: false,
     },
   });
 
-  // 개발모드/프로덕션모드에 따른 로드 경로
-  if (isDev) {
-    win.loadURL('http://localhost:5174');
+  // 개발 모드에서는 개발 서버 URL 로드, 프로덕션에서는 빌드된 파일 로드
+  if (process.env.NODE_ENV === 'development') {
+    mainWindow.loadURL('http://localhost:3000');
+    mainWindow.webContents.openDevTools(); // 개발 도구 자동 열기
   } else {
-    win.loadURL(path.join(__dirname, '../renderer/index.html'));
+    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
 
-  // --------------------------------
-  // 1) 환경 설정 저장/불러오기 (기존)
-  // --------------------------------
-  const settingsFilePath = path.join(app.getPath('userData'), 'settings.json');
-
-  // 설정 파일 직접 실행하기 핸들러 추가
-  ipcMain.handle('open-settings-file', async () => {
-    try {
-      // 파일이 존재하는지 확인
-      await fs.access(settingsFilePath);
-      // 파일 열기
-      await shell.openPath(settingsFilePath);
-      return { success: true };
-    } catch (error) {
-      console.error('설정 파일 열기 실패:', error);
-      return { success: false, message: (error as Error).message };
-    }
+  // 윈도우가 닫힐 때 이벤트
+  mainWindow.on('closed', () => {
+    mainWindow = null;
   });
+}
 
+// IPC 핸들러 등록 함수
+function registerIpcHandlers() {
+  console.log('IPC 핸들러 등록 시작');
+
+  // 설정 저장 핸들러
   ipcMain.handle('save-settings', async (event, settings) => {
     try {
-      await fs.writeFile(settingsFilePath, JSON.stringify(settings, null, 2));
-    } catch (error) {
-      console.error('설정 저장 실패:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('load-settings', async () => {
-    try {
-      let data = '';
-      try {
-        data = await fs.readFile(settingsFilePath, 'utf8');
-      } catch (readError) {
-        const err = readError as ErrnoException;
-        if (err.code === 'ENOENT') {
-          // 파일이 없으면 초기값
-          const initial = {
-            rfcList: [],
-            dbConnections: [],
-            selectedRfc: '',
-            selectedDbId: '',
-          };
-          await fs.writeFile(
-            settingsFilePath,
-            JSON.stringify(initial, null, 2)
-          );
-          return initial;
-        }
-        throw err;
-      }
-
-      if (!data.trim()) {
-        // 파일이 비어있으면 초기값
-        const initial = {
-          rfcList: [],
-          dbConnections: [],
-          selectedRfc: '',
-          selectedDbId: '',
-        };
-        await fs.writeFile(settingsFilePath, JSON.stringify(initial, null, 2));
-        return initial;
-      }
-      return JSON.parse(data);
-    } catch (error) {
-      console.error('설정 불러오기 실패:', error);
-      return {
-        rfcList: [],
-        dbConnections: [],
-        selectedRfc: '',
-        selectedDbId: '',
-      };
-    }
-  });
-
-  // --------------------------------
-  // 2) SQL 설정 저장/불러오기
-  // --------------------------------
-  const sqlSettingsFilePath = path.join(
-    app.getPath('userData'),
-    'sqlSettings.json'
-  );
-
-  ipcMain.handle('load-sql-settings', async () => {
-    try {
-      let data = '';
-      try {
-        data = await fs.readFile(sqlSettingsFilePath, 'utf8');
-      } catch (readError) {
-        const err = readError as ErrnoException;
-        if (err.code === 'ENOENT') {
-          // 파일 없으면 초기값
-          const initialSqlData = {
-            sqlList: [],
-            selectedSqlId: '',
-          };
-          await fs.writeFile(
-            sqlSettingsFilePath,
-            JSON.stringify(initialSqlData, null, 2)
-          );
-          return initialSqlData;
-        }
-        throw err;
-      }
-      if (!data.trim()) {
-        // 파일 비어있으면 초기값
-        const initialSqlData = {
-          sqlList: [],
-          selectedSqlId: '',
-        };
-        await fs.writeFile(
-          sqlSettingsFilePath,
-          JSON.stringify(initialSqlData, null, 2)
-        );
-        return initialSqlData;
-      }
-      return JSON.parse(data);
-    } catch (error) {
-      console.error('SQL 설정 불러오기 실패:', error);
-      return {
-        sqlList: [],
-        selectedSqlId: '',
-      };
-    }
-  });
-
-  ipcMain.handle('save-sql-settings', async (event, sqlSettings) => {
-    try {
-      await fs.writeFile(
-        sqlSettingsFilePath,
-        JSON.stringify(sqlSettings, null, 2)
+      await fs.promises.writeFile(
+        settingsPath,
+        JSON.stringify(settings, null, 2)
       );
+      return { success: true };
     } catch (error) {
-      console.error('SQL 설정 저장 실패:', error);
-      throw error;
+      console.error('설정 저장 오류:', error);
+      return { success: false, error: String(error) };
     }
   });
 
-  // --------------------------------
-  // 3) DB 테스트 & RFC 테스트 (기존)
-  // --------------------------------
+  // 설정 로드 핸들러
+  ipcMain.handle('load-settings', async (event) => {
+    try {
+      if (fs.existsSync(settingsPath)) {
+        const data = await fs.promises.readFile(settingsPath, 'utf8');
+        return JSON.parse(data);
+      }
+      return null;
+    } catch (error) {
+      console.error('설정 로드 오류:', error);
+      return null;
+    }
+  });
+
+  // 설정 파일 열기 핸들러
+  ipcMain.handle('open-settings-file', async (event) => {
+    try {
+      if (!fs.existsSync(settingsPath)) {
+        await fs.promises.writeFile(settingsPath, JSON.stringify({}, null, 2));
+      }
+
+      const opened = await dialog.showOpenDialog({
+        defaultPath: settingsPath,
+        properties: ['openFile'],
+      });
+
+      if (!opened.canceled && opened.filePaths.length > 0) {
+        // 파일 열기 성공
+        return { success: true };
+      }
+
+      return { success: false, message: '파일 열기가 취소되었습니다.' };
+    } catch (error) {
+      console.error('설정 파일 열기 오류:', error);
+      return { success: false, message: String(error) };
+    }
+  });
+
+  // DB 연결 테스트 핸들러
   ipcMain.handle('test-db-connection', async (event, dbConfig) => {
     try {
       await testOracleConnection(dbConfig);
       return { success: true };
     } catch (error: any) {
+      console.error('DB 연결 테스트 오류:', error);
       return { success: false, message: error?.message || String(error) };
     }
   });
 
+  // RFC 연결 테스트 핸들러
   ipcMain.handle('test-rfc-connection', async (event, rfcConfig) => {
+    console.log('RFC 연결 테스트 요청:', rfcConfig);
     try {
       await testSapRfcConnection(rfcConfig);
       return { success: true };
     } catch (error: any) {
+      console.error('RFC 연결 테스트 오류:', error);
       return { success: false, message: error?.message || String(error) };
     }
   });
+
+  // RFC 함수 테스트 핸들러
+  ipcMain.handle('test-rfc-function', async (event, params) => {
+    console.log('RFC 함수 테스트 요청:', params);
+    try {
+      const result = await testSapRfcFunction(params);
+      return { success: true, data: result };
+    } catch (error: any) {
+      console.error('RFC 함수 테스트 오류:', error);
+      return { success: false, message: error?.message || String(error) };
+    }
+  });
+
+  console.log('IPC 핸들러 등록 완료');
 }
 
-app.whenReady().then(createWindow);
+// 앱이 준비되면 윈도우 생성 및 핸들러 등록
+app.whenReady().then(() => {
+  console.log('Electron 애플리케이션 시작');
+  registerIpcHandlers();
+  createWindow();
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+  // macOS에서 모든 창이 닫혔을 때 앱을 종료하지 않도록 함
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
 });
 
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow();
+// 모든 창이 닫히면 앱 종료 (Windows/Linux)
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+// 앱 종료 전 정리 작업
+app.on('before-quit', () => {
+  // 필요한 정리 작업 수행
 });

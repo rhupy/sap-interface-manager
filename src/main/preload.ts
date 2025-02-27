@@ -1,4 +1,5 @@
 // src/main/preload.ts
+import { RfcConnectionInfo } from '@/types';
 import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('api', {
@@ -17,10 +18,13 @@ contextBridge.exposeInMainWorld('api', {
     return ipcRenderer.invoke('test-db-connection', dbConfig);
   },
 
-  // [D] RFC 테스트
-  async testRfcConnection(rfcConfig: any) {
-    return ipcRenderer.invoke('test-rfc-connection', rfcConfig);
-  },
+  // [C] RFC 연결 테스트
+  testRfcConnection: (rfcConfig: RfcConnectionInfo) =>
+    ipcRenderer.invoke('test-rfc-connection', rfcConfig),
+
+  // [D] RFC 함수 테스트
+  testRfcFunction: (params: any) =>
+    ipcRenderer.invoke('test-rfc-function', params),
 
   // 설정 파일 열기
   openSettingsFile: () => ipcRenderer.invoke('open-settings-file'),

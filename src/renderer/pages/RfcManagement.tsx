@@ -332,7 +332,7 @@ export default function RfcManagement() {
     setNewParameter({ ...param });
   };
 
-  // RFC 연결 테스트 핸들러
+  // RFC 함수 테스트 핸들러
   const testRfcFunction = async () => {
     if (!settings.selectedRfc) {
       setMessage('테스트할 RFC 연결을 선택하세요.');
@@ -357,22 +357,51 @@ export default function RfcManagement() {
         return;
       }
 
-      // RFC 테스트 호출
-      if (!window.api?.testRfcConnection) {
-        setMessage('RFC 테스트 API를 사용할 수 없습니다.');
+      // 테스트용 파라미터 생성 (import 파라미터만 사용)
+      const testParameters = newRfcFunction.parameters
+        .filter((param) => param.type === 'import')
+        .reduce(
+          (acc, param) => {
+            // 기본값이 있으면 사용, 없으면 데이터 타입에 따라 기본값 설정
+            acc[param.name] =
+              param.defaultValue || getDefaultValueForType(param.dataType);
+            return acc;
+          },
+          {} as Record<string, any>
+        );
+
+      // RFC 함수 테스트 호출
+      if (!window.api?.testRfcFunction) {
+        setMessage('RFC 함수 테스트 API를 사용할 수 없습니다.');
         return;
       }
 
-      const result = await window.api.testRfcConnection(rfcConnection);
+      const result = await window.api.testRfcFunction({
+        connection: rfcConnection,
+        functionName: newRfcFunction.functionName,
+        parameters: testParameters,
+      });
 
       if (result.success) {
-        setMessage('RFC 연결 테스트 성공!');
+        setMessage(
+          `RFC 함수 테스트 성공! 결과: ${JSON.stringify(result.data || {})}`
+        );
       } else {
-        setMessage(`RFC 연결 테스트 실패: ${result.message || ''}`);
+        setMessage(`RFC 함수 테스트 실패: ${result.message || ''}`);
       }
     } catch (error: any) {
-      setMessage(`RFC 연결 테스트 에러: ${error?.message || error}`);
+      setMessage(`RFC 함수 테스트 에러: ${error?.message || error}`);
     }
+  };
+
+  // 데이터 타입에 따른 기본값 생성 함수
+  const getDefaultValueForType = (dataType: string) => {
+    const type = dataType.toUpperCase();
+    if (type.includes('CHAR') || type.includes('STRING')) return '';
+    if (type.includes('NUM') || type.includes('INT')) return 0;
+    if (type.includes('DATE')) return '00000000';
+    if (type.includes('TIME')) return '000000';
+    return '';
   };
 
   // 로딩 중 표시
