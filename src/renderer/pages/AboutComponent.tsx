@@ -100,9 +100,7 @@ export default function AboutComponent() {
           </Link>
         </p>
         <p>
-          <Link href="mailto:your.email@example.com">
-            kimsungjiny@gmail.com
-          </Link>
+          <Link href="mailto:kimsungjiny@gmail.com">kimsungjiny@gmail.com</Link>
         </p>
       </Section>
 
