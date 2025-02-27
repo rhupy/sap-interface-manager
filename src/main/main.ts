@@ -14,8 +14,8 @@ let mainWindow: BrowserWindow | null = null;
 // 메인 윈도우 생성 함수
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1800,
+    height: 1200,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -25,8 +25,9 @@ function createWindow() {
 
   // 개발 모드에서는 개발 서버 URL 로드, 프로덕션에서는 빌드된 파일 로드
   if (process.env.NODE_ENV === 'development') {
-    mainWindow.loadURL('http://localhost:3000');
-    mainWindow.webContents.openDevTools(); // 개발 도구 자동 열기
+    // 포트 번호를 확인하고 수정 (5174로 변경)
+    mainWindow.loadURL('http://localhost:5174');
+    // mainWindow.webContents.openDevTools(); // 개발 도구 자동 열기
   } else {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }

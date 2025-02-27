@@ -17,24 +17,13 @@ interface TestResult {
   message?: string;
 }
 
-import { Settings } from '../types/index';
+import { ElectronAPI, Settings } from '../types/index';
 // ↑ 실제로 Settings 타입이 있는 경로에 맞게 작성
 
 declare global {
   interface Window {
-    api?: {
-      // [A] 환경설정
-      saveSettings?: (settings: any) => Promise<void>;
-      loadSettings?: () => Promise<Settings | null>;
-
-      // [B] SQL
-      loadSqlSettings?: () => Promise<SqlSettings | null>;
-      saveSqlSettings?: (settings: SqlSettings) => Promise<void>;
-
-      // [C] RFC/DB 테스트
-      testDbConnection?: (dbConfig: any) => Promise<TestResult>;
-      testRfcConnection?: (rfcConfig: any) => Promise<TestResult>;
-    };
+    // 중복 선언 제거하고 하나만 유지
+    api?: ElectronAPI;
   }
 }
 

@@ -8,6 +8,8 @@ import {
   Title,
   Description,
 } from './styles/CommonStyles';
+import { MessageProvider } from './context/MessageContext';
+import { MessageDisplay } from './components/MessageDisplay';
 import RfcManagement from './pages/RfcManagement';
 import SqlManagement from './pages/SqlManagement';
 import SettingsComponent from './pages/SettingsComponent';
@@ -22,54 +24,57 @@ export default function App() {
     <>
       <GlobalStyle />
       <SettingsProvider>
-        <AppContainer>
-          <TabContainer>
-            <TabButton
-              active={activeTab === 'profile'}
-              onClick={() => setActiveTab('profile')}
-            >
-              프로파일
-            </TabButton>
-            <TabButton
-              active={activeTab === 'interface'}
-              onClick={() => setActiveTab('interface')}
-            >
-              인터페이스 관리
-            </TabButton>
-            <TabButton
-              active={activeTab === 'rfc'}
-              onClick={() => setActiveTab('rfc')}
-            >
-              RFC 관리
-            </TabButton>
-            <TabButton
-              active={activeTab === 'sql'}
-              onClick={() => setActiveTab('sql')}
-            >
-              SQL 관리
-            </TabButton>
-            <TabButton
-              active={activeTab === 'process'}
-              onClick={() => setActiveTab('process')}
-            >
-              프로세스 관리
-            </TabButton>
-            <TabButton
-              active={activeTab === 'settings'}
-              onClick={() => setActiveTab('settings')}
-            >
-              환경 설정
-            </TabButton>
-          </TabContainer>
-          <ContentContainer>
-            {activeTab === 'profile' && <Profile />}
-            {activeTab === 'interface' && <InterfaceManagement />}
-            {activeTab === 'rfc' && <RfcManagement />}
-            {activeTab === 'sql' && <SqlManagement />}
-            {activeTab === 'process' && <ProcessManagement />}
-            {activeTab === 'settings' && <SettingsComponent />}
-          </ContentContainer>
-        </AppContainer>
+        <MessageProvider>
+          <AppContainer>
+            <TabContainer>
+              <TabButton
+                active={activeTab === 'profile'}
+                onClick={() => setActiveTab('profile')}
+              >
+                프로파일
+              </TabButton>
+              <TabButton
+                active={activeTab === 'interface'}
+                onClick={() => setActiveTab('interface')}
+              >
+                인터페이스 관리
+              </TabButton>
+              <TabButton
+                active={activeTab === 'rfc'}
+                onClick={() => setActiveTab('rfc')}
+              >
+                RFC 관리
+              </TabButton>
+              <TabButton
+                active={activeTab === 'sql'}
+                onClick={() => setActiveTab('sql')}
+              >
+                SQL 관리
+              </TabButton>
+              <TabButton
+                active={activeTab === 'process'}
+                onClick={() => setActiveTab('process')}
+              >
+                프로세스 관리
+              </TabButton>
+              <TabButton
+                active={activeTab === 'settings'}
+                onClick={() => setActiveTab('settings')}
+              >
+                환경 설정
+              </TabButton>
+            </TabContainer>
+            <ContentContainer>
+              {activeTab === 'profile' && <Profile />}
+              {activeTab === 'interface' && <InterfaceManagement />}
+              {activeTab === 'rfc' && <RfcManagement />}
+              {activeTab === 'sql' && <SqlManagement />}
+              {activeTab === 'process' && <ProcessManagement />}
+              {activeTab === 'settings' && <SettingsComponent />}
+            </ContentContainer>
+            <MessageDisplay />
+          </AppContainer>
+        </MessageProvider>
       </SettingsProvider>
     </>
   );

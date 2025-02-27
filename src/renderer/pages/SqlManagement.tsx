@@ -3,12 +3,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Section,
   SectionTitle,
-  Label,
   Input,
   Button,
   Title,
   Description,
-  FixedMessage,
   FlexContainer,
   SidePanel,
   SidePanelHeader,
@@ -28,9 +26,8 @@ import {
 
 import { format } from 'sql-formatter';
 import { useSettingsContext } from '../context/SettingContext';
+import { useMessage } from '../context/MessageContext';
 import { SqlInfo } from '../types';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism-tomorrow.css';
 import 'prismjs/components/prism-sql';
@@ -57,13 +54,14 @@ const customStyles = `
 type SortType = 'name' | 'createdAt' | 'updatedAt';
 
 export default function SqlManagement() {
+  const { showMessage } = useMessage();
+
   const [searchTerm, setSearchTerm] = useState('');
 
   const [showHighlighter, setShowHighlighter] = useState(false);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const { settings, updateSettings, isLoading } = useSettingsContext();
-  const [message, setMessage] = useState('');
   const [newSql, setNewSql] = useState<SqlInfo>(emptySqlInfo);
   const [paramList, setParamList] = useState<string[]>([]);
 
@@ -226,7 +224,7 @@ export default function SqlManagement() {
   // -----------------------------
   const handleFormatSql = () => {
     if (!newSql.sqlText.trim()) {
-      setMessage('SQL 문이 비어 있습니다.');
+      showMessage('SQL 문이 비어 있습니다.');
       return;
     }
     try {
@@ -254,10 +252,10 @@ export default function SqlManagement() {
       setNewSql({ ...newSql, sqlText: restoredSql });
       const extracted = extractParamsFromSql(restoredSql);
       setParamList(extracted);
-      setMessage('SQL이 정렬되었습니다.');
+      showMessage('SQL이 정렬되었습니다.', 'success');
     } catch (error) {
       console.error('SQL 정렬 오류:', error);
-      setMessage('SQL 정렬 중 오류가 발생했습니다.');
+      showMessage('SQL 정렬 중 오류가 발생했습니다.', 'error');
     }
   };
 
@@ -269,7 +267,7 @@ export default function SqlManagement() {
   // (추가)
   const handleAddSql = () => {
     if (!newSql.name) {
-      setMessage('SQL명을 입력하세요.');
+      showMessage('SQL명을 입력하세요.');
       return;
     }
 
@@ -277,7 +275,7 @@ export default function SqlManagement() {
 
     const isDuplicate = sqlList.some((item) => item.name === newSql.name);
     if (isDuplicate) {
-      setMessage('이미 존재하는 SQL명입니다.');
+      showMessage('이미 존재하는 SQL명입니다.', 'error');
       return;
     }
 
@@ -299,17 +297,17 @@ export default function SqlManagement() {
       selectedSqlId: newId,
     }));
 
-    setMessage('SQL이 추가되었습니다.');
+    showMessage('SQL이 추가되었습니다.');
   };
 
   // (수정)
   const handleUpdateSql = () => {
     if (!settings.selectedSqlId) {
-      setMessage('수정할 SQL이 선택되지 않았습니다.');
+      showMessage('수정할 SQL이 선택되지 않았습니다.');
       return;
     }
     if (!newSql.name) {
-      setMessage('SQL명을 입력하세요.');
+      showMessage('SQL명을 입력하세요.');
       return;
     }
 
@@ -319,7 +317,7 @@ export default function SqlManagement() {
       (item) => item.name === newSql.name && item.id !== settings.selectedSqlId
     );
     if (isDuplicate) {
-      setMessage('이미 존재하는 SQL명입니다.');
+      showMessage('이미 존재하는 SQL명입니다.', 'error');
       return;
     }
 
@@ -340,13 +338,13 @@ export default function SqlManagement() {
       ),
     }));
 
-    setMessage('SQL이 수정되었습니다.');
+    showMessage('SQL이 수정되었습니다.', 'success');
   };
 
   // (삭제)
   const handleDeleteSql = () => {
     if (!settings.selectedSqlId) {
-      setMessage('삭제할 SQL이 선택되지 않았습니다.');
+      showMessage('삭제할 SQL이 선택되지 않았습니다.');
       return;
     }
 
@@ -358,7 +356,7 @@ export default function SqlManagement() {
       selectedSqlId: '',
     }));
 
-    setMessage('SQL이 삭제되었습니다.');
+    showMessage('SQL이 삭제되었습니다.', 'success');
   };
 
   // (SQL문 입력할 때마다 파라미터 리스트 다시 추출)
@@ -611,21 +609,6 @@ export default function SqlManagement() {
           </Section>
         </MainPanel>
       </FlexContainer>
-
-      {message && (
-        <FixedMessage
-          color={
-            message.includes('추가') ||
-            message.includes('삭제') ||
-            message.includes('수정') ||
-            message.includes('정렬')
-              ? '#4A90E2'
-              : '#E41E1E'
-          }
-        >
-          {message}
-        </FixedMessage>
-      )}
     </FullPageContainer>
   );
 }

@@ -1,18 +1,30 @@
 // src/types/index.ts
 // API 인터페이스
 export interface ElectronAPI {
-  saveSettings?: (settings: Settings) => Promise<void>;
-  loadSettings?: () => Promise<Settings>;
+  // 설정 관련
+  saveSettings?: (
+    settings: Settings
+  ) => Promise<{ success: boolean; error?: string }>;
+  loadSettings?: () => Promise<Settings | null>;
+
+  // SQL 관련
   loadSqlSettings?: () => Promise<any>;
   saveSqlSettings?: (settings: any) => Promise<void>;
+
+  // DB 연결 테스트
   testDbConnection?: (
     dbConfig: OracleDbConfig
   ) => Promise<{ success: boolean; message?: string }>;
+
+  // RFC 연결 테스트
   testRfcConnection?: (
     rfcConfig: RfcConnectionDetail
   ) => Promise<{ success: boolean; message?: string }>;
+
+  // 설정 파일 열기
   openSettingsFile?: () => Promise<{ success: boolean; message?: string }>;
-  // RFC 함수 테스트 API 추가
+
+  // RFC 함수 테스트
   testRfcFunction?: (params: {
     connection: RfcConnectionInfo;
     functionName: string;

@@ -8,7 +8,6 @@ import {
   Button,
   Title,
   Description,
-  FixedMessage,
   FlexContainer,
   SidePanel,
   SidePanelHeader,
@@ -23,12 +22,12 @@ import {
   FullPageContainer,
   DeleteButton,
   LeftAlignedLabel,
-  TextArea,
   Select,
 } from '../styles/CommonStyles';
 
 import { useSettingsContext } from '../context/SettingContext';
-import { RfcConnectionInfo, RfcFunctionInfo, RfcParameter } from '../types';
+import { useMessage } from '../context/MessageContext';
+import { RfcFunctionInfo, RfcParameter } from '../types';
 
 // RFC 함수 정보 기본값
 const emptyRfcFunction: RfcFunctionInfo = {
@@ -54,9 +53,10 @@ const emptyParameter: RfcParameter = {
 type SortType = 'name' | 'createdAt' | 'updatedAt';
 
 export default function RfcManagement() {
+  const { showMessage } = useMessage();
+
   const [searchTerm, setSearchTerm] = useState('');
   const { settings, updateSettings, isLoading } = useSettingsContext();
-  const [message, setMessage] = useState('');
   const [newRfcFunction, setNewRfcFunction] =
     useState<RfcFunctionInfo>(emptyRfcFunction);
   const [newParameter, setNewParameter] =
@@ -171,7 +171,7 @@ export default function RfcManagement() {
   // RFC 함수 추가 핸들러
   const handleAddRfcFunction = () => {
     if (!newRfcFunction.name || !newRfcFunction.functionName) {
-      setMessage('함수 이름과 SAP 함수 이름을 입력하세요.');
+      showMessage('함수 이름과 SAP 함수 이름을 입력하세요.');
       return;
     }
 
@@ -180,7 +180,7 @@ export default function RfcManagement() {
     );
 
     if (isDuplicate) {
-      setMessage('이미 존재하는 함수 이름입니다.');
+      showMessage('이미 존재하는 함수 이름입니다.', 'error');
       return;
     }
 
@@ -201,18 +201,18 @@ export default function RfcManagement() {
       selectedRfcFunctionId: newId,
     }));
 
-    setMessage('RFC 함수가 추가되었습니다.');
+    showMessage('RFC 함수가 추가되었습니다.', 'success');
   };
 
   // RFC 함수 수정 핸들러
   const handleUpdateRfcFunction = () => {
     if (!settings.selectedRfcFunctionId) {
-      setMessage('수정할 RFC 함수가 선택되지 않았습니다.');
+      showMessage('수정할 RFC 함수가 선택되지 않았습니다.');
       return;
     }
 
     if (!newRfcFunction.name || !newRfcFunction.functionName) {
-      setMessage('함수 이름과 SAP 함수 이름을 입력하세요.');
+      showMessage('함수 이름과 SAP 함수 이름을 입력하세요.');
       return;
     }
 
@@ -224,7 +224,7 @@ export default function RfcManagement() {
     );
 
     if (isDuplicate) {
-      setMessage('이미 존재하는 함수 이름입니다.');
+      showMessage('이미 존재하는 함수 이름입니다.', 'error');
       return;
     }
 
@@ -240,13 +240,13 @@ export default function RfcManagement() {
       ),
     }));
 
-    setMessage('RFC 함수가 수정되었습니다.');
+    showMessage('RFC 함수가 수정되었습니다.', 'success');
   };
 
   // RFC 함수 삭제 핸들러
   const handleDeleteRfcFunction = () => {
     if (!settings.selectedRfcFunctionId) {
-      setMessage('삭제할 RFC 함수가 선택되지 않았습니다.');
+      showMessage('삭제할 RFC 함수가 선택되지 않았습니다.');
       return;
     }
 
@@ -259,7 +259,7 @@ export default function RfcManagement() {
       selectedRfcFunctionId: '',
     }));
 
-    setMessage('RFC 함수가 삭제되었습니다.');
+    showMessage('RFC 함수가 삭제되었습니다.', 'success');
     setNewRfcFunction(emptyRfcFunction);
     setNewParameter(emptyParameter);
   };
@@ -267,7 +267,7 @@ export default function RfcManagement() {
   // 파라미터 추가 핸들러
   const handleAddParameter = () => {
     if (!newParameter.name) {
-      setMessage('파라미터 이름을 입력하세요.');
+      showMessage('파라미터 이름을 입력하세요.');
       return;
     }
 
@@ -277,7 +277,7 @@ export default function RfcManagement() {
     );
 
     if (isDuplicate) {
-      setMessage('이미 존재하는 파라미터 이름입니다.');
+      showMessage('이미 존재하는 파라미터 이름입니다.', 'error');
       return;
     }
 
@@ -289,13 +289,13 @@ export default function RfcManagement() {
     setNewRfcFunction({ ...newRfcFunction, parameters: updatedParameters });
     setNewParameter(emptyParameter); // 입력 필드 초기화
 
-    setMessage('파라미터가 추가되었습니다.');
+    showMessage('파라미터가 추가되었습니다.', 'success');
   };
 
   // 파라미터 수정 핸들러
   const handleUpdateParameter = (index: number) => {
     if (!newParameter.name) {
-      setMessage('파라미터 이름을 입력하세요.');
+      showMessage('파라미터 이름을 입력하세요.');
       return;
     }
 
@@ -305,7 +305,7 @@ export default function RfcManagement() {
     );
 
     if (isDuplicate) {
-      setMessage('이미 존재하는 파라미터 이름입니다.');
+      showMessage('이미 존재하는 파라미터 이름입니다.', 'error');
       return;
     }
 
@@ -314,7 +314,7 @@ export default function RfcManagement() {
     updatedParameters[index] = { ...newParameter };
     setNewRfcFunction({ ...newRfcFunction, parameters: updatedParameters });
 
-    setMessage('파라미터가 수정되었습니다.');
+    showMessage('파라미터가 수정되었습니다.', 'success');
   };
 
   // 파라미터 삭제 핸들러
@@ -324,7 +324,7 @@ export default function RfcManagement() {
     setNewRfcFunction({ ...newRfcFunction, parameters: updatedParameters });
     setNewParameter(emptyParameter); // 입력 필드 초기화
 
-    setMessage('파라미터가 삭제되었습니다.');
+    showMessage('파라미터가 삭제되었습니다.', 'success');
   };
 
   // 파라미터 선택 핸들러
@@ -335,16 +335,16 @@ export default function RfcManagement() {
   // RFC 함수 테스트 핸들러
   const testRfcFunction = async () => {
     if (!settings.selectedRfc) {
-      setMessage('테스트할 RFC 연결을 선택하세요.');
+      showMessage('테스트할 RFC 연결을 선택하세요.');
       return;
     }
 
     if (!newRfcFunction.functionName) {
-      setMessage('SAP 함수 이름을 입력하세요.');
+      showMessage('SAP 함수 이름을 입력하세요.');
       return;
     }
 
-    setMessage('RFC 함수 테스트 중...');
+    showMessage('RFC 함수 테스트 중입니다. 기다려주세요...', 'info', 900000);
 
     try {
       // RFC 연결 정보 찾기
@@ -353,7 +353,7 @@ export default function RfcManagement() {
       );
 
       if (!rfcConnection) {
-        setMessage('선택한 RFC 연결 정보를 찾을 수 없습니다.');
+        showMessage('선택한 RFC 연결 정보를 찾을 수 없습니다.', 'error');
         return;
       }
 
@@ -372,7 +372,7 @@ export default function RfcManagement() {
 
       // RFC 함수 테스트 호출
       if (!window.api?.testRfcFunction) {
-        setMessage('RFC 함수 테스트 API를 사용할 수 없습니다.');
+        showMessage('RFC 함수 테스트 API를 사용할 수 없습니다.', 'error');
         return;
       }
 
@@ -383,14 +383,15 @@ export default function RfcManagement() {
       });
 
       if (result.success) {
-        setMessage(
-          `RFC 함수 테스트 성공! 결과: ${JSON.stringify(result.data || {})}`
+        showMessage(
+          `RFC 함수 테스트 성공! 결과: ${JSON.stringify(result.data || {})}`,
+          'success'
         );
       } else {
-        setMessage(`RFC 함수 테스트 실패: ${result.message || ''}`);
+        showMessage(`RFC 함수 테스트 실패: ${result.message || ''}`, 'error');
       }
     } catch (error: any) {
-      setMessage(`RFC 함수 테스트 에러: ${error?.message || error}`);
+      showMessage(`RFC 함수 테스트 에러: ${error?.message || error}`, 'error');
     }
   };
 
@@ -596,7 +597,8 @@ export default function RfcManagement() {
             <div
               style={{
                 marginBottom: '10px',
-                maxHeight: '150px',
+                height: '100%',
+                // maxHeight: '150px',
                 overflowY: 'auto',
                 border: '1px solid #eee',
                 padding: '5px',
@@ -813,7 +815,7 @@ export default function RfcManagement() {
                 style={{
                   marginTop: '10px',
                   display: 'flex',
-                  justifyContent: 'flex-end',
+                  justifyContent: 'flex-start',
                 }}
               >
                 <Button
@@ -852,7 +854,7 @@ export default function RfcManagement() {
                     onClick={testRfcFunction}
                     disabled={!settings.selectedRfc}
                   >
-                    연결 테스트
+                    RFC 함수 테스트
                   </Button>
                   <Button onClick={handleUpdateRfcFunction}>수정</Button>
                   <DeleteButton onClick={handleDeleteRfcFunction}>
@@ -864,23 +866,6 @@ export default function RfcManagement() {
           </Section>
         </MainPanel>
       </FlexContainer>
-
-      {message && (
-        <FixedMessage
-          color={
-            message.includes('추가') ||
-            message.includes('삭제') ||
-            message.includes('수정') ||
-            message.includes('성공')
-              ? '#4A90E2'
-              : message.includes('테스트 중')
-                ? '#f39c12'
-                : '#E41E1E'
-          }
-        >
-          {message}
-        </FixedMessage>
-      )}
     </FullPageContainer>
   );
 }

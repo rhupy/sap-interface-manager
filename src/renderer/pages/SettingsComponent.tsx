@@ -1,19 +1,19 @@
 // src/renderer/pages/SettingsComponent.tsx
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ContentContainer,
   Title,
-  Description,
   Button,
   Input,
   Select,
   Label,
   Section,
   SectionTitle,
-  FixedMessage,
+  DeleteButton,
 } from '../styles/CommonStyles';
 import { useSettingsContext } from '../context/SettingContext';
+import { useMessage } from '../context/MessageContext';
 import { RfcConnectionInfo, DbConnectionConfig } from '../types';
 
 // RFC/DB를 비웠을 때 사용하기 위한 객체
@@ -40,6 +40,7 @@ const emptyDb: DbConnectionConfig = {
 };
 
 export default function SettingsComponent() {
+  const { showMessage } = useMessage();
   // -------------------------
   // 상태 관리
   // -------------------------
@@ -48,9 +49,6 @@ export default function SettingsComponent() {
     updateSettings,
     isLoading: isSettingsLoading,
   } = useSettingsContext();
-
-  // 메시지 출력
-  const [message, setMessage] = useState<string>('');
 
   // 현재 편집 중인 RFC/DB 정보
   const [newRfc, setNewRfc] = useState<RfcConnectionInfo>(emptyRfc);
@@ -107,23 +105,23 @@ export default function SettingsComponent() {
         (rfc) => rfc.connectionName === newRfc.connectionName
       );
       if (isDuplicate) {
-        setMessage('이미 존재하는 연결 이름입니다.');
+        showMessage('이미 존재하는 연결 이름입니다.', 'error');
         return;
       }
       updateSettings({
         rfcList: [...settings.rfcList, newRfc],
       });
       setNewRfc(emptyRfc);
-      setMessage('RFC 연결이 추가되었습니다.');
+      showMessage('RFC 연결이 추가되었습니다.', 'success');
     } else {
-      setMessage('연결 이름과 호스트를 입력하세요.');
+      showMessage('연결 이름과 호스트를 입력하세요.');
     }
   };
 
   // (2) RFC 삭제
   const deleteRfcConnection = (connectionName: string) => {
     if (!connectionName) {
-      setMessage('삭제할 RFC 연결이 선택되지 않았습니다.');
+      showMessage('삭제할 RFC 연결이 선택되지 않았습니다.');
       return;
     }
     updateSettings((prev) => ({
@@ -134,7 +132,7 @@ export default function SettingsComponent() {
       // 현재 선택된 RFC가 삭제 대상이면 selectedRfc 비우기
       selectedRfc: prev.selectedRfc === connectionName ? '' : prev.selectedRfc,
     }));
-    setMessage('RFC 연결이 삭제되었습니다.');
+    showMessage('RFC 연결이 삭제되었습니다.', 'success');
   };
 
   // (3) RFC 수정
@@ -147,7 +145,7 @@ export default function SettingsComponent() {
           rfc.connectionName !== settings.selectedRfc
       );
       if (isDuplicate) {
-        setMessage('이미 존재하는 연결 이름입니다.');
+        showMessage('이미 존재하는 연결 이름입니다.', 'error');
         return;
       }
       updateSettings((prev) => ({
@@ -158,25 +156,27 @@ export default function SettingsComponent() {
         // 새 이름으로 바뀌었으면 selectedRfc도 갱신
         selectedRfc: newRfc.connectionName,
       }));
-      setMessage('RFC 연결이 수정되었습니다.');
+      showMessage('RFC 연결이 수정되었습니다.', 'success');
     } else {
-      setMessage('선택된 RFC가 없거나 연결 이름/호스트가 비어 있습니다.');
+      showMessage('선택된 RFC가 없거나 연결 이름/호스트가 비어 있습니다.');
     }
   };
 
   // (4) RFC 테스트 (구현)
   const testRfcConnection = async () => {
     if (!window.api?.testRfcConnection) {
-      setMessage('RFC 테스트 기능이 지원되지 않습니다.');
+      showMessage('RFC 테스트 기능이 지원되지 않습니다.', 'error');
       return;
     }
 
     if (settings.selectedRfc) {
+      showMessage('RFC 연결 테스트 중입니다. 기다려주세요...', 'info', 900000);
+
       const rfc = settings.rfcList.find(
         (r) => r.connectionName === settings.selectedRfc
       );
       if (!rfc) {
-        setMessage('선택된 RFC 연결 정보를 찾지 못했습니다.');
+        showMessage('선택된 RFC 연결 정보를 찾지 못했습니다.', 'error');
         return;
       }
       try {
@@ -192,19 +192,24 @@ export default function SettingsComponent() {
           poolSize: rfc.poolSize,
         });
         if (result.success) {
-          setMessage(`RFC "${rfc.connectionName}" 연결 테스트 성공`);
+          showMessage(
+            `RFC "${rfc.connectionName}" 연결 테스트 성공`,
+            'success'
+          );
         } else {
-          setMessage(
-            `RFC "${rfc.connectionName}" 연결 테스트 실패: ${result.message || ''}`
+          showMessage(
+            `RFC "${rfc.connectionName}" 연결 테스트 실패: ${result.message || ''}`,
+            'error'
           );
         }
       } catch (error: any) {
-        setMessage(
-          `RFC "${rfc.connectionName}" 연결 테스트 에러: ${error?.message || error}`
+        showMessage(
+          `RFC "${rfc.connectionName}" 연결 테스트 에러: ${error?.message || error}`,
+          'error'
         );
       }
     } else {
-      setMessage('RFC 연결을 선택하세요.');
+      showMessage('RFC 연결을 선택하세요.');
     }
   };
 
@@ -218,7 +223,7 @@ export default function SettingsComponent() {
         (db) => db.name === newDb.name
       );
       if (isDuplicate) {
-        setMessage('이미 존재하는 연결 이름입니다.');
+        showMessage('이미 존재하는 연결 이름입니다.', 'error');
         return;
       }
       const newId = `db-${Date.now()}`;
@@ -226,16 +231,16 @@ export default function SettingsComponent() {
         dbConnections: [...settings.dbConnections, { ...newDb, id: newId }],
       });
       setNewDb(emptyDb);
-      setMessage('DB 연결이 추가되었습니다.');
+      showMessage('DB 연결이 추가되었습니다.', 'success');
     } else {
-      setMessage('연결 이름과 호스트를 입력하세요.');
+      showMessage('연결 이름과 호스트를 입력하세요.');
     }
   };
 
   // (2) DB 삭제
   const deleteDbConnection = (dbId: string) => {
     if (!dbId) {
-      setMessage('삭제할 DB 연결이 선택되지 않았습니다.');
+      showMessage('삭제할 DB 연결이 선택되지 않았습니다.');
       return;
     }
     updateSettings((prev) => ({
@@ -244,7 +249,7 @@ export default function SettingsComponent() {
       // 현재 선택된 DB가 삭제 대상이면 selectedDbId 비우기
       selectedDbId: prev.selectedDbId === dbId ? '' : prev.selectedDbId,
     }));
-    setMessage('DB 연결이 삭제되었습니다.');
+    showMessage('DB 연결이 삭제되었습니다.', 'success');
   };
 
   // (3) DB 수정
@@ -255,7 +260,7 @@ export default function SettingsComponent() {
         (db) => db.name === newDb.name && db.id !== settings.selectedDbId
       );
       if (isDuplicate) {
-        setMessage('이미 존재하는 연결 이름입니다.');
+        showMessage('이미 존재하는 연결 이름입니다.', 'error');
         return;
       }
       updateSettings((prev) => ({
@@ -264,25 +269,26 @@ export default function SettingsComponent() {
           db.id === prev.selectedDbId ? { ...newDb, id: db.id } : db
         ),
       }));
-      setMessage('DB 연결이 수정되었습니다.');
+      showMessage('DB 연결이 수정되었습니다.', 'success');
     } else {
-      setMessage('선택된 DB가 없거나 연결 이름/호스트가 비어 있습니다.');
+      showMessage('선택된 DB가 없거나 연결 이름/호스트가 비어 있습니다.');
     }
   };
 
   // (4) DB 테스트 (구현)
   const testDbConnection = async () => {
     if (!window.api?.testDbConnection) {
-      setMessage('DB 테스트 기능이 지원되지 않습니다.');
+      showMessage('DB 테스트 기능이 지원되지 않습니다.', 'error');
       return;
     }
 
     if (settings.selectedDbId) {
+      showMessage('DB 연결 테스트 중입니다. 기다려주세요...', 'info', 900000);
       const db = settings.dbConnections.find(
         (d) => d.id === settings.selectedDbId
       );
       if (!db) {
-        setMessage('선택된 DB 연결 정보를 찾지 못했습니다.');
+        showMessage('선택된 DB 연결 정보를 찾지 못했습니다.', 'error');
         return;
       }
       try {
@@ -294,38 +300,40 @@ export default function SettingsComponent() {
           password: db.password,
         });
         if (result.success) {
-          setMessage(`DB "${db.name}" 연결 테스트 성공`);
+          showMessage(`DB "${db.name}" 연결 테스트 성공`, 'success');
         } else {
-          setMessage(
-            `DB "${db.name}" 연결 테스트 실패: ${result.message || ''}`
+          showMessage(
+            `DB "${db.name}" 연결 테스트 실패: ${result.message || ''}`,
+            'error'
           );
         }
       } catch (error: any) {
-        setMessage(
-          `DB "${db.name}" 연결 테스트 에러: ${error?.message || error}`
+        showMessage(
+          `DB "${db.name}" 연결 테스트 에러: ${error?.message || error}`,
+          'error'
         );
       }
     } else {
-      setMessage('DB 연결을 선택하세요.');
+      showMessage('DB 연결을 선택하세요.');
     }
   };
 
   // 설정 파일 열기 함수 추가
   const openSettingsFile = async () => {
     if (!window.api?.openSettingsFile) {
-      setMessage('설정 파일 열기 기능이 지원되지 않습니다.');
+      showMessage('설정 파일 열기 기능이 지원되지 않습니다.');
       return;
     }
 
     try {
       const result = await window.api.openSettingsFile();
       if (result.success) {
-        setMessage('설정 파일을 열었습니다.');
+        showMessage('설정 파일을 열었습니다.');
       } else {
-        setMessage(`설정 파일 열기 실패: ${result.message || ''}`);
+        showMessage(`설정 파일 열기 실패: ${result.message || ''}`, 'error');
       }
     } catch (error: any) {
-      setMessage(`설정 파일 열기 에러: ${error?.message || error}`);
+      showMessage(`설정 파일 열기 에러: ${error?.message || error}`, 'error');
     }
   };
 
@@ -392,12 +400,12 @@ export default function SettingsComponent() {
                 >
                   테스트
                 </Button>
-                <Button
+                <DeleteButton
                   onClick={() => deleteRfcConnection(settings.selectedRfc)}
                   style={{ marginRight: '10px' }}
                 >
                   삭제
-                </Button>
+                </DeleteButton>
               </>
             )}
           </div>
@@ -521,12 +529,12 @@ export default function SettingsComponent() {
                 >
                   테스트
                 </Button>
-                <Button
+                <DeleteButton
                   onClick={() => deleteDbConnection(settings.selectedDbId)}
                   style={{ marginRight: '10px' }}
                 >
                   삭제
-                </Button>
+                </DeleteButton>
               </>
             )}
           </div>
@@ -590,22 +598,6 @@ export default function SettingsComponent() {
             )}
           </div>
         </Section>
-
-        {/* 메시지 출력 */}
-        {message && (
-          <FixedMessage
-            color={
-              message.includes('추가') ||
-              message.includes('삭제') ||
-              message.includes('수정') ||
-              message.includes('테스트')
-                ? '#4A90E2'
-                : '#E41E1E'
-            }
-          >
-            {message}
-          </FixedMessage>
-        )}
       </ContentContainer>
     </>
   );
