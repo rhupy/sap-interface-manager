@@ -74,7 +74,7 @@ export default function AboutComponent() {
         <List>
           <ListItem>RFC 함수 호출 및 테스트</ListItem>
           <ListItem>데이터베이스 연결 및 SQL 쿼리 실행</ListItem>
-          <ListItem>SAP-SAP / SAP-DB / DB-DB 간 파라미터 매핑 / 연계</ListItem>
+          <ListItem>SAP-SAP / SAP-DB / DB-DB 간 파라미터 매핑과 연계</ListItem>
           <ListItem>자유로운 인터페이스 로직 구현</ListItem>
           <ListItem>인터페이스 프로세스 모니터링 및 관리 / 로깅</ListItem>
           <ListItem>다중 SAP 시스템 및 데이터베이스 연결 지원</ListItem>
