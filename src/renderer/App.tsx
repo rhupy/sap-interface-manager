@@ -8,13 +8,14 @@ import {
   Title,
   Description,
 } from './styles/CommonStyles';
+import RfcManagement from './pages/RfcManagement';
 import SqlManagement from './pages/SqlManagement';
 import SettingsComponent from './pages/SettingsComponent';
 import { SettingsProvider } from './context/SettingContext';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<
-    'profile' | 'interface' | 'sql' | 'process' | 'settings'
+    'profile' | 'interface' | 'rfc' | 'sql' | 'process' | 'settings'
   >('profile');
 
   return (
@@ -34,6 +35,12 @@ export default function App() {
               onClick={() => setActiveTab('interface')}
             >
               인터페이스 관리
+            </TabButton>
+            <TabButton
+              active={activeTab === 'rfc'}
+              onClick={() => setActiveTab('rfc')}
+            >
+              RFC 관리
             </TabButton>
             <TabButton
               active={activeTab === 'sql'}
@@ -57,6 +64,7 @@ export default function App() {
           <ContentContainer>
             {activeTab === 'profile' && <Profile />}
             {activeTab === 'interface' && <InterfaceManagement />}
+            {activeTab === 'rfc' && <RfcManagement />}
             {activeTab === 'sql' && <SqlManagement />}
             {activeTab === 'process' && <ProcessManagement />}
             {activeTab === 'settings' && <SettingsComponent />}
