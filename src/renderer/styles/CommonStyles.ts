@@ -1,6 +1,18 @@
 // src/renderer/styles/CommonStyles.ts
 import styled from 'styled-components';
 
+// 일반 탭 그룹 (왼쪽 정렬)
+export const TabGroup = styled.div`
+  display: flex;
+  flex: 1;
+`;
+
+// 우측 정렬 탭 그룹
+export const RightTabGroup = styled.div`
+  display: flex;
+  margin-left: auto; // 우측 정렬
+`;
+
 export const AppContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -10,22 +22,34 @@ export const AppContainer = styled.div`
 
 export const TabContainer = styled.div`
   display: flex;
-  background-color: #e0e0e0;
-  padding: 10px;
+  background-color: #f0f0f0;
+  border-bottom: 1px solid #ddd;
+  padding: 0;
+  margin: 0;
+  position: relative; // 상대 위치 설정
 `;
 
 export const TabButton = styled.button<{ active: boolean }>`
   padding: 10px 20px;
-  margin-right: 5px;
   border: none;
-  background-color: ${({ active }) => (active ? '#4A90E2' : '#f0f0f0')};
-  color: ${({ active }) => (active ? '#fff' : '#000')};
+  background-color: ${(props) => (props.active ? '#4A90E2' : '#e0e0e0')};
+  color: ${(props) => (props.active ? 'white' : '#333')};
+  font-weight: ${(props) => (props.active ? 'bold' : 'normal')};
   cursor: pointer;
-  border-radius: 4px;
+  transition: all 0.3s ease;
+  border-bottom: ${(props) => (props.active ? '3px solid #2c3e50' : 'none')};
 
   &:hover {
-    background-color: ${({ active }) => (active ? '#357ABD' : '#e0e0e0')};
+    background-color: ${(props) => (props.active ? '#4A90E2' : '#d0d0d0')};
   }
+
+  &:focus {
+    outline: none;
+  }
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 export const ContentContainer = styled.div`

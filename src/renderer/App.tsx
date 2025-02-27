@@ -7,6 +7,7 @@ import {
   ContentContainer,
   Title,
   Description,
+  RightTabGroup,
 } from './styles/CommonStyles';
 import { MessageProvider } from './context/MessageContext';
 import { MessageDisplay } from './components/MessageDisplay';
@@ -14,10 +15,12 @@ import RfcManagement from './pages/RfcManagement';
 import SqlManagement from './pages/SqlManagement';
 import SettingsComponent from './pages/SettingsComponent';
 import { SettingsProvider } from './context/SettingContext';
+import { FaQuestion, FaInfoCircle } from 'react-icons/fa';
+import AboutComponent from './pages/AboutComponent';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<
-    'profile' | 'interface' | 'rfc' | 'sql' | 'process' | 'settings'
+    'profile' | 'interface' | 'rfc' | 'sql' | 'process' | 'settings' | 'about'
   >('profile');
 
   return (
@@ -63,6 +66,14 @@ export default function App() {
               >
                 환경 설정
               </TabButton>
+              <RightTabGroup>
+                <TabButton
+                  active={activeTab === 'about'}
+                  onClick={() => setActiveTab('about')}
+                >
+                  <FaQuestion style={{ marginRight: '5px' }} /> 도움말
+                </TabButton>
+              </RightTabGroup>
             </TabContainer>
             <ContentContainer>
               {activeTab === 'profile' && <Profile />}
@@ -71,6 +82,7 @@ export default function App() {
               {activeTab === 'sql' && <SqlManagement />}
               {activeTab === 'process' && <ProcessManagement />}
               {activeTab === 'settings' && <SettingsComponent />}
+              {activeTab === 'about' && <AboutComponent />}
             </ContentContainer>
             <MessageDisplay />
           </AppContainer>
