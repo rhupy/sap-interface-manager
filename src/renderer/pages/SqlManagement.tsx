@@ -483,7 +483,7 @@ export default function SqlManagement() {
 
             <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
               <div style={{ flex: 1 }}>
-                <LeftAlignedLabel>SQL 명</LeftAlignedLabel>
+                <LeftAlignedLabel>타이틀</LeftAlignedLabel>
                 <Input
                   value={newSql.name}
                   onChange={(e) =>

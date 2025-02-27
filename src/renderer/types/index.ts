@@ -59,16 +59,40 @@ export interface SqlInfo {
   parameters: string[]; // 파라미터 목록 추가
 }
 
-// Settings
+// RFC 함수 호출 정보
+export interface RfcFunctionInfo {
+  id: string;
+  name: string;
+  description: string;
+  functionName: string; // SAP RFC 함수 이름
+  parameters: RfcParameter[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// RFC 파라미터
+export interface RfcParameter {
+  name: string;
+  type: 'import' | 'export' | 'table'; // 파라미터 타입
+  dataType: string; // 데이터 타입 (STRING, INT, TABLE 등)
+  description?: string;
+  defaultValue?: string;
+}
+
+// Settings 인터페이스
 export interface Settings {
   rfcList: RfcConnectionInfo[];
   dbConnections: DbConnectionConfig[];
   selectedRfc: string;
   selectedDbId: string;
 
-  // SQL 관리 관련 필드 추가
+  // SQL 관리 관련 필드
   sqlList?: SqlInfo[];
   selectedSqlId?: string;
+
+  // RFC 함수 관리 관련 필드
+  rfcFunctions?: RfcFunctionInfo[];
+  selectedRfcFunctionId?: string;
 }
 
 /**
