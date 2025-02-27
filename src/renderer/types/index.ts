@@ -1,4 +1,20 @@
 // src/types/index.ts
+// Settings 인터페이스 : 전 페이지에서 settings.json 파일에 저장되는 설정 정보
+export interface Settings {
+  rfcList: RfcConnectionInfo[];
+  dbConnections: DbConnectionConfig[];
+  selectedRfc: string;
+  selectedDbId: string;
+
+  // SQL 관리 관련 필드
+  sqlList?: SqlInfo[];
+  selectedSqlId?: string;
+
+  // RFC 함수 관리 관련 필드
+  rfcFunctions?: RfcFunctionInfo[];
+  selectedRfcFunctionId?: string;
+}
+
 // API 인터페이스
 export interface ElectronAPI {
   // 설정 관련
@@ -39,7 +55,7 @@ declare global {
   }
 }
 
-// RFC
+// RFC 접속 정보
 export interface RfcConnectionDetail {
   appServerHost: string;
   systemNumber: string;
@@ -55,7 +71,16 @@ export interface RfcConnectionInfo extends RfcConnectionDetail {
   connectionName: string;
 }
 
-// DB
+// DB 연결 설정
+export interface OracleDbConfig {
+  host: string;
+  port: string;
+  sid: string;
+  user: string;
+  password: string;
+}
+
+// DB 접속 정보
 export interface DbConnectionConfig {
   id: string;
   name: string;
@@ -66,7 +91,7 @@ export interface DbConnectionConfig {
   password: string;
 }
 
-// SQL 관리
+// SQL문 관리
 export interface SqlInfo {
   id: string;
   name: string;
@@ -77,7 +102,7 @@ export interface SqlInfo {
   parameters: string[]; // 파라미터 목록 추가
 }
 
-// RFC 함수 호출 정보
+// RFC함수 호출 정보
 export interface RfcFunctionInfo {
   id: string;
   name: string;
@@ -95,31 +120,4 @@ export interface RfcParameter {
   dataType: string; // 데이터 타입 (STRING, INT, TABLE 등)
   description?: string;
   defaultValue?: string;
-}
-
-// Settings 인터페이스
-export interface Settings {
-  rfcList: RfcConnectionInfo[];
-  dbConnections: DbConnectionConfig[];
-  selectedRfc: string;
-  selectedDbId: string;
-
-  // SQL 관리 관련 필드
-  sqlList?: SqlInfo[];
-  selectedSqlId?: string;
-
-  // RFC 함수 관리 관련 필드
-  rfcFunctions?: RfcFunctionInfo[];
-  selectedRfcFunctionId?: string;
-}
-
-/**
- * DB 연결 설정
- */
-export interface OracleDbConfig {
-  host: string;
-  port: string;
-  sid: string;
-  user: string;
-  password: string;
 }

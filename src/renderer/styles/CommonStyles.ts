@@ -1,12 +1,6 @@
 // src/renderer/styles/CommonStyles.ts
 import styled from 'styled-components';
 
-// 일반 탭 그룹 (왼쪽 정렬)
-export const TabGroup = styled.div`
-  display: flex;
-  flex: 1;
-`;
-
 // 우측 정렬 탭 그룹
 export const RightTabGroup = styled.div`
   display: flex;
@@ -113,14 +107,6 @@ export const Label = styled.label`
   text-align: right; // 라벨 텍스트 오른쪽 정렬
 `;
 
-export const Message = styled.div<{ color: string }>`
-  margin-top: 10px;
-  padding: 10px;
-  background-color: #f0f0f0;
-  border-radius: 4px;
-  color: ${({ color }) => color};
-`;
-
 export const Section = styled.div`
   margin-bottom: 20px;
   background-color: #fff;
@@ -140,21 +126,7 @@ export const SectionTitle = styled.h2`
   color: #333;
 `;
 
-export const FixedMessage = styled.div<{ color?: string }>`
-  position: fixed; /* 화면에 고정 */
-  bottom: 0; /* 화면 하단 */
-  left: 0; /* 화면 왼쪽 기준 */
-  width: 100%; /* 가로폭 전체 */
-  text-align: center; /* 텍스트 중앙 정렬 */
-  background-color: #f0f0f0;
-  padding: 10px;
-  border-top: 1px solid #ccc;
-  z-index: 9999; /* 다른 요소 위에 표시 */
-
-  color: ${({ color }) => color || '#333'};
-`;
-
-// 전체 화면 컨테이너 추가
+// 전체 화면 컨테이너
 export const FullPageContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -163,7 +135,6 @@ export const FullPageContainer = styled.div`
   overflow: hidden;
 `;
 
-// 새로운 스타일 추가
 export const FlexContainer = styled.div`
   display: flex;
   flex: 1;
