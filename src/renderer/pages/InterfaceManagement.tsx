@@ -117,6 +117,11 @@ export default function InterfaceManagement() {
     setSearchTerm(e.target.value);
   };
 
+  // 정렬 타입 변경 핸들러
+  const handleSortTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSortType(e.target.value as SortType);
+  };
+
   // 인터페이스 선택 핸들러
   const handleSelectInterface = (id: string) => {
     updateSettings({ selectedInterfaceId: id });
@@ -140,6 +145,13 @@ export default function InterfaceManagement() {
     }
   }, [settings.selectedInterfaceId, settings.interfaces]);
 
+  // 초기화: settings에 interfaces가 없으면 빈 배열로 초기화
+  useEffect(() => {
+    if (!settings.interfaces) {
+      updateSettings({ interfaces: [] });
+    }
+  }, [settings, updateSettings]);
+
   // 인터페이스 추가 핸들러
   const handleAddInterface = () => {
     if (!newInterface.name) {
@@ -147,21 +159,23 @@ export default function InterfaceManagement() {
       return;
     }
 
-    // 중복 이름 검사
+    // 이름 중복 검사
     const isDuplicate = (settings.interfaces || []).some(
-      (item) => item.name === newInterface.name
+      (item) => item.name.toLowerCase() === newInterface.name.toLowerCase()
     );
 
     if (isDuplicate) {
-      showMessage('이미 존재하는 인터페이스 이름입니다.', 'error');
+      showMessage('이미 동일한 이름의 인터페이스가 존재합니다.', 'error');
       return;
     }
 
+    // 새 인터페이스 ID 생성
+    const id = `interface-${Date.now()}`;
     const currentTime = getCurrentFormattedTime();
-    const newId = `interface-${Date.now()}`;
-    const newItem: InterfaceInfo = {
+
+    const interfaceToAdd: InterfaceInfo = {
       ...newInterface,
-      id: newId,
+      id,
       createdAt: currentTime,
       updatedAt: currentTime,
       steps: [],
@@ -169,11 +183,12 @@ export default function InterfaceManagement() {
 
     updateSettings((prev) => ({
       ...prev,
-      interfaces: [...(prev.interfaces || []), newItem],
-      selectedInterfaceId: newId,
+      interfaces: [...(prev.interfaces || []), interfaceToAdd],
+      selectedInterfaceId: id,
     }));
 
-    showMessage('인터페이스가 추가되었습니다.', 'success');
+    setNewInterface(emptyInterface);
+    showMessage('새 인터페이스가 추가되었습니다.', 'success');
   };
 
   // 인터페이스 수정 핸들러
@@ -185,18 +200,6 @@ export default function InterfaceManagement() {
 
     if (!newInterface.name) {
       showMessage('인터페이스 이름을 입력하세요.');
-      return;
-    }
-
-    // 다른 인터페이스와 중복 이름 검사
-    const isDuplicate = (settings.interfaces || []).some(
-      (item) =>
-        item.name === newInterface.name &&
-        item.id !== settings.selectedInterfaceId
-    );
-
-    if (isDuplicate) {
-      showMessage('이미 존재하는 인터페이스 이름입니다.', 'error');
       return;
     }
 
@@ -406,77 +409,9 @@ export default function InterfaceManagement() {
     setEditingStepIndex(index);
   };
 
-  // 단계 순서 변경 핸들러 (위로)
-  const handleMoveStepUp = (index: number) => {
-    if (index === 0) return;
-
-    const updatedSteps = [...newInterface.steps];
-    const temp = updatedSteps[index];
-    updatedSteps[index] = updatedSteps[index - 1];
-    updatedSteps[index - 1] = temp;
-
-    // 순서 재정렬
-    const reorderedSteps = updatedSteps.map((step, i) => ({
-      ...step,
-      order: i + 1,
-    }));
-
-    // 인터페이스 업데이트
-    setNewInterface({ ...newInterface, steps: reorderedSteps });
-
-    // 전체 설정 업데이트
-    updateSettings((prev) => ({
-      ...prev,
-      interfaces: (prev.interfaces || []).map((item) =>
-        item.id === settings.selectedInterfaceId
-          ? {
-              ...item,
-              steps: reorderedSteps,
-              updatedAt: getCurrentFormattedTime(),
-            }
-          : item
-      ),
-    }));
-  };
-
-  // 단계 순서 변경 핸들러 (아래로)
-  const handleMoveStepDown = (index: number) => {
-    if (index === newInterface.steps.length - 1) return;
-
-    const updatedSteps = [...newInterface.steps];
-    const temp = updatedSteps[index];
-    updatedSteps[index] = updatedSteps[index + 1];
-    updatedSteps[index + 1] = temp;
-
-    // 순서 재정렬
-    const reorderedSteps = updatedSteps.map((step, i) => ({
-      ...step,
-      order: i + 1,
-    }));
-
-    // 인터페이스 업데이트
-    setNewInterface({ ...newInterface, steps: reorderedSteps });
-
-    // 전체 설정 업데이트
-    updateSettings((prev) => ({
-      ...prev,
-      interfaces: (prev.interfaces || []).map((item) =>
-        item.id === settings.selectedInterfaceId
-          ? {
-              ...item,
-              steps: reorderedSteps,
-              updatedAt: getCurrentFormattedTime(),
-            }
-          : item
-      ),
-    }));
-  };
-
-  // 단계 이동 핸들러
-  function handleMoveStep(index: number, direction: 'up' | 'down') {
-    if (!settings.selectedInterfaceId) {
-      return;
-    }
+  // 단계 순서 변경 핸들러
+  const handleMoveStep = (index: number, direction: 'up' | 'down') => {
+    if (!settings.selectedInterfaceId) return;
 
     const updatedSteps = [...newInterface.steps];
 
@@ -492,29 +427,33 @@ export default function InterfaceManagement() {
         updatedSteps[index + 1],
         updatedSteps[index],
       ];
+    } else {
+      return; // 이동할 수 없는 경우
     }
 
-    // 순서 번호 업데이트
-    updatedSteps.forEach((step, i) => {
-      step.order = i;
-    });
-
-    setNewInterface({
-      ...newInterface,
-      steps: updatedSteps,
-    });
+    // 순서 재정렬
+    const reorderedSteps = updatedSteps.map((step, i) => ({
+      ...step,
+      order: i + 1,
+    }));
 
     // 인터페이스 업데이트
-    const currentTime = getCurrentFormattedTime();
+    setNewInterface({ ...newInterface, steps: reorderedSteps });
+
+    // 전체 설정 업데이트
     updateSettings((prev) => ({
       ...prev,
       interfaces: (prev.interfaces || []).map((item) =>
         item.id === settings.selectedInterfaceId
-          ? { ...newInterface, steps: updatedSteps, updatedAt: currentTime }
+          ? {
+              ...item,
+              steps: reorderedSteps,
+              updatedAt: getCurrentFormattedTime(),
+            }
           : item
       ),
     }));
-  }
+  };
 
   // 파라미터 변경 핸들러
   const handleParameterChange = (paramName: string, value: string) => {
@@ -524,7 +463,7 @@ export default function InterfaceManagement() {
     }));
   };
 
-  // 선택된 단계 유형에 따라 참조 항목 목록 가져오기
+  // 참조 항목 옵션 가져오기
   const getReferenceOptions = () => {
     if (newStep.type === 'rfc') {
       return settings.rfcFunctions || [];
@@ -535,7 +474,7 @@ export default function InterfaceManagement() {
   };
 
   // 참조 항목 이름 가져오기
-  function getReferenceName(type: string, id: string) {
+  const getReferenceName = (type: string, id: string) => {
     if (type === 'rfc') {
       const rfcFunction = (settings.rfcFunctions || []).find(
         (f) => f.id === id
@@ -548,9 +487,9 @@ export default function InterfaceManagement() {
       return sql ? sql.name : '알 수 없음';
     }
     return '';
-  }
+  };
 
-  // 선택된 참조 항목의 파라미터 목록 가져오기
+  // 파라미터 필드 가져오기
   const getParameterFields = () => {
     if (!newStep.referenceId) return [];
 
@@ -558,38 +497,22 @@ export default function InterfaceManagement() {
       const rfcFunction = (settings.rfcFunctions || []).find(
         (f) => f.id === newStep.referenceId
       );
-      if (rfcFunction) {
-        return rfcFunction.parameters.filter((p) => p.type === 'import');
-      }
+      return rfcFunction ? rfcFunction.parameters : [];
     } else if (newStep.type === 'sql') {
       const sql = (settings.sqlList || []).find(
         (s) => s.id === newStep.referenceId
       );
-      if (sql && sql.parameters) {
-        return sql.parameters;
-      }
+      return sql ? sql.parameters || [] : [];
     }
     return [];
   };
 
-  // 로딩 중 표시
-  if (isLoading) {
-    return <div>인터페이스 설정을 불러오는 중...</div>;
-  }
-
   return (
     <FullPageContainer>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '10px',
-        }}
-      >
-        <Title>인터페이스 관리</Title>
-      </div>
-      <Description>인터페이스 목록 및 수정/추가/삭제 기능</Description>
+      <Title>인터페이스 관리</Title>
+      <Description>
+        RFC 함수와 SQL 쿼리를 조합하여 인터페이스를 구성합니다.
+      </Description>
 
       <FlexContainer>
         {/* 왼쪽 인터페이스 목록 패널 */}
@@ -603,30 +526,31 @@ export default function InterfaceManagement() {
                 width: '100%',
               }}
             >
-              <SelectGroup>
-                <SmallLabel>정렬:</SmallLabel>
-                <SmallSelect
-                  value={sortType}
-                  onChange={(e) => setSortType(e.target.value as SortType)}
-                >
+              <SelectGroup style={{ marginBottom: 0 }}>
+                <SmallSelect value={sortType} onChange={handleSortTypeChange}>
                   <option value="name">이름순</option>
                   <option value="createdAt">생성시간순</option>
                   <option value="updatedAt">수정시간순</option>
                 </SmallSelect>
               </SelectGroup>
 
-              <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-center',
+                }}
+              >
                 <Input
                   type="text"
                   value={searchTerm}
                   onChange={handleSearchChange}
                   placeholder="검색..."
                   style={{
-                    width: '120px',
+                    width: '150px',
                     padding: '5px',
                     fontSize: '0.9rem',
-                    height: '28px',
-                    marginBottom: 0,
+                    height: '30px',
                   }}
                 />
               </div>
@@ -685,16 +609,13 @@ export default function InterfaceManagement() {
                 <Input
                   value={newInterface.name}
                   onChange={(e) =>
-                    setNewInterface({
-                      ...newInterface,
-                      name: e.target.value,
-                    })
+                    setNewInterface({ ...newInterface, name: e.target.value })
                   }
-                  placeholder="예) 고객정보 조회 인터페이스"
+                  placeholder="인터페이스 이름 입력"
                   style={{ width: '100%', maxWidth: 'none' }}
                 />
               </div>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 2 }}>
                 <LeftAlignedLabel>설명</LeftAlignedLabel>
                 <Input
                   value={newInterface.description}

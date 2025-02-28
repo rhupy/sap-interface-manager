@@ -412,7 +412,6 @@ export default function SqlManagement() {
               }}
             >
               <SelectGroup style={{ marginBottom: 0 }}>
-                <SmallLabel>정렬:</SmallLabel>
                 <SmallSelect value={sortType} onChange={handleSortTypeChange}>
                   <option value="name">이름순</option>
                   <option value="createdAt">생성시간순</option>
@@ -420,18 +419,23 @@ export default function SqlManagement() {
                 </SmallSelect>
               </SelectGroup>
 
-              <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-center',
+                }}
+              >
                 <Input
                   type="text"
                   value={searchTerm}
                   onChange={handleSearchChange}
                   placeholder="검색..."
                   style={{
-                    width: '120px',
+                    width: '150px',
                     padding: '5px',
                     fontSize: '0.9rem',
-                    height: '28px',
-                    marginBottom: 0,
+                    height: '30px',
                   }}
                 />
               </div>

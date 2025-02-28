@@ -21,8 +21,8 @@ import AboutComponent from './pages/AboutComponent';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<
-    'profile' | 'interface' | 'rfc' | 'sql' | 'process' | 'settings' | 'about'
-  >('profile');
+    'project' | 'interface' | 'rfc' | 'sql' | 'process' | 'settings' | 'about'
+  >('project');
 
   return (
     <>
@@ -32,10 +32,10 @@ export default function App() {
           <AppContainer>
             <TabContainer>
               <TabButton
-                active={activeTab === 'profile'}
-                onClick={() => setActiveTab('profile')}
+                active={activeTab === 'project'}
+                onClick={() => setActiveTab('project')}
               >
-                프로파일
+                프로젝트
               </TabButton>
               <TabButton
                 active={activeTab === 'interface'}
@@ -77,7 +77,7 @@ export default function App() {
               </RightTabGroup>
             </TabContainer>
             <ContentContainer>
-              {activeTab === 'profile' && <Profile />}
+              {activeTab === 'project' && <Profile />}
               {activeTab === 'interface' && <InterfaceManagement />}
               {activeTab === 'rfc' && <RfcManagement />}
               {activeTab === 'sql' && <SqlManagement />}
@@ -96,8 +96,8 @@ export default function App() {
 function Profile() {
   return (
     <>
-      <Title>프로파일</Title>
-      <Description>프로파일 프로 파일...</Description>
+      <Title>프로젝트</Title>
+      <Description>프로젝트 프로 파일...</Description>
     </>
   );
 }

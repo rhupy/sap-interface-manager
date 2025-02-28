@@ -422,7 +422,7 @@ export default function RfcManagement() {
       >
         <Title>RFC 관리</Title>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Label style={{ marginRight: '10px' }}>RFC 연결:</Label>
+          <Label style={{ marginRight: '10px' }}>테스트 RFC :</Label>
           <Select
             value={settings.selectedRfc}
             onChange={(e) => updateSettings({ selectedRfc: e.target.value })}
@@ -452,7 +452,6 @@ export default function RfcManagement() {
               }}
             >
               <SelectGroup style={{ marginBottom: 0 }}>
-                <SmallLabel>정렬:</SmallLabel>
                 <SmallSelect value={sortType} onChange={handleSortTypeChange}>
                   <option value="name">이름순</option>
                   <option value="createdAt">생성시간순</option>
@@ -460,18 +459,23 @@ export default function RfcManagement() {
                 </SmallSelect>
               </SelectGroup>
 
-              <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-center',
+                }}
+              >
                 <Input
                   type="text"
                   value={searchTerm}
                   onChange={handleSearchChange}
                   placeholder="검색..."
                   style={{
-                    width: '120px',
+                    width: '150px',
                     padding: '5px',
                     fontSize: '0.9rem',
-                    height: '28px',
-                    marginBottom: 0,
+                    height: '30px',
                   }}
                 />
               </div>
