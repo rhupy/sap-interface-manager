@@ -13,6 +13,10 @@ export interface Settings {
   // RFC 함수 관리 관련 필드
   rfcFunctions?: RfcFunctionInfo[];
   selectedRfcFunctionId?: string;
+
+  // 인터페이스 관리 관련 필드
+  interfaces?: InterfaceInfo[];
+  selectedInterfaceId?: string;
 }
 
 // API 인터페이스
@@ -120,4 +124,24 @@ export interface RfcParameter {
   dataType: string; // 데이터 타입 (STRING, INT, TABLE 등)
   description?: string;
   defaultValue?: string;
+}
+
+// 인터페이스 정보
+export interface InterfaceInfo {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+  steps: InterfaceStep[];
+}
+
+// 인터페이스 단계 (RFC 또는 SQL)
+export interface InterfaceStep {
+  id: string;
+  type: 'rfc' | 'sql';
+  name: string;
+  referenceId: string; // RFC 함수 ID 또는 SQL ID
+  order: number;
+  parameters?: Record<string, string>; // 파라미터 매핑 정보
 }

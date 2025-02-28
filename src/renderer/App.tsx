@@ -11,6 +11,7 @@ import {
 } from './styles/CommonStyles';
 import { MessageProvider } from './context/MessageContext';
 import { MessageDisplay } from './components/MessageDisplay';
+import InterfaceManagement from './pages/InterfaceManagement';
 import RfcManagement from './pages/RfcManagement';
 import SqlManagement from './pages/SqlManagement';
 import SettingsComponent from './pages/SettingsComponent';
@@ -97,15 +98,6 @@ function Profile() {
     <>
       <Title>프로파일</Title>
       <Description>프로파일 프로 파일...</Description>
-    </>
-  );
-}
-
-function InterfaceManagement() {
-  return (
-    <>
-      <Title>인터페이스 관리</Title>
-      <Description>인터페이스 목록 및 설정...</Description>
     </>
   );
 }
