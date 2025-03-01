@@ -24,6 +24,7 @@
 - **Node.js** (v16.x or above)
 - **npm** (v7.x or above)
 - **Oracle DB Client** (Required for `oracledb` package)
+- **SAP RFC SDK** (v7.50)
 
 ### Clone the Repository
 
