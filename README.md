@@ -59,7 +59,8 @@ cd sap-interface-manager
 - **Node.js** (v16.x 이상)
 - **npm** (v7.x 이상)
 - **Oracle DB 클라이언트** (oracledb 패키지 사용을 위해 필요)
-
+- **SAP RFC SDK** (v7.50)
+  
 ### 저장소 클론
 
 ```bash
