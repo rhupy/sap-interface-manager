@@ -33,7 +33,9 @@ git clone https://github.com/rhupy/sap-interface-manager.git
 cd sap-interface-manager
 ```
 
-# SAP Interface Manager
+---
+
+# SAP Interface Manager (한글)
 
 ## 프로젝트 개요
 **SAP Interface Manager**는 **React**와 **Electron**을 사용하여 SAP RFC 데이터를 관리하고, Oracle DB와 연동하여 데이터를 삽입 및 업데이트하며, 인터페이스 관리, 스케줄링, 실시간 로깅 등 다양한 기능을 제공하는 데스크탑 애플리케이션입니다. 이 도구는 SAP 시스템 및 Oracle 데이터베이스와 쉽게 상호작용할 수 있게 해줍니다.
@@ -61,6 +63,6 @@ cd sap-interface-manager
 ### 저장소 클론
 
 ```bash
-git clone https://github.com/yourusername/sap-interface-manager.git
+git clone https://github.com/rhupy/sap-interface-manager.git
 cd sap-interface-manager
 
