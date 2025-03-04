@@ -18,6 +18,7 @@ export interface ParameterMappingProps {
   targetItems: MappingItem[];
   connections: MappingConnection[];
   onConnectionsChange: (connections: MappingConnection[]) => void;
+  onDeleteConnection?: (connectionId: string) => void;
   sourceTitle?: string;
   targetTitle?: string;
   readOnly?: boolean;

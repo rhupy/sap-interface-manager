@@ -396,9 +396,6 @@ export default function SqlManagement() {
 
   return (
     <FullPageContainer>
-      <Title>SQL 관리</Title>
-      <Description>등록된 SQL 목록 및 수정/추가/삭제 기능</Description>
-
       <FlexContainer>
         {/* 왼쪽 SQL 목록 패널 */}
         <SidePanel>

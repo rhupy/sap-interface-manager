@@ -347,7 +347,7 @@ export default function RfcManagement() {
 
     try {
       // RFC 연결 정보 찾기
-      const rfcConnection = settings.rfcList.find(
+      const rfcConnection = settings.rfcConnections.find(
         (rfc) => rfc.connectionName === settings.selectedRfc
       );
 
@@ -428,7 +428,7 @@ export default function RfcManagement() {
             style={{ width: '200px' }}
           >
             <option value="">RFC 연결 선택</option>
-            {settings.rfcList.map((rfc) => (
+            {settings.rfcConnections.map((rfc) => (
               <option key={rfc.connectionName} value={rfc.connectionName}>
                 {rfc.connectionName}
               </option>
@@ -528,7 +528,33 @@ export default function RfcManagement() {
         {/* 오른쪽 RFC 함수 정보 패널 */}
         <MainPanel>
           <Section>
-            <SectionTitle>RFC 함수 정보</SectionTitle>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '16px',
+              }}
+            >
+              <SectionTitle>RFC 함수 정보</SectionTitle>
+              <div>
+                <LeftAlignedLabel>테스트 연결</LeftAlignedLabel>
+                <Select
+                  value={settings.selectedRfc}
+                  onChange={(e) =>
+                    updateSettings({ selectedRfc: e.target.value })
+                  }
+                  style={{ width: '200px' }}
+                >
+                  <option value="">RFC 연결 선택</option>
+                  {settings.rfcConnections.map((rfc) => (
+                    <option key={rfc.connectionName} value={rfc.connectionName}>
+                      {rfc.connectionName}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </div>
 
             <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
               <div style={{ flex: 1 }}>

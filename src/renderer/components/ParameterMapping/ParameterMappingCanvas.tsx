@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DraggableItem } from './DraggableItem';
@@ -11,6 +11,7 @@ export const ParameterMappingCanvas: React.FC<ParameterMappingProps> = ({
   targetItems,
   connections,
   onConnectionsChange,
+  onDeleteConnection,
   sourceTitle = '출력 파라미터',
   targetTitle = '입력 파라미터',
   readOnly = false,
@@ -35,7 +36,13 @@ export const ParameterMappingCanvas: React.FC<ParameterMappingProps> = ({
   };
 
   const handleDeleteConnection = (connectionId: string) => {
-    onConnectionsChange(connections.filter((conn) => conn.id !== connectionId));
+    if (onDeleteConnection) {
+      onDeleteConnection(connectionId);
+    } else {
+      onConnectionsChange(
+        connections.filter((conn) => conn.id !== connectionId)
+      );
+    }
   };
 
   return (
@@ -48,7 +55,7 @@ export const ParameterMappingCanvas: React.FC<ParameterMappingProps> = ({
             left: 0,
             width: '100%',
             height: '100%',
-            pointerEvents: 'none',
+            pointerEvents: 'auto',
             zIndex: 1,
           }}
         >

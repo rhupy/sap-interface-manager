@@ -423,6 +423,7 @@ export default function InterfaceManagement() {
   };
 
   // 파라미터 매핑 다이얼로그 컴포넌트
+  // 파라미터 매핑 다이얼로그 컴포넌트
   const ParameterMappingDialog = () => {
     if (mappingStepIndex === null || !showMappingDialog) return null;
 
@@ -505,6 +506,14 @@ export default function InterfaceManagement() {
       setCurrentMappings(newMappings);
     };
 
+    // 연결 삭제 핸들러
+    const handleDeleteConnection = (connectionId: string) => {
+      const updatedConnections = connections.filter(
+        (conn) => conn.id !== connectionId
+      );
+      handleConnectionsChange(updatedConnections);
+    };
+
     return (
       <div
         className="modal-overlay"
@@ -530,41 +539,66 @@ export default function InterfaceManagement() {
             width: '80%',
             maxWidth: '900px',
             maxHeight: '80vh',
-            overflow: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           <h3 style={{ marginTop: 0 }}>파라미터 매핑 - {currentStep.name}</h3>
 
-          <ParameterMappingCanvas
-            sourceItems={sourceItems}
-            targetItems={targetItems}
-            connections={connections}
-            onConnectionsChange={handleConnectionsChange}
-            sourceTitle="이전 작업 출력 파라미터"
-            targetTitle="현재 작업 입력 파라미터"
-            containerStyle={{ minHeight: '400px' }}
-          />
+          <div
+            style={{
+              flex: 1,
+              overflow: 'auto',
+              marginBottom: '15px',
+              minHeight: '400px',
+              maxHeight: 'calc(80vh - 130px)', // 헤더와 버튼 영역 제외한 높이
+            }}
+          >
+            <ParameterMappingCanvas
+              sourceItems={sourceItems}
+              targetItems={targetItems}
+              connections={connections}
+              onConnectionsChange={handleConnectionsChange}
+              onDeleteConnection={handleDeleteConnection}
+              sourceTitle="이전 작업 출력 파라미터"
+              targetTitle="현재 작업 입력 파라미터"
+              containerStyle={{ minHeight: '100%' }}
+            />
+          </div>
 
           <div
             style={{
               display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '10px',
-              marginTop: '20px',
+              justifyContent: 'space-between',
+              padding: '10px 0',
+              borderTop: '1px solid #eee',
+              backgroundColor: 'white',
             }}
           >
-            <Button onClick={() => handleSaveMappings(currentMappings)}>
-              저장
-            </Button>
-            <Button
-              onClick={() => {
-                setShowMappingDialog(false);
-                setMappingStepIndex(null);
+            <div>
+              <small style={{ color: '#666' }}>
+                * 연결선을 클릭하면 매핑이 삭제됩니다.
+              </small>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                gap: '10px',
               }}
-              style={{ backgroundColor: '#6c757d' }}
             >
-              취소
-            </Button>
+              <Button onClick={() => handleSaveMappings(currentMappings)}>
+                저장
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowMappingDialog(false);
+                  setMappingStepIndex(null);
+                }}
+                style={{ backgroundColor: '#6c757d' }}
+              >
+                취소
+              </Button>
+            </div>
           </div>
         </div>
       </div>

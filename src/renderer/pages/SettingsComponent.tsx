@@ -63,7 +63,7 @@ export default function SettingsComponent() {
       // 'RFC 선택'인 경우 입력창 초기화
       setNewRfc(emptyRfc);
     } else {
-      const found = settings.rfcList.find(
+      const found = settings.rfcConnections.find(
         (r) => r.connectionName === settings.selectedRfc
       );
       if (found) setNewRfc(found);
@@ -101,7 +101,7 @@ export default function SettingsComponent() {
   // (1) RFC 추가
   const addRfcConnection = () => {
     if (newRfc.connectionName && newRfc.appServerHost) {
-      const isDuplicate = settings.rfcList.some(
+      const isDuplicate = settings.rfcConnections.some(
         (rfc) => rfc.connectionName === newRfc.connectionName
       );
       if (isDuplicate) {
@@ -109,7 +109,7 @@ export default function SettingsComponent() {
         return;
       }
       updateSettings({
-        rfcList: [...settings.rfcList, newRfc],
+        rfcConnections: [...settings.rfcConnections, newRfc],
       });
       setNewRfc(emptyRfc);
       showMessage('RFC 연결이 추가되었습니다.', 'success');
@@ -126,7 +126,7 @@ export default function SettingsComponent() {
     }
     updateSettings((prev) => ({
       ...prev, // 기존 모든 속성 유지
-      rfcList: prev.rfcList.filter(
+      rfcConnections: prev.rfcConnections.filter(
         (rfc) => rfc.connectionName !== connectionName
       ),
       // 현재 선택된 RFC가 삭제 대상이면 selectedRfc 비우기
@@ -139,7 +139,7 @@ export default function SettingsComponent() {
   const updateRfcConnection = () => {
     if (settings.selectedRfc && newRfc.connectionName && newRfc.appServerHost) {
       // 중복 검사 (본인 제외)
-      const isDuplicate = settings.rfcList.some(
+      const isDuplicate = settings.rfcConnections.some(
         (rfc) =>
           rfc.connectionName === newRfc.connectionName &&
           rfc.connectionName !== settings.selectedRfc
@@ -150,7 +150,7 @@ export default function SettingsComponent() {
       }
       updateSettings((prev) => ({
         ...prev, // 기존 모든 속성 유지
-        rfcList: prev.rfcList.map((rfc) =>
+        rfcConnections: prev.rfcConnections.map((rfc) =>
           rfc.connectionName === prev.selectedRfc ? newRfc : rfc
         ),
         // 새 이름으로 바뀌었으면 selectedRfc도 갱신
@@ -172,7 +172,7 @@ export default function SettingsComponent() {
     if (settings.selectedRfc) {
       showMessage('RFC 연결 테스트 중입니다. 기다려주세요...', 'info', 900000);
 
-      const rfc = settings.rfcList.find(
+      const rfc = settings.rfcConnections.find(
         (r) => r.connectionName === settings.selectedRfc
       );
       if (!rfc) {
@@ -357,7 +357,7 @@ export default function SettingsComponent() {
           marginBottom: '10px',
         }}
       >
-        <Title>환경 설정</Title>
+        <Title>접속 정보</Title>
         {/* 설정 파일 열기 버튼 */}
         <Button
           onClick={openSettingsFile}
@@ -384,7 +384,7 @@ export default function SettingsComponent() {
               onChange={(e) => handleRfcSelect(e.target.value)}
             >
               <option value="">RFC 선택</option>
-              {settings.rfcList.map((rfc) => (
+              {settings.rfcConnections.map((rfc) => (
                 <option key={rfc.connectionName} value={rfc.connectionName}>
                   {rfc.connectionName}
                 </option>

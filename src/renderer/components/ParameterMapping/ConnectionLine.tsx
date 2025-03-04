@@ -65,13 +65,32 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({
   };
 
   return (
-    <path
-      ref={lineRef}
-      stroke="#4a90e2"
-      strokeWidth="2"
-      fill="none"
-      onClick={handleLineClick}
-      style={{ cursor: readOnly ? 'default' : 'pointer' }}
-    />
+    <>
+      {/* 실제 선 (시각적 표현) */}
+      <path
+        ref={lineRef}
+        stroke="#4a90e2"
+        strokeWidth="2"
+        fill="none"
+        style={{ pointerEvents: 'none' }} // 이 선은 클릭 이벤트를 받지 않음
+      />
+
+      {/* 클릭 가능한 넓은 영역 (사용자 상호작용용) */}
+      <path
+        ref={(el) => {
+          if (el && lineRef.current) {
+            el.setAttribute('d', lineRef.current.getAttribute('d') || '');
+          }
+        }}
+        stroke="transparent"
+        strokeWidth="15" // 더 넓은 클릭 영역
+        fill="none"
+        onClick={handleLineClick}
+        style={{
+          cursor: readOnly ? 'default' : 'pointer',
+          pointerEvents: 'auto', // 이 선은 클릭 이벤트를 받음
+        }}
+      />
+    </>
   );
 };

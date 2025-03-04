@@ -1,7 +1,7 @@
 // src/types/index.ts
 // Settings 인터페이스 : 전 페이지에서 settings.json 파일에 저장되는 설정 정보
 export interface Settings {
-  rfcList: RfcConnectionInfo[];
+  rfcConnections: RfcConnectionInfo[];
   dbConnections: DbConnectionConfig[];
   selectedRfc: string;
   selectedDbId: string;
@@ -38,7 +38,7 @@ export interface ElectronAPI {
 
   // RFC 연결 테스트
   testRfcConnection?: (
-    rfcConfig: RfcConnectionDetail
+    rfcConfig: RfcConnectionInfo
   ) => Promise<{ success: boolean; message?: string }>;
 
   // 설정 파일 열기
@@ -60,7 +60,9 @@ declare global {
 }
 
 // RFC 접속 정보
-export interface RfcConnectionDetail {
+export interface RfcConnectionInfo {
+  id: string;
+  connectionName: string;
   appServerHost: string;
   systemNumber: string;
   systemID: string;
@@ -69,10 +71,6 @@ export interface RfcConnectionDetail {
   client: string;
   language: string;
   poolSize: string;
-}
-
-export interface RfcConnectionInfo extends RfcConnectionDetail {
-  connectionName: string;
 }
 
 // DB 연결 설정
