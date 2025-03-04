@@ -33,7 +33,7 @@ export interface ElectronAPI {
 
   // DB 연결 테스트
   testDbConnection?: (
-    dbConfig: OracleDbConfig
+    dbConfig: DbConnectionConfig
   ) => Promise<{ success: boolean; message?: string }>;
 
   // RFC 연결 테스트
@@ -71,15 +71,6 @@ export interface RfcConnectionInfo {
   client: string;
   language: string;
   poolSize: string;
-}
-
-// DB 연결 설정
-export interface OracleDbConfig {
-  host: string;
-  port: string;
-  sid: string;
-  user: string;
-  password: string;
 }
 
 // DB 접속 정보

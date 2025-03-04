@@ -670,8 +670,55 @@ export default function InterfaceManagement() {
         <MainPanel
           style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
         >
-          <Section style={{ height: '140px', minHeight: '140px' }}>
-            <SectionTitle>인터페이스 정보</SectionTitle>
+          <Section style={{ height: '150px', minHeight: '150px' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '16px',
+              }}
+            >
+              <SectionTitle>인터페이스 정보</SectionTitle>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ flex: 1 }}>
+                  <LeftAlignedLabel>테스트 연결</LeftAlignedLabel>
+                  <Select
+                    value={settings.selectedRfc}
+                    onChange={(e) =>
+                      updateSettings({ selectedRfc: e.target.value })
+                    }
+                    style={{ width: '180px' }}
+                  >
+                    <option value="">RFC 연결 선택</option>
+                    {settings.rfcConnections.map((rfc) => (
+                      <option
+                        key={rfc.connectionName}
+                        value={rfc.connectionName}
+                      >
+                        {rfc.connectionName}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <div>
+                  <Select
+                    value={settings.selectedDbId}
+                    onChange={(e) =>
+                      updateSettings({ selectedDbId: e.target.value })
+                    }
+                    style={{ width: '180px' }}
+                  >
+                    <option value="">DB 연결 선택</option>
+                    {settings.dbConnections.map((db) => (
+                      <option key={db.name} value={db.name}>
+                        {db.name}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+              </div>
+            </div>
             <div style={{ display: 'flex', gap: '20px' }}>
               <div style={{ flex: 1 }}>
                 <LeftAlignedLabel>타이틀</LeftAlignedLabel>
@@ -714,6 +761,7 @@ export default function InterfaceManagement() {
                     fontSize: '0.8rem',
                     color: '#666',
                     whiteSpace: 'nowrap',
+                    paddingBottom: '5px',
                   }}
                 >
                   <div>생성: {newInterface.createdAt || '새 인터페이스'}</div>

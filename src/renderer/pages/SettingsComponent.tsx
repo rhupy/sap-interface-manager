@@ -296,6 +296,8 @@ export default function SettingsComponent() {
       }
       try {
         const result = await window.api.testDbConnection({
+          id: db.id,
+          name: db.name,
           host: db.host,
           port: db.port,
           sid: db.sid,
