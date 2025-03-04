@@ -17,17 +17,19 @@ export const DroppableItem: React.FC<DroppableItemProps> = ({
   connectionLabel,
   readOnly = false,
 }) => {
-  const [{ isOver }, drop] = useDrop({
+  const [{ isOver, canDrop }, drop] = useDrop({
     accept: 'PARAMETER',
     drop: (droppedItem: MappingItem & { isSource: boolean }) => {
-      if (droppedItem.isSource) {
-        onConnect(droppedItem, item);
-      }
+      console.log('Item dropped:', droppedItem);
+      onConnect(droppedItem, item);
+      return { dropped: true };
     },
-    canDrop: (droppedItem: MappingItem & { isSource: boolean }) =>
-      !readOnly && droppedItem.isSource,
+    canDrop: (droppedItem: MappingItem & { isSource: boolean }) => {
+      return !readOnly && droppedItem.isSource;
+    },
     collect: (monitor) => ({
       isOver: !!monitor.isOver(),
+      canDrop: !!monitor.canDrop(),
     }),
   });
 
@@ -38,14 +40,13 @@ export const DroppableItem: React.FC<DroppableItemProps> = ({
       style={{
         padding: '8px 12px',
         margin: '4px 0',
-        backgroundColor: isOver
-          ? '#d1ecf1'
-          : isConnected
-            ? '#e8f4f8'
-            : '#f8f9fa',
+        backgroundColor:
+          isOver && canDrop ? '#d1ecf1' : isConnected ? '#e8f4f8' : '#f8f9fa',
         borderRadius: '4px',
-        border: `1px solid ${isOver ? '#bee5eb' : isConnected ? '#b8d0e0' : '#ddd'}`,
+        border: `1px solid ${isOver && canDrop ? '#bee5eb' : isConnected ? '#b8d0e0' : '#ddd'}`,
         position: 'relative',
+        userSelect: 'none',
+        transition: 'background-color 0.2s, border-color 0.2s',
       }}
     >
       <div>{item.label}</div>

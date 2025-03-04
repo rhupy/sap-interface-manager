@@ -19,8 +19,8 @@ export const DraggableItem: React.FC<DraggableItemProps> = ({
 }) => {
   const [{ isDragging }, drag] = useDrag({
     type: 'PARAMETER',
-    item: { ...item, isSource },
-    canDrag: !readOnly && isSource,
+    item: () => ({ ...item, isSource }),
+    canDrag: !readOnly,
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
@@ -32,13 +32,14 @@ export const DraggableItem: React.FC<DraggableItemProps> = ({
       id={`mapping-item-${item.id}`}
       style={{
         opacity: isDragging ? 0.5 : 1,
-        cursor: isSource && !readOnly ? 'move' : 'default',
+        cursor: !readOnly ? 'grab' : 'default',
         padding: '8px 12px',
         margin: '4px 0',
         backgroundColor: isConnected ? '#d1ecf1' : '#f8f9fa',
         borderRadius: '4px',
         border: `1px solid ${isConnected ? '#bee5eb' : '#ddd'}`,
         position: 'relative',
+        userSelect: 'none', // 텍스트 선택 방지
       }}
     >
       <div>{item.label}</div>

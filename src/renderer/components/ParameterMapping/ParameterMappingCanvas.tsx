@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DraggableItem } from './DraggableItem';
@@ -18,6 +18,8 @@ export const ParameterMappingCanvas: React.FC<ParameterMappingProps> = ({
   containerStyle = {},
 }) => {
   const handleConnect = (sourceItem: MappingItem, targetItem: MappingItem) => {
+    console.log('Connecting:', sourceItem.label, 'to', targetItem.label);
+
     // 이미 연결된 타겟이 있으면 제거
     const filteredConnections = connections.filter(
       (conn) => conn.targetId !== targetItem.id
@@ -36,6 +38,8 @@ export const ParameterMappingCanvas: React.FC<ParameterMappingProps> = ({
   };
 
   const handleDeleteConnection = (connectionId: string) => {
+    console.log('Deleting connection:', connectionId);
+
     if (onDeleteConnection) {
       onDeleteConnection(connectionId);
     } else {
@@ -45,9 +49,22 @@ export const ParameterMappingCanvas: React.FC<ParameterMappingProps> = ({
     }
   };
 
+  // 디버깅용 로그
+  useEffect(() => {
+    console.log('Source items:', sourceItems);
+    console.log('Target items:', targetItems);
+    console.log('Connections:', connections);
+  }, [sourceItems, targetItems, connections]);
+
   return (
     <DndProvider backend={HTML5Backend}>
-      <div style={{ position: 'relative', ...containerStyle }}>
+      <div
+        style={{
+          position: 'relative',
+          minHeight: '400px',
+          ...containerStyle,
+        }}
+      >
         <svg
           style={{
             position: 'absolute',
@@ -57,6 +74,7 @@ export const ParameterMappingCanvas: React.FC<ParameterMappingProps> = ({
             height: '100%',
             pointerEvents: 'auto',
             zIndex: 1,
+            overflow: 'visible',
           }}
         >
           {connections.map((connection) => (
@@ -69,45 +87,80 @@ export const ParameterMappingCanvas: React.FC<ParameterMappingProps> = ({
           ))}
         </svg>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            position: 'relative',
+            zIndex: 2,
+          }}
+        >
           {/* 소스 아이템 (출력 파라미터) */}
           <div style={{ width: '45%' }}>
             <h4>{sourceTitle}</h4>
-            {sourceItems.map((item) => {
-              const connection = connections.find(
-                (conn) => conn.sourceId === item.id
-              );
-              return (
-                <DraggableItem
-                  key={item.id}
-                  item={item}
-                  isSource={true}
-                  isConnected={!!connection}
-                  connectionLabel={connection?.targetLabel}
-                  readOnly={readOnly}
-                />
-              );
-            })}
+            <div
+              style={{
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                padding: '8px',
+                backgroundColor: '#f8f9fa',
+              }}
+            >
+              {sourceItems.map((item) => {
+                const connection = connections.find(
+                  (conn) => conn.sourceId === item.id
+                );
+                return (
+                  <DraggableItem
+                    key={item.id}
+                    item={item}
+                    isSource={true}
+                    isConnected={!!connection}
+                    connectionLabel={connection?.targetLabel}
+                    readOnly={readOnly}
+                  />
+                );
+              })}
+              {sourceItems.length === 0 && (
+                <div style={{ padding: '8px', color: '#6c757d' }}>
+                  출력 파라미터가 없습니다.
+                </div>
+              )}
+            </div>
           </div>
 
           {/* 타겟 아이템 (입력 파라미터) */}
           <div style={{ width: '45%' }}>
             <h4>{targetTitle}</h4>
-            {targetItems.map((item) => {
-              const connection = connections.find(
-                (conn) => conn.targetId === item.id
-              );
-              return (
-                <DroppableItem
-                  key={item.id}
-                  item={item}
-                  onConnect={handleConnect}
-                  isConnected={!!connection}
-                  connectionLabel={connection?.sourceLabel}
-                  readOnly={readOnly}
-                />
-              );
-            })}
+            <div
+              style={{
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                padding: '8px',
+                backgroundColor: '#f8f9fa',
+              }}
+            >
+              {targetItems.map((item) => {
+                const connection = connections.find(
+                  (conn) => conn.targetId === item.id
+                );
+                return (
+                  <DroppableItem
+                    key={item.id}
+                    item={item}
+                    onConnect={handleConnect}
+                    isConnected={!!connection}
+                    connectionLabel={connection?.sourceLabel}
+                    readOnly={readOnly}
+                  />
+                );
+              })}
+              {targetItems.length === 0 && (
+                <div style={{ padding: '8px', color: '#6c757d' }}>
+                  입력 파라미터가 없습니다.
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

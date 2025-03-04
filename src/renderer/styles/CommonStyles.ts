@@ -108,7 +108,7 @@ export const Label = styled.label`
 `;
 
 export const Section = styled.div`
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   background-color: #fff;
   padding: 15px;
   border-radius: 4px;

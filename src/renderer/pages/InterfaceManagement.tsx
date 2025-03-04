@@ -423,7 +423,6 @@ export default function InterfaceManagement() {
   };
 
   // 파라미터 매핑 다이얼로그 컴포넌트
-  // 파라미터 매핑 다이얼로그 컴포넌트
   const ParameterMappingDialog = () => {
     if (mappingStepIndex === null || !showMappingDialog) return null;
 
@@ -666,177 +665,217 @@ export default function InterfaceManagement() {
           </SidePanelContent>
         </SidePanel>
 
-        <MainPanel>
-          <Section style={{ height: '300px' }}>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
+        <MainPanel
+          style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+        >
+          <Section style={{ height: '140px', minHeight: '140px' }}>
+            <SectionTitle>인터페이스 정보</SectionTitle>
+            <div style={{ display: 'flex', gap: '20px' }}>
+              <div style={{ flex: 1 }}>
+                <LeftAlignedLabel>타이틀</LeftAlignedLabel>
+                <Input
+                  type="text"
+                  value={newInterface.name}
+                  onChange={(e) =>
+                    setNewInterface({
+                      ...newInterface,
+                      name: e.target.value,
+                    })
+                  }
+                  placeholder="인터페이스 이름을 입력하세요"
+                  style={{ width: '100%', maxWidth: 'none' }}
+                />
+              </div>
+              <div style={{ flex: 2 }}>
+                <LeftAlignedLabel>설명</LeftAlignedLabel>
+                <Input
+                  value={newInterface.description}
+                  onChange={(e) =>
+                    setNewInterface({
+                      ...newInterface,
+                      description: e.target.value,
+                    })
+                  }
+                  placeholder="인터페이스에 대한 설명을 입력하세요"
+                  style={{ width: '100%', maxWidth: 'none' }}
+                />
+              </div>
               <div
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
+                  width: '180px',
+                  textAlign: 'right',
+                  alignSelf: 'flex-end',
                 }}
               >
-                <SectionTitle>인터페이스 정보</SectionTitle>
                 <div
                   style={{
-                    display: 'flex',
-                    gap: '8px',
+                    fontSize: '0.8rem',
+                    color: '#666',
+                    whiteSpace: 'nowrap',
                   }}
                 >
-                  <Button onClick={handleAddInterface}>
-                    새 인터페이스 추가
-                  </Button>
-                  <Button
-                    onClick={handleDeleteInterface}
-                    style={{ backgroundColor: '#e74c3c' }}
-                  >
-                    삭제
-                  </Button>
+                  <div>생성: {newInterface.createdAt || '새 인터페이스'}</div>
+                  <div>수정: {newInterface.updatedAt || '새 인터페이스'}</div>
                 </div>
               </div>
-
               <div
-                style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}
+                style={{ display: 'flex', gap: '8px', alignSelf: 'flex-end' }}
               >
-                <div style={{ flex: 1 }}>
-                  <LeftAlignedLabel>타이틀</LeftAlignedLabel>
-                  <Input
-                    type="text"
-                    value={newInterface.name}
-                    onChange={(e) =>
-                      setNewInterface({
-                        ...newInterface,
-                        name: e.target.value,
-                      })
-                    }
-                    placeholder="인터페이스 이름을 입력하세요"
-                    style={{ width: '100%', maxWidth: 'none' }}
-                  />
-                </div>
-                <div style={{ flex: 2 }}>
-                  <LeftAlignedLabel>설명</LeftAlignedLabel>
-                  <Input
-                    value={newInterface.description}
-                    onChange={(e) =>
-                      setNewInterface({
-                        ...newInterface,
-                        description: e.target.value,
-                      })
-                    }
-                    placeholder="인터페이스에 대한 설명을 입력하세요"
-                    style={{ width: '100%', maxWidth: 'none' }}
-                  />
-                </div>
-                <div
-                  style={{
-                    width: '180px',
-                    textAlign: 'right',
-                    alignSelf: 'flex-end',
-                  }}
+                <Button onClick={handleAddInterface}>새 인터페이스 추가</Button>
+                <Button
+                  onClick={handleDeleteInterface}
+                  style={{ backgroundColor: '#e74c3c' }}
                 >
-                  <div
-                    style={{
-                      fontSize: '0.8rem',
-                      color: '#666',
-                      whiteSpace: 'nowrap',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    <div>생성: {newInterface.createdAt || '새 인터페이스'}</div>
-                    <div>수정: {newInterface.updatedAt || '새 인터페이스'}</div>
-                  </div>
-                </div>
+                  삭제
+                </Button>
               </div>
             </div>
           </Section>
 
           {newInterface.id && (
             <>
-              <Section>
+              <Section style={{ height: '140px', minHeight: '140px' }}>
                 <SectionTitle>작업 관리</SectionTitle>
-                <div style={{ marginBottom: '15px' }}>
-                  <LeftAlignedLabel>작업 유형</LeftAlignedLabel>
-                  <SelectGroup>
-                    <Select
-                      value={newStep.type}
-                      onChange={(e) =>
-                        setNewStep({
-                          ...newStep,
-                          type: e.target.value as 'rfc' | 'sql',
-                          referenceId: '',
-                        })
-                      }
-                    >
-                      <option value="rfc">RFC 함수</option>
-                      <option value="sql">SQL 쿼리</option>
-                    </Select>
-                  </SelectGroup>
-                </div>
-                <div style={{ marginBottom: '15px' }}>
-                  <LeftAlignedLabel>참조 항목</LeftAlignedLabel>
-                  <SelectGroup>
-                    <Select
-                      value={newStep.referenceId}
-                      onChange={(e) =>
-                        setNewStep({
-                          ...newStep,
-                          referenceId: e.target.value,
-                        })
-                      }
-                    >
-                      <option value="">선택하세요</option>
-                      {newStep.type === 'rfc' &&
-                        (settings.rfcFunctions || []).map((func) => (
-                          <option key={func.id} value={func.id}>
-                            {func.name}
-                          </option>
-                        ))}
-                      {newStep.type === 'sql' &&
-                        (settings.sqlList || []).map((sql) => (
-                          <option key={sql.id} value={sql.id}>
-                            {sql.name}
-                          </option>
-                        ))}
-                    </Select>
-                  </SelectGroup>
-                </div>
-                <div style={{ marginBottom: '15px' }}>
-                  <LeftAlignedLabel>작업 이름</LeftAlignedLabel>
-                  <Input
-                    type="text"
-                    value={newStep.name}
-                    onChange={(e) =>
-                      setNewStep({
-                        ...newStep,
-                        name: e.target.value,
-                      })
-                    }
-                    placeholder="작업 이름을 입력하세요"
-                  />
-                </div>
-                <ButtonGroup>
-                  {!isEditingStep ? (
-                    <Button onClick={handleAddStep}>작업 추가</Button>
-                  ) : (
-                    <>
-                      <Button onClick={handleUpdateStep}>작업 수정</Button>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '20px',
+                    alignItems: 'flex-end',
+                  }}
+                >
+                  <div style={{ flex: 1 }}>
+                    <LeftAlignedLabel>작업 유형</LeftAlignedLabel>
+                    <div style={{ display: 'flex', gap: '8px' }}>
                       <Button
-                        onClick={handleCancelEdit}
-                        style={{ backgroundColor: '#6c757d' }}
+                        onClick={() =>
+                          setNewStep({
+                            ...newStep,
+                            type: 'rfc',
+                            referenceId: '',
+                            name: '',
+                          })
+                        }
+                        style={{
+                          flex: 1,
+                          backgroundColor:
+                            newStep.type === 'rfc' ? '#007bff' : '#f8f9fa',
+                          color: newStep.type === 'rfc' ? 'white' : '#212529',
+                          border: '1px solid #ced4da',
+                          fontWeight:
+                            newStep.type === 'rfc' ? 'bold' : 'normal',
+                        }}
                       >
-                        취소
+                        RFC 함수
                       </Button>
-                    </>
-                  )}
-                </ButtonGroup>
+                      <Button
+                        onClick={() =>
+                          setNewStep({
+                            ...newStep,
+                            type: 'sql',
+                            referenceId: '',
+                            name: '',
+                          })
+                        }
+                        style={{
+                          flex: 1,
+                          backgroundColor:
+                            newStep.type === 'sql' ? '#007bff' : '#f8f9fa',
+                          color: newStep.type === 'sql' ? 'white' : '#212529',
+                          border: '1px solid #ced4da',
+                          fontWeight:
+                            newStep.type === 'sql' ? 'bold' : 'normal',
+                        }}
+                      >
+                        SQL 쿼리
+                      </Button>
+                    </div>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <LeftAlignedLabel>작업 선택</LeftAlignedLabel>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <Select
+                        value={newStep.referenceId}
+                        onChange={(e) => {
+                          const selectedId = e.target.value;
+                          let selectedName = '';
+
+                          if (newStep.type === 'rfc') {
+                            const selectedFunc = settings.rfcFunctions?.find(
+                              (func) => func.id === selectedId
+                            );
+                            selectedName = selectedFunc?.name || '';
+                          } else if (newStep.type === 'sql') {
+                            const selectedSql = settings.sqlList?.find(
+                              (sql) => sql.id === selectedId
+                            );
+                            selectedName = selectedSql?.name || '';
+                          }
+
+                          setNewStep({
+                            ...newStep,
+                            referenceId: selectedId,
+                            name: selectedName,
+                          });
+                        }}
+                        style={{ width: '100%' }}
+                      >
+                        <option value="">선택하세요</option>
+                        {newStep.type === 'rfc' &&
+                          (settings.rfcFunctions || []).map((func) => (
+                            <option key={func.id} value={func.id}>
+                              {func.name}
+                            </option>
+                          ))}
+                        {newStep.type === 'sql' &&
+                          (settings.sqlList || []).map((sql) => (
+                            <option key={sql.id} value={sql.id}>
+                              {sql.name}
+                            </option>
+                          ))}
+                      </Select>
+                    </div>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <LeftAlignedLabel>작업 이름</LeftAlignedLabel>
+                    <Input
+                      type="text"
+                      value={newStep.name}
+                      onChange={(e) =>
+                        setNewStep({
+                          ...newStep,
+                          name: e.target.value,
+                        })
+                      }
+                      placeholder="작업 선택 시 자동으로 입력됩니다"
+                      style={{ width: '100%', maxWidth: 'none' }}
+                    />
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '8px',
+                      justifyContent: 'flex-end',
+                      alignSelf: 'flex-end',
+                    }}
+                  >
+                    {!isEditingStep ? (
+                      <Button onClick={handleAddStep}>추가</Button>
+                    ) : (
+                      <>
+                        <Button onClick={handleUpdateStep}>수정</Button>
+                        <Button
+                          onClick={handleCancelEdit}
+                          style={{ backgroundColor: '#6c757d' }}
+                        >
+                          취소
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
               </Section>
 
-              <Section>
+              <Section style={{ flex: 1, overflow: 'auto' }}>
                 <SectionTitle>작업 목록</SectionTitle>
                 {newInterface.steps.length > 0 ? (
                   <div>
@@ -848,6 +887,7 @@ export default function InterfaceManagement() {
                           marginBottom: '10px',
                           border: '1px solid #ddd',
                           borderRadius: '4px',
+                          backgroundColor: '#f8f9fa',
                         }}
                       >
                         <div
@@ -855,24 +895,13 @@ export default function InterfaceManagement() {
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
-                            marginBottom: '5px',
                           }}
                         >
-                          <div>
-                            <strong>
-                              {index + 1}. {step.name}
-                            </strong>
-                            <span
-                              style={{
-                                marginLeft: '10px',
-                                color: '#666',
-                                fontSize: '0.9rem',
-                              }}
-                            >
-                              ({step.type === 'rfc' ? 'RFC 함수' : 'SQL 쿼리'})
-                            </span>
+                          <div style={{ fontWeight: 'bold' }}>
+                            {index + 1}. {step.type === 'rfc' ? 'RFC' : 'SQL'} (
+                            {step.name})
                           </div>
-                          <div>
+                          <div style={{ display: 'flex', gap: '5px' }}>
                             <Button
                               onClick={() => handleOpenMappingDialog(index)}
                               style={{
@@ -936,7 +965,6 @@ export default function InterfaceManagement() {
                               >
                                 {Object.entries(step.parameters).map(
                                   ([paramName, value]) => {
-                                    // 이전 작업의 출력 파라미터인지 확인
                                     const isReference = value.includes('.');
                                     return (
                                       <div
@@ -988,7 +1016,7 @@ export default function InterfaceManagement() {
                       textAlign: 'center',
                     }}
                   >
-                    등록된 작업가 없습니다. 작업를 추가해주세요.
+                    등록된 작업이 없습니다. 작업을 추가해주세요.
                   </div>
                 )}
               </Section>
