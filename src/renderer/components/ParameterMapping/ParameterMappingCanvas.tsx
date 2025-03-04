@@ -49,6 +49,28 @@ export const ParameterMappingCanvas: React.FC<ParameterMappingProps> = ({
     }
   };
 
+  // 파라미터 중복 제거 로직 추가
+  const getUniqueTargetItems = (items: MappingItem[]) => {
+    const uniqueItems: MappingItem[] = [];
+    const seenIds = new Set();
+
+    items.forEach((item) => {
+      // 파라미터 이름(ID)만 추출 (예: DATA1)
+      const paramName = item.id;
+
+      // 이미 처리한 파라미터인지 확인
+      if (!seenIds.has(paramName)) {
+        seenIds.add(paramName);
+        uniqueItems.push(item);
+      }
+    });
+
+    return uniqueItems;
+  };
+
+  // 기존 targetItems 대신 중복이 제거된 uniqueTargetItems 사용
+  const uniqueTargetItems = getUniqueTargetItems(targetItems);
+
   // 디버깅용 로그
   useEffect(() => {
     console.log('Source items:', sourceItems);
@@ -135,7 +157,7 @@ export const ParameterMappingCanvas: React.FC<ParameterMappingProps> = ({
                 backgroundColor: 'transparent', // 배경색 투명으로 변경
               }}
             >
-              {targetItems.map((item) => {
+              {uniqueTargetItems.map((item) => {
                 const connection = connections.find(
                   (conn) => conn.targetId === item.id
                 );
