@@ -542,7 +542,9 @@ export default function InterfaceManagement() {
             flexDirection: 'column',
           }}
         >
-          <h3 style={{ marginTop: 0 }}>파라미터 매핑 - {currentStep.name}</h3>
+          <h3 style={{ marginTop: 0, marginBottom: 8 }}>
+            파라미터 매핑 - {currentStep.name}
+          </h3>
 
           <div
             style={{

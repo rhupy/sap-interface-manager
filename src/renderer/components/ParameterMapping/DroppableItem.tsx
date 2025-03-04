@@ -5,6 +5,7 @@ import { MappingItem } from './types';
 interface DroppableItemProps {
   item: MappingItem;
   onConnect: (sourceItem: MappingItem, targetItem: MappingItem) => void;
+  onRemoveMapping?: (targetId: string) => void; // 매핑 제거 함수 추가
   isConnected?: boolean;
   connectionLabel?: string;
   readOnly?: boolean;
@@ -13,6 +14,7 @@ interface DroppableItemProps {
 export const DroppableItem: React.FC<DroppableItemProps> = ({
   item,
   onConnect,
+  onRemoveMapping,
   isConnected = false,
   connectionLabel,
   readOnly = false,
@@ -20,8 +22,9 @@ export const DroppableItem: React.FC<DroppableItemProps> = ({
   const [{ isOver, canDrop }, drop] = useDrop({
     accept: 'PARAMETER',
     drop: (droppedItem: MappingItem & { isSource: boolean }) => {
-      console.log('Item dropped:', droppedItem);
-      onConnect(droppedItem, item);
+      if (droppedItem.isSource) {
+        onConnect(droppedItem, item);
+      }
       return { dropped: true };
     },
     canDrop: (droppedItem: MappingItem & { isSource: boolean }) => {
@@ -32,6 +35,12 @@ export const DroppableItem: React.FC<DroppableItemProps> = ({
       canDrop: !!monitor.canDrop(),
     }),
   });
+
+  const handleRemoveMapping = () => {
+    if (!readOnly && onRemoveMapping && isConnected) {
+      onRemoveMapping(item.id);
+    }
+  };
 
   return (
     <div
@@ -45,16 +54,42 @@ export const DroppableItem: React.FC<DroppableItemProps> = ({
         borderRadius: '4px',
         border: `1px solid ${isOver && canDrop ? '#bee5eb' : isConnected ? '#b8d0e0' : '#ddd'}`,
         position: 'relative',
-        userSelect: 'none',
-        transition: 'background-color 0.2s, border-color 0.2s',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
       }}
     >
-      <div>{item.label}</div>
-      {isConnected && connectionLabel && (
-        <div style={{ fontSize: '0.8rem', color: '#0c5460', marginTop: '2px' }}>
-          ← {connectionLabel}
-        </div>
+      <div style={{ flex: 1 }}>
+        <div>{item.label}</div>
+        {isConnected && connectionLabel && (
+          <div
+            style={{ fontSize: '0.8rem', color: '#0c5460', marginTop: '2px' }}
+          >
+            ← {connectionLabel}
+          </div>
+        )}
+      </div>
+
+      {/* 매핑 제거 버튼 */}
+      {isConnected && !readOnly && (
+        <button
+          onClick={handleRemoveMapping}
+          style={{
+            background: '#ff4757',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            padding: '2px 6px',
+            fontSize: '0.7rem',
+            cursor: 'pointer',
+            marginLeft: '8px',
+          }}
+          title="매핑 제거"
+        >
+          매핑 제거
+        </button>
       )}
+
       <div
         className="connection-point"
         style={{

@@ -72,16 +72,15 @@ export const ParameterMappingCanvas: React.FC<ParameterMappingProps> = ({
             left: 0,
             width: '100%',
             height: '100%',
-            pointerEvents: 'auto',
             zIndex: 1,
             overflow: 'visible',
+            pointerEvents: 'none', // SVG 자체는 포인터 이벤트를 받지 않음
           }}
         >
           {connections.map((connection) => (
             <ConnectionLine
               key={connection.id}
               connection={connection}
-              onDelete={handleDeleteConnection}
               readOnly={readOnly}
             />
           ))}
@@ -100,10 +99,8 @@ export const ParameterMappingCanvas: React.FC<ParameterMappingProps> = ({
             <h4>{sourceTitle}</h4>
             <div
               style={{
-                border: '1px solid #ddd',
-                borderRadius: '4px',
                 padding: '8px',
-                backgroundColor: '#f8f9fa',
+                backgroundColor: 'transparent', // 배경색 투명으로 변경
               }}
             >
               {sourceItems.map((item) => {
@@ -134,10 +131,8 @@ export const ParameterMappingCanvas: React.FC<ParameterMappingProps> = ({
             <h4>{targetTitle}</h4>
             <div
               style={{
-                border: '1px solid #ddd',
-                borderRadius: '4px',
                 padding: '8px',
-                backgroundColor: '#f8f9fa',
+                backgroundColor: 'transparent', // 배경색 투명으로 변경
               }}
             >
               {targetItems.map((item) => {
@@ -149,6 +144,14 @@ export const ParameterMappingCanvas: React.FC<ParameterMappingProps> = ({
                     key={item.id}
                     item={item}
                     onConnect={handleConnect}
+                    onRemoveMapping={(targetId) => {
+                      const connectionToRemove = connections.find(
+                        (conn) => conn.targetId === targetId
+                      );
+                      if (connectionToRemove) {
+                        handleDeleteConnection(connectionToRemove.id);
+                      }
+                    }}
                     isConnected={!!connection}
                     connectionLabel={connection?.sourceLabel}
                     readOnly={readOnly}

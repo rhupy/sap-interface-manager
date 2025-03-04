@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { MappingConnection } from './types';
 
 interface ConnectionLineProps {
@@ -13,8 +13,6 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({
   readOnly = false,
 }) => {
   const lineRef = useRef<SVGPathElement>(null);
-  const clickableRef = useRef<SVGPathElement>(null);
-  const [path, setPath] = useState<string>('');
 
   const updateLine = () => {
     try {
@@ -25,8 +23,7 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({
         `mapping-item-${connection.targetId}`
       );
 
-      if (!sourceEl || !targetEl) {
-        console.log('Source or target element not found');
+      if (!sourceEl || !targetEl || !lineRef.current) {
         return;
       }
 
@@ -34,16 +31,14 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({
       const targetPoint = targetEl.querySelector('.connection-point');
 
       if (!sourcePoint || !targetPoint) {
-        console.log('Connection points not found');
         return;
       }
 
       const sourceRect = sourcePoint.getBoundingClientRect();
       const targetRect = targetPoint.getBoundingClientRect();
 
-      const svgEl = lineRef.current?.ownerSVGElement;
+      const svgEl = lineRef.current.ownerSVGElement;
       if (!svgEl) {
-        console.log('SVG element not found');
         return;
       }
 
@@ -55,21 +50,11 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({
       const x2 = targetRect.left + targetRect.width / 2 - svgRect.left;
       const y2 = targetRect.top + targetRect.height / 2 - svgRect.top;
 
-      console.log('Line coordinates:', { x1, y1, x2, y2 });
-
       // 베지어 곡선으로 선 그리기
       const dx = Math.abs(x2 - x1) * 0.5;
       const newPath = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
 
-      setPath(newPath);
-
-      if (lineRef.current) {
-        lineRef.current.setAttribute('d', newPath);
-      }
-
-      if (clickableRef.current) {
-        clickableRef.current.setAttribute('d', newPath);
-      }
+      lineRef.current.setAttribute('d', newPath);
     } catch (error) {
       console.error('Error updating line:', error);
     }
@@ -94,38 +79,16 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({
     };
   }, [connection]);
 
-  const handleLineClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!readOnly && onDelete) {
-      onDelete(connection.id);
-    }
-  };
+  // 초기 경로 (나중에 업데이트됨)
+  const initialPath = 'M 0 0 C 0 0, 0 0, 0 0';
 
   return (
-    <>
-      {/* 실제 선 (시각적 표현) */}
-      <path
-        ref={lineRef}
-        d={path}
-        stroke="#4a90e2"
-        strokeWidth="2"
-        fill="none"
-        style={{ pointerEvents: 'none' }} // 이 선은 클릭 이벤트를 받지 않음
-      />
-
-      {/* 클릭 가능한 넓은 영역 (사용자 상호작용용) */}
-      <path
-        ref={clickableRef}
-        d={path}
-        stroke="transparent"
-        strokeWidth="15" // 더 넓은 클릭 영역
-        fill="none"
-        onClick={handleLineClick}
-        style={{
-          cursor: readOnly ? 'default' : 'pointer',
-          pointerEvents: 'auto', // 이 선은 클릭 이벤트를 받음
-        }}
-      />
-    </>
+    <path
+      ref={lineRef}
+      d={initialPath}
+      stroke="#4a90e2"
+      strokeWidth="2"
+      fill="none"
+    />
   );
 };
