@@ -18,6 +18,7 @@ import { RfcConnectionInfo, DbConnectionConfig } from '../types';
 
 // RFC/DB를 비웠을 때 사용하기 위한 객체
 const emptyRfc: RfcConnectionInfo = {
+  id: '',
   connectionName: '',
   appServerHost: '',
   systemNumber: '',
@@ -182,6 +183,8 @@ export default function SettingsComponent() {
       try {
         const result = await window.api.testRfcConnection({
           // 필요한 필드만 전달
+          id: rfc.id,
+          connectionName: rfc.connectionName,
           appServerHost: rfc.appServerHost,
           systemNumber: rfc.systemNumber,
           systemID: rfc.systemID,

@@ -667,71 +667,90 @@ export default function InterfaceManagement() {
         </SidePanel>
 
         <MainPanel>
-          <Section style={{ height: '280px' }}>
-            <SectionTitle>인터페이스 정보</SectionTitle>
+          <Section style={{ height: '300px' }}>
             <div
               style={{
                 display: 'flex',
-                alignItems: 'center',
-                gap: '15px',
-                width: '100%',
+                flexDirection: 'column',
               }}
             >
-              <div style={{ width: '200px' }}>
-                <Label>인터페이스 이름</Label>
-                <Input
-                  type="text"
-                  value={newInterface.name}
-                  onChange={(e) =>
-                    setNewInterface({ ...newInterface, name: e.target.value })
-                  }
-                  placeholder="인터페이스 이름을 입력하세요"
-                />
-              </div>
-              <div style={{ flex: '1', width: 'auto' }}>
-                <Label>설명</Label>
-                <Input
-                  value={newInterface.description}
-                  onChange={(e) =>
-                    setNewInterface({
-                      ...newInterface,
-                      description: e.target.value,
-                    })
-                  }
-                  placeholder="인터페이스에 대한 설명을 입력하세요"
-                />
-              </div>
-              <div
-                style={{
-                  fontSize: '0.8rem',
-                  color: '#666',
-                  whiteSpace: 'nowrap',
-                  marginTop: '20px',
-                }}
-              >
-                <div>생성: {newInterface.createdAt || '새 인터페이스'}</div>
-                <div>수정: {newInterface.updatedAt || '새 인터페이스'}</div>
-              </div>
               <div
                 style={{
                   display: 'flex',
-                  gap: '10px',
-                  marginTop: '20px',
-                  whiteSpace: 'nowrap',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                 }}
               >
-                <Button
-                  onClick={handleAddInterface}
-                  style={{ marginRight: '10px' }}
+                <SectionTitle>인터페이스 정보</SectionTitle>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '8px',
+                  }}
                 >
-                  새 인터페이스 추가
-                </Button>
-                <Button
-                  onClick={handleDeleteInterface}
-                  style={{ backgroundColor: '#e74c3c' }}
+                  <Button onClick={handleAddInterface}>
+                    새 인터페이스 추가
+                  </Button>
+                  <Button
+                    onClick={handleDeleteInterface}
+                    style={{ backgroundColor: '#e74c3c' }}
+                  >
+                    삭제
+                  </Button>
+                </div>
+              </div>
+
+              <div
+                style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}
+              >
+                <div style={{ flex: 1 }}>
+                  <LeftAlignedLabel>타이틀</LeftAlignedLabel>
+                  <Input
+                    type="text"
+                    value={newInterface.name}
+                    onChange={(e) =>
+                      setNewInterface({
+                        ...newInterface,
+                        name: e.target.value,
+                      })
+                    }
+                    placeholder="인터페이스 이름을 입력하세요"
+                    style={{ width: '100%', maxWidth: 'none' }}
+                  />
+                </div>
+                <div style={{ flex: 2 }}>
+                  <LeftAlignedLabel>설명</LeftAlignedLabel>
+                  <Input
+                    value={newInterface.description}
+                    onChange={(e) =>
+                      setNewInterface({
+                        ...newInterface,
+                        description: e.target.value,
+                      })
+                    }
+                    placeholder="인터페이스에 대한 설명을 입력하세요"
+                    style={{ width: '100%', maxWidth: 'none' }}
+                  />
+                </div>
+                <div
+                  style={{
+                    width: '180px',
+                    textAlign: 'right',
+                    alignSelf: 'flex-end',
+                  }}
                 >
-                  삭제
-                </Button>
+                  <div
+                    style={{
+                      fontSize: '0.8rem',
+                      color: '#666',
+                      whiteSpace: 'nowrap',
+                      marginBottom: '8px',
+                    }}
+                  >
+                    <div>생성: {newInterface.createdAt || '새 인터페이스'}</div>
+                    <div>수정: {newInterface.updatedAt || '새 인터페이스'}</div>
+                  </div>
+                </div>
               </div>
             </div>
           </Section>

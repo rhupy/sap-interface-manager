@@ -55,12 +55,12 @@ export default function App() {
               >
                 SQL 관리
               </TabButton>
-              <TabButton
+              {/* <TabButton
                 active={activeTab === 'process'}
                 onClick={() => setActiveTab('process')}
               >
                 프로세스 관리
-              </TabButton>
+              </TabButton> */}
               <TabButton
                 active={activeTab === 'settings'}
                 onClick={() => setActiveTab('settings')}
