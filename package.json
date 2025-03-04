@@ -33,6 +33,8 @@
     "node-rfc": "^3.3.1",
     "oracledb": "^6.7.2",
     "react": "^18.3.1",
+    "react-dnd": "^16.0.1",
+    "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.3.1",
     "react-icons": "^5.5.0",
     "react-syntax-highlighter": "^15.6.1",
