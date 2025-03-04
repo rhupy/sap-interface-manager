@@ -50,6 +50,12 @@ export interface ElectronAPI {
     functionName: string;
     parameters: Record<string, any>;
   }) => Promise<{ success: boolean; message?: string; data?: any }>;
+
+  // SQL 실행 메서드
+  executeSql?: (params: {
+    connection: DbConnectionConfig;
+    query: string;
+  }) => Promise<{ success: boolean; message?: string; data?: any }>;
 }
 
 // Window 인터페이스 확장
@@ -133,4 +139,21 @@ export interface InterfaceStep {
   referenceId: string; // RFC 함수 ID 또는 SQL ID
   order: number;
   parameters?: Record<string, string>; // 파라미터 매핑 정보
+}
+
+// 실행 로그 타입 정의
+export interface ExecutionLog {
+  timestamp: string;
+  level: 'info' | 'error' | 'success' | 'warning';
+  message: string;
+  details?: any;
+}
+
+// 실행 상태 타입 정의
+export interface ExecutionState {
+  isRunning: boolean;
+  currentStepIndex: number;
+  logs: ExecutionLog[];
+  results: any[];
+  error?: string;
 }
