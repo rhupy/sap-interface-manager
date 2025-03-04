@@ -26,6 +26,9 @@ contextBridge.exposeInMainWorld('api', {
   testRfcFunction: (params: any) =>
     ipcRenderer.invoke('test-rfc-function', params),
 
+  // SQL 실행
+  executeSql: (params: any) => ipcRenderer.invoke('execute-sql', params),
+
   // 설정 파일 열기
   openSettingsFile: () => ipcRenderer.invoke('open-settings-file'),
 });

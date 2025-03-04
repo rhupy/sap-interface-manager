@@ -54,3 +54,41 @@ export async function testSapRfcConnection(rfcConfig: any): Promise<void> {
     }
   }
 }
+
+// SQL 실행 함수
+export async function executeOracleSql(params: {
+  connection: any;
+  query: string;
+}): Promise<any> {
+  const { connection, query } = params;
+  let conn;
+
+  try {
+    // Oracle DB 연결
+    conn = await oracledb.getConnection({
+      user: connection.user,
+      password: connection.password,
+      connectString: `${connection.host}:${connection.port}/${connection.sid}`,
+    });
+
+    // 쿼리 실행
+    const result = await conn.execute(query, [], {
+      outFormat: oracledb.OUT_FORMAT_OBJECT,
+      autoCommit: true,
+    });
+
+    return result;
+  } catch (error) {
+    console.error('SQL 실행 오류:', error);
+    throw error;
+  } finally {
+    // 연결 종료
+    if (conn) {
+      try {
+        await conn.close();
+      } catch (err) {
+        console.error('Oracle 연결 종료 오류:', err);
+      }
+    }
+  }
+}

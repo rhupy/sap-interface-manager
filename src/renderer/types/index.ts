@@ -41,9 +41,6 @@ export interface ElectronAPI {
     rfcConfig: RfcConnectionInfo
   ) => Promise<{ success: boolean; message?: string }>;
 
-  // 설정 파일 열기
-  openSettingsFile?: () => Promise<{ success: boolean; message?: string }>;
-
   // RFC 함수 테스트
   testRfcFunction?: (params: {
     connection: RfcConnectionInfo;
@@ -56,6 +53,9 @@ export interface ElectronAPI {
     connection: DbConnectionConfig;
     query: string;
   }) => Promise<{ success: boolean; message?: string; data?: any }>;
+
+  // 설정 파일 열기
+  openSettingsFile?: () => Promise<{ success: boolean; message?: string }>;
 }
 
 // Window 인터페이스 확장
@@ -96,9 +96,9 @@ export interface SqlInfo {
   name: string;
   description: string;
   sqlText: string;
-  createdAt: string; // 생성 시간 추가
-  updatedAt: string; // 수정 시간 추가
-  parameters: string[]; // 파라미터 목록 추가
+  createdAt: string; // 생성 시간
+  updatedAt: string; // 수정 시간
+  parameters: string[]; // 파라미터 목록
 }
 
 // RFC함수 호출 정보

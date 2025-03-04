@@ -3,7 +3,7 @@ import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import { testSapRfcConnection, testSapRfcFunction } from './rfcService';
-import { testOracleConnection } from './oracleService';
+import { executeOracleSql, testOracleConnection } from './oracleService';
 
 // 설정 파일 경로
 const settingsPath = path.join(app.getPath('userData'), 'settings.json');
@@ -125,6 +125,25 @@ function registerIpcHandlers() {
       return { success: true, data: result };
     } catch (error: any) {
       console.error('RFC 함수 테스트 오류:', error);
+      return { success: false, message: error?.message || String(error) };
+    }
+  });
+
+  // SQL 실행 핸들러
+  ipcMain.handle('execute-sql', async (event, params) => {
+    console.log('SQL 실행 요청:', params);
+    try {
+      const result = await executeOracleSql(params);
+      return {
+        success: true,
+        data: {
+          rows: result.rows,
+          rowsAffected: result.rowsAffected,
+          metaData: result.metaData,
+        },
+      };
+    } catch (error: any) {
+      console.error('SQL 실행 오류:', error);
       return { success: false, message: error?.message || String(error) };
     }
   });
