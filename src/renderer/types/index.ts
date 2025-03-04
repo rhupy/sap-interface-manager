@@ -136,7 +136,7 @@ export interface InterfaceInfo {
   steps: InterfaceStep[];
 }
 
-// 인터페이스 단계 (RFC 또는 SQL)
+// 인터페이스 작업 (RFC 또는 SQL)
 export interface InterfaceStep {
   id: string;
   type: 'rfc' | 'sql';

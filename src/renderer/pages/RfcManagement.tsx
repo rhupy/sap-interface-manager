@@ -16,7 +16,6 @@ import {
   MainPanel,
   ButtonGroup,
   SelectGroup,
-  SmallLabel,
   SmallSelect,
   MetaInfo,
   FullPageContainer,
@@ -412,7 +411,7 @@ export default function RfcManagement() {
 
   return (
     <FullPageContainer>
-      <div
+      {/* <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -437,7 +436,7 @@ export default function RfcManagement() {
           </Select>
         </div>
       </div>
-      <Description>등록된 RFC 함수 목록 및 수정/추가/삭제 기능</Description>
+      <Description>등록된 RFC 함수 목록 및 수정/추가/삭제 기능</Description> */}
 
       <FlexContainer>
         {/* 왼쪽 RFC 함수 목록 패널 */}

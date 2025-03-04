@@ -30,7 +30,13 @@ import {
   InterfaceStep,
   RfcFunctionInfo,
   SqlInfo,
+  RfcParameter,
 } from '../types';
+import { ParameterMappingCanvas } from '../components/ParameterMapping';
+import {
+  MappingItem,
+  MappingConnection,
+} from '../components/ParameterMapping/types';
 
 // 빈 인터페이스 정보
 const emptyInterface: InterfaceInfo = {
@@ -42,581 +48,614 @@ const emptyInterface: InterfaceInfo = {
   steps: [],
 };
 
-// 빈 단계 정보
+// 빈 작업 정보
 const emptyStep: InterfaceStep = {
   id: '',
   type: 'rfc',
   name: '',
   referenceId: '',
   order: 0,
+  parameters: {},
 };
 
 // 정렬 타입
 type SortType = 'name' | 'createdAt' | 'updatedAt';
 
 export default function InterfaceManagement() {
+  const { settings, updateSettings } = useSettingsContext();
   const { showMessage } = useMessage();
-  const { settings, updateSettings, isLoading } = useSettingsContext();
 
-  // 상태 관리
+  // 인터페이스 목록
+  const [interfaces, setInterfaces] = useState<InterfaceInfo[]>([]);
+  // 새 인터페이스 정보
   const [newInterface, setNewInterface] =
     useState<InterfaceInfo>(emptyInterface);
+  // 새 작업 정보
   const [newStep, setNewStep] = useState<InterfaceStep>(emptyStep);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortType, setSortType] = useState<SortType>('updatedAt');
+  // 작업 편집 모드
+  const [isEditingStep, setIsEditingStep] = useState(false);
+  // 편집 중인 작업 인덱스
   const [editingStepIndex, setEditingStepIndex] = useState<number | null>(null);
-  const [stepParameters, setStepParameters] = useState<Record<string, string>>(
-    {}
-  );
+  // 정렬 방식
+  const [sortType, setSortType] = useState<SortType>('name');
+  // 정렬 방향 (오름차순/내림차순)
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  // 검색어
+  const [searchTerm, setSearchTerm] = useState('');
+  // 파라미터 매핑 다이얼로그 표시 여부
+  const [showMappingDialog, setShowMappingDialog] = useState(false);
+  // 매핑 중인 작업 인덱스
+  const [mappingStepIndex, setMappingStepIndex] = useState<number | null>(null);
+  // 현재 매핑 정보
+  const [currentMappings, setCurrentMappings] = useState<
+    Record<string, string>
+  >({});
 
-  // 현재 시간 포맷팅 함수
-  function getCurrentFormattedTime() {
-    const now = new Date();
-    return now.toISOString();
-  }
-
-  // 날짜 포맷팅 함수
-  function formatDateTime(dateTimeStr: string) {
-    if (!dateTimeStr) return '';
-    const date = new Date(dateTimeStr);
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-  }
-
-  // 인터페이스 목록 필터링 및 정렬
-  const filteredAndSortedInterfaces = React.useMemo(() => {
-    const interfaces = settings.interfaces || [];
-
+  // 인터페이스 목록 정렬 및 필터링
+  const getSortedAndFilteredInterfaces = () => {
     // 검색어로 필터링
-    const filtered = interfaces.filter(
+    const filtered = (settings.interfaces || []).filter(
       (item) =>
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.description.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     // 정렬
-    return [...filtered].sort((a, b) => {
-      switch (sortType) {
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'createdAt':
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-        case 'updatedAt':
-          return (
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-          );
-        default:
-          return 0;
+    return filtered.sort((a, b) => {
+      let valueA, valueB;
+
+      if (sortType === 'name') {
+        valueA = a.name.toLowerCase();
+        valueB = b.name.toLowerCase();
+      } else if (sortType === 'createdAt') {
+        valueA = a.createdAt;
+        valueB = b.createdAt;
+      } else {
+        valueA = a.updatedAt;
+        valueB = b.updatedAt;
+      }
+
+      if (sortDirection === 'asc') {
+        return valueA > valueB ? 1 : -1;
+      } else {
+        return valueA < valueB ? 1 : -1;
       }
     });
-  }, [settings.interfaces, searchTerm, sortType]);
-
-  // 검색어 변경 핸들러
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
   };
 
-  // 정렬 타입 변경 핸들러
-  const handleSortTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSortType(e.target.value as SortType);
-  };
+  // 초기 데이터 로드
+  useEffect(() => {
+    if (settings.interfaces) {
+      setInterfaces(settings.interfaces);
+    }
+
+    // 선택된 인터페이스가 있으면 로드
+    if (settings.selectedInterfaceId) {
+      const selectedInterface = settings.interfaces?.find(
+        (item) => item.id === settings.selectedInterfaceId
+      );
+      if (selectedInterface) {
+        setNewInterface(selectedInterface);
+      }
+    }
+  }, [settings]);
 
   // 인터페이스 선택 핸들러
   const handleSelectInterface = (id: string) => {
-    updateSettings({ selectedInterfaceId: id });
+    const selectedInterface = interfaces.find((item) => item.id === id);
+    if (selectedInterface) {
+      setNewInterface(selectedInterface);
+      updateSettings({
+        ...settings,
+        selectedInterfaceId: id,
+      });
+    }
   };
-
-  // 선택된 인터페이스 ID가 변경될 때 newInterface 업데이트
-  useEffect(() => {
-    if (!settings.selectedInterfaceId) {
-      setNewInterface(emptyInterface);
-      return;
-    }
-
-    const found = (settings.interfaces || []).find(
-      (item) => item.id === settings.selectedInterfaceId
-    );
-
-    if (found) {
-      setNewInterface(found);
-    } else {
-      setNewInterface(emptyInterface);
-    }
-  }, [settings.selectedInterfaceId, settings.interfaces]);
-
-  // 초기화: settings에 interfaces가 없으면 빈 배열로 초기화
-  useEffect(() => {
-    if (!settings.interfaces) {
-      updateSettings({ interfaces: [] });
-    }
-  }, [settings, updateSettings]);
 
   // 인터페이스 추가 핸들러
   const handleAddInterface = () => {
     if (!newInterface.name) {
-      showMessage('인터페이스 이름을 입력하세요.');
+      showMessage('인터페이스 이름을 입력하세요.', 'error');
       return;
     }
 
-    // 이름 중복 검사
-    const isDuplicate = (settings.interfaces || []).some(
-      (item) => item.name.toLowerCase() === newInterface.name.toLowerCase()
-    );
-
-    if (isDuplicate) {
-      showMessage('이미 동일한 이름의 인터페이스가 존재합니다.', 'error');
-      return;
-    }
-
-    // 새 인터페이스 ID 생성
-    const id = `interface-${Date.now()}`;
-    const currentTime = getCurrentFormattedTime();
-
-    const interfaceToAdd: InterfaceInfo = {
+    const now = new Date().toISOString();
+    const newId = `interface_${Date.now()}`;
+    const interfaceToAdd = {
       ...newInterface,
-      id,
-      createdAt: currentTime,
-      updatedAt: currentTime,
-      steps: [],
+      id: newId,
+      createdAt: now,
+      updatedAt: now,
     };
 
-    updateSettings((prev) => ({
-      ...prev,
-      interfaces: [...(prev.interfaces || []), interfaceToAdd],
-      selectedInterfaceId: id,
-    }));
+    const updatedInterfaces = [...(settings.interfaces || []), interfaceToAdd];
+    updateSettings({
+      ...settings,
+      interfaces: updatedInterfaces,
+      selectedInterfaceId: newId,
+    });
 
-    setNewInterface(emptyInterface);
-    showMessage('새 인터페이스가 추가되었습니다.', 'success');
+    setNewInterface(interfaceToAdd);
+    showMessage('인터페이스가 추가되었습니다.', 'success');
   };
 
   // 인터페이스 수정 핸들러
   const handleUpdateInterface = () => {
-    if (!settings.selectedInterfaceId) {
-      showMessage('수정할 인터페이스가 선택되지 않았습니다.');
-      return;
-    }
+    if (!newInterface.id) return;
 
-    if (!newInterface.name) {
-      showMessage('인터페이스 이름을 입력하세요.');
-      return;
-    }
+    const now = new Date().toISOString();
+    const updatedInterface = {
+      ...newInterface,
+      updatedAt: now,
+    };
 
-    const currentTime = getCurrentFormattedTime();
+    const updatedInterfaces = (settings.interfaces || []).map((item) =>
+      item.id === updatedInterface.id ? updatedInterface : item
+    );
 
-    updateSettings((prev) => ({
-      ...prev,
-      interfaces: (prev.interfaces || []).map((item) =>
-        item.id === settings.selectedInterfaceId
-          ? { ...newInterface, updatedAt: currentTime }
-          : item
-      ),
-    }));
+    updateSettings({
+      ...settings,
+      interfaces: updatedInterfaces,
+    });
 
+    setNewInterface(updatedInterface);
     showMessage('인터페이스가 수정되었습니다.', 'success');
   };
 
   // 인터페이스 삭제 핸들러
   const handleDeleteInterface = () => {
-    if (!settings.selectedInterfaceId) {
-      showMessage('삭제할 인터페이스가 선택되지 않았습니다.');
-      return;
-    }
+    if (!newInterface.id) return;
 
-    updateSettings((prev) => ({
-      ...prev,
-      interfaces: (prev.interfaces || []).filter(
-        (item) => item.id !== settings.selectedInterfaceId
-      ),
-      selectedInterfaceId: '',
-    }));
+    const updatedInterfaces = (settings.interfaces || []).filter(
+      (item) => item.id !== newInterface.id
+    );
+
+    updateSettings({
+      ...settings,
+      interfaces: updatedInterfaces,
+      selectedInterfaceId:
+        updatedInterfaces.length > 0 ? updatedInterfaces[0].id : '',
+    });
+
+    if (updatedInterfaces.length > 0) {
+      setNewInterface(updatedInterfaces[0]);
+    } else {
+      setNewInterface(emptyInterface);
+    }
 
     showMessage('인터페이스가 삭제되었습니다.', 'success');
-    setNewInterface(emptyInterface);
   };
 
-  // 단계 추가 핸들러
+  // 작업 추가 핸들러
   const handleAddStep = () => {
-    if (!settings.selectedInterfaceId) {
-      showMessage('인터페이스를 먼저 선택하세요.');
+    if (!newInterface.id) {
+      showMessage('먼저 인터페이스를 생성하세요.', 'error');
       return;
     }
 
-    if (!newStep.type || !newStep.referenceId) {
-      showMessage('단계 유형과 참조 항목을 선택하세요.');
+    if (!newStep.name || !newStep.referenceId) {
+      showMessage('작업 이름과 참조 항목을 선택하세요.', 'error');
       return;
     }
 
-    // 참조하는 항목 찾기
-    let referenceName = '';
-    if (newStep.type === 'rfc') {
-      const rfcFunction = (settings.rfcFunctions || []).find(
-        (f) => f.id === newStep.referenceId
-      );
-      if (rfcFunction) {
-        referenceName = rfcFunction.name;
-      }
-    } else if (newStep.type === 'sql') {
-      const sql = (settings.sqlList || []).find(
-        (s) => s.id === newStep.referenceId
-      );
-      if (sql) {
-        referenceName = sql.name;
-      }
-    }
-
-    if (!referenceName) {
-      showMessage('참조 항목을 찾을 수 없습니다.', 'error');
-      return;
-    }
-
-    const stepId = `step-${Date.now()}`;
-    const newStepItem: InterfaceStep = {
+    const stepId = `step_${Date.now()}`;
+    const stepToAdd = {
       ...newStep,
       id: stepId,
-      name: referenceName,
-      order: newInterface.steps.length + 1,
-      parameters: stepParameters,
+      order: newInterface.steps.length,
     };
 
-    // 인터페이스 단계 목록 업데이트
-    const updatedSteps = [...newInterface.steps, newStepItem];
-    setNewInterface({ ...newInterface, steps: updatedSteps });
+    const updatedSteps = [...newInterface.steps, stepToAdd];
+    const updatedInterface = {
+      ...newInterface,
+      steps: updatedSteps,
+      updatedAt: new Date().toISOString(),
+    };
 
-    // 전체 설정 업데이트
-    updateSettings((prev) => ({
-      ...prev,
-      interfaces: (prev.interfaces || []).map((item) =>
-        item.id === settings.selectedInterfaceId
-          ? {
-              ...item,
-              steps: updatedSteps,
-              updatedAt: getCurrentFormattedTime(),
-            }
-          : item
-      ),
-    }));
+    const updatedInterfaces = (settings.interfaces || []).map((item) =>
+      item.id === updatedInterface.id ? updatedInterface : item
+    );
 
-    // 입력 필드 초기화
+    updateSettings({
+      ...settings,
+      interfaces: updatedInterfaces,
+    });
+
+    setNewInterface(updatedInterface);
     setNewStep(emptyStep);
-    setStepParameters({});
-    showMessage('단계가 추가되었습니다.', 'success');
+    showMessage('작업가 추가되었습니다.', 'success');
   };
 
-  // 단계 수정 핸들러
+  // 작업 수정 핸들러
   const handleUpdateStep = () => {
-    if (editingStepIndex === null) {
-      showMessage('수정할 단계를 선택하세요.');
-      return;
-    }
+    if (!isEditingStep || editingStepIndex === null) return;
 
-    if (!newStep.type || !newStep.referenceId) {
-      showMessage('단계 유형과 참조 항목을 선택하세요.');
-      return;
-    }
-
-    // 참조하는 항목 찾기
-    let referenceName = '';
-    if (newStep.type === 'rfc') {
-      const rfcFunction = (settings.rfcFunctions || []).find(
-        (f) => f.id === newStep.referenceId
-      );
-      if (rfcFunction) {
-        referenceName = rfcFunction.name;
-      }
-    } else if (newStep.type === 'sql') {
-      const sql = (settings.sqlList || []).find(
-        (s) => s.id === newStep.referenceId
-      );
-      if (sql) {
-        referenceName = sql.name;
-      }
-    }
-
-    if (!referenceName) {
-      showMessage('참조 항목을 찾을 수 없습니다.', 'error');
-      return;
-    }
-
-    // 단계 업데이트
     const updatedSteps = [...newInterface.steps];
     updatedSteps[editingStepIndex] = {
       ...newStep,
-      name: referenceName,
-      parameters: stepParameters,
+      order: editingStepIndex,
     };
 
-    // 인터페이스 업데이트
-    setNewInterface({ ...newInterface, steps: updatedSteps });
+    const updatedInterface = {
+      ...newInterface,
+      steps: updatedSteps,
+      updatedAt: new Date().toISOString(),
+    };
 
-    // 전체 설정 업데이트
-    updateSettings((prev) => ({
-      ...prev,
-      interfaces: (prev.interfaces || []).map((item) =>
-        item.id === settings.selectedInterfaceId
-          ? {
-              ...item,
-              steps: updatedSteps,
-              updatedAt: getCurrentFormattedTime(),
-            }
-          : item
-      ),
-    }));
+    const updatedInterfaces = (settings.interfaces || []).map((item) =>
+      item.id === updatedInterface.id ? updatedInterface : item
+    );
 
-    // 입력 필드 초기화
+    updateSettings({
+      ...settings,
+      interfaces: updatedInterfaces,
+    });
+
+    setNewInterface(updatedInterface);
     setNewStep(emptyStep);
-    setStepParameters({});
+    setIsEditingStep(false);
     setEditingStepIndex(null);
-    showMessage('단계가 수정되었습니다.', 'success');
+    showMessage('작업가 수정되었습니다.', 'success');
   };
 
-  // 단계 삭제 핸들러
+  // 작업 삭제 핸들러
   const handleDeleteStep = (index: number) => {
     const updatedSteps = newInterface.steps.filter((_, i) => i !== index);
 
-    // 순서 재정렬
+    // 순서 재조정
     const reorderedSteps = updatedSteps.map((step, i) => ({
       ...step,
-      order: i + 1,
+      order: i,
     }));
 
-    // 인터페이스 업데이트
-    setNewInterface({ ...newInterface, steps: reorderedSteps });
+    const updatedInterface = {
+      ...newInterface,
+      steps: reorderedSteps,
+      updatedAt: new Date().toISOString(),
+    };
 
-    // 전체 설정 업데이트
-    updateSettings((prev) => ({
-      ...prev,
-      interfaces: (prev.interfaces || []).map((item) =>
-        item.id === settings.selectedInterfaceId
-          ? {
-              ...item,
-              steps: reorderedSteps,
-              updatedAt: getCurrentFormattedTime(),
-            }
-          : item
-      ),
-    }));
+    const updatedInterfaces = (settings.interfaces || []).map((item) =>
+      item.id === updatedInterface.id ? updatedInterface : item
+    );
 
-    showMessage('단계가 삭제되었습니다.', 'success');
+    updateSettings({
+      ...settings,
+      interfaces: updatedInterfaces,
+    });
+
+    setNewInterface(updatedInterface);
+    showMessage('작업가 삭제되었습니다.', 'success');
   };
 
-  // 단계 편집 시작 핸들러
+  // 작업 편집 모드 시작
   const handleEditStep = (index: number) => {
-    const step = newInterface.steps[index];
-    setNewStep(step);
-    setStepParameters(step.parameters || {});
+    setNewStep(newInterface.steps[index]);
+    setIsEditingStep(true);
     setEditingStepIndex(index);
   };
 
-  // 단계 순서 변경 핸들러
-  const handleMoveStep = (index: number, direction: 'up' | 'down') => {
-    if (!settings.selectedInterfaceId) return;
+  // 작업 편집 취소
+  const handleCancelEdit = () => {
+    setNewStep(emptyStep);
+    setIsEditingStep(false);
+    setEditingStepIndex(null);
+  };
+
+  // 파라미터 매핑 다이얼로그 열기 핸들러
+  const handleOpenMappingDialog = (index: number) => {
+    const step = newInterface.steps[index];
+    setMappingStepIndex(index);
+    setCurrentMappings(step.parameters || {});
+    setShowMappingDialog(true);
+  };
+
+  // 파라미터 매핑 저장 핸들러
+  const handleSaveMappings = (mappings: Record<string, string>) => {
+    if (mappingStepIndex === null) return;
 
     const updatedSteps = [...newInterface.steps];
+    updatedSteps[mappingStepIndex] = {
+      ...updatedSteps[mappingStepIndex],
+      parameters: mappings,
+    };
 
-    if (direction === 'up' && index > 0) {
-      // 위로 이동
-      [updatedSteps[index], updatedSteps[index - 1]] = [
-        updatedSteps[index - 1],
-        updatedSteps[index],
-      ];
-    } else if (direction === 'down' && index < updatedSteps.length - 1) {
-      // 아래로 이동
-      [updatedSteps[index], updatedSteps[index + 1]] = [
-        updatedSteps[index + 1],
-        updatedSteps[index],
-      ];
-    } else {
-      return; // 이동할 수 없는 경우
-    }
+    const updatedInterface = {
+      ...newInterface,
+      steps: updatedSteps,
+      updatedAt: new Date().toISOString(),
+    };
 
-    // 순서 재정렬
-    const reorderedSteps = updatedSteps.map((step, i) => ({
-      ...step,
-      order: i + 1,
-    }));
+    const updatedInterfaces = (settings.interfaces || []).map((item) =>
+      item.id === updatedInterface.id ? updatedInterface : item
+    );
 
-    // 인터페이스 업데이트
-    setNewInterface({ ...newInterface, steps: reorderedSteps });
+    updateSettings({
+      ...settings,
+      interfaces: updatedInterfaces,
+    });
 
-    // 전체 설정 업데이트
-    updateSettings((prev) => ({
-      ...prev,
-      interfaces: (prev.interfaces || []).map((item) =>
-        item.id === settings.selectedInterfaceId
-          ? {
-              ...item,
-              steps: reorderedSteps,
-              updatedAt: getCurrentFormattedTime(),
-            }
-          : item
-      ),
-    }));
+    setNewInterface(updatedInterface);
+    setShowMappingDialog(false);
+    setMappingStepIndex(null);
+    showMessage('파라미터 매핑이 저장되었습니다.', 'success');
   };
 
-  // 파라미터 변경 핸들러
-  const handleParameterChange = (paramName: string, value: string) => {
-    setStepParameters((prev) => ({
-      ...prev,
-      [paramName]: value,
-    }));
-  };
-
-  // 참조 항목 옵션 가져오기
-  const getReferenceOptions = () => {
-    if (newStep.type === 'rfc') {
-      return settings.rfcFunctions || [];
-    } else if (newStep.type === 'sql') {
-      return settings.sqlList || [];
-    }
-    return [];
-  };
-
-  // 참조 항목 이름 가져오기
-  const getReferenceName = (type: string, id: string) => {
+  // 입력 파라미터 필드 가져오기
+  const getParameterFields = (type: string, referenceId: string) => {
     if (type === 'rfc') {
       const rfcFunction = (settings.rfcFunctions || []).find(
-        (f) => f.id === id
+        (f) => f.id === referenceId
       );
-      return rfcFunction
-        ? `${rfcFunction.name} (${rfcFunction.functionName})`
-        : '알 수 없음';
+      if (!rfcFunction) return [];
+      return rfcFunction.parameters.filter((p) => p.type === 'import');
     } else if (type === 'sql') {
-      const sql = (settings.sqlList || []).find((s) => s.id === id);
-      return sql ? sql.name : '알 수 없음';
-    }
-    return '';
-  };
-
-  // 파라미터 필드 가져오기
-  const getParameterFields = () => {
-    if (!newStep.referenceId) return [];
-
-    if (newStep.type === 'rfc') {
-      const rfcFunction = (settings.rfcFunctions || []).find(
-        (f) => f.id === newStep.referenceId
+      // SQL의 경우 입력 파라미터 (바인딩 변수) 추출
+      const sqlInfo = (settings.sqlList || []).find(
+        (s) => s.id === referenceId
       );
-      return rfcFunction ? rfcFunction.parameters : [];
-    } else if (newStep.type === 'sql') {
-      const sql = (settings.sqlList || []).find(
-        (s) => s.id === newStep.referenceId
-      );
-      return sql ? sql.parameters || [] : [];
+      if (!sqlInfo) return [];
+
+      // SQL 문에서 ::파라미터 형태로 된 것들을 추출
+      const paramRegex = /::([A-Za-z0-9_]+)/g;
+      const sqlText = sqlInfo.sqlText || '';
+      const matches = [...sqlText.matchAll(paramRegex)];
+
+      return matches.map((match) => match[1]);
     }
     return [];
+  };
+
+  // 출력 파라미터 가져오기
+  const getOutputParameters = (type: string, referenceId: string) => {
+    if (type === 'rfc') {
+      const rfcFunction = (settings.rfcFunctions || []).find(
+        (f) => f.id === referenceId
+      );
+      if (!rfcFunction) return [];
+      return rfcFunction.parameters.filter(
+        (p) => p.type === 'export' || p.type === 'table'
+      );
+    } else if (type === 'sql') {
+      // SQL의 경우 모든 컬럼을 출력 파라미터로 간주
+      return ['RESULT'];
+    }
+    return [];
+  };
+
+  // 파라미터 매핑 다이얼로그 컴포넌트
+  const ParameterMappingDialog = () => {
+    if (mappingStepIndex === null || !showMappingDialog) return null;
+
+    const currentStep = newInterface.steps[mappingStepIndex];
+    const previousSteps = newInterface.steps.slice(0, mappingStepIndex);
+
+    // 현재 작업의 입력 파라미터 가져오기
+    const inputParams = getParameterFields(
+      currentStep.type,
+      currentStep.referenceId
+    );
+
+    // 이전 작업들의 출력 파라미터 가져오기
+    const outputParams = previousSteps.flatMap((step, idx) => {
+      const params = getOutputParameters(step.type, step.referenceId);
+      return params.map((param) => {
+        const paramName = typeof param === 'string' ? param : param.name;
+        return {
+          stepIndex: idx,
+          stepName: step.name,
+          paramName,
+          fullPath: `${step.name}.${paramName}`,
+        };
+      });
+    });
+
+    // 매핑 아이템 변환
+    const sourceItems: MappingItem[] = outputParams.map((param) => ({
+      id: `${param.stepIndex}-${param.paramName}`,
+      label: `${param.stepName}.${param.paramName}`,
+      data: param,
+    }));
+
+    const targetItems: MappingItem[] = inputParams.map((param) => {
+      const paramName = typeof param === 'string' ? param : param.name;
+      return {
+        id: paramName,
+        label: paramName,
+        data: param,
+      };
+    });
+
+    // 연결 정보 변환
+    const connections: MappingConnection[] = Object.entries(currentMappings)
+      .filter(([_, value]) => value.includes('.'))
+      .map(([paramName, value]) => {
+        const sourceParam = outputParams.find((p) => p.fullPath === value);
+        if (!sourceParam) return null;
+
+        return {
+          id: `${sourceParam.stepIndex}-${sourceParam.paramName}-${paramName}`,
+          sourceId: `${sourceParam.stepIndex}-${sourceParam.paramName}`,
+          targetId: paramName,
+          sourceLabel: `${sourceParam.stepName}.${sourceParam.paramName}`,
+          targetLabel: paramName,
+        };
+      })
+      .filter(Boolean) as MappingConnection[];
+
+    const handleConnectionsChange = (newConnections: MappingConnection[]) => {
+      const newMappings = { ...currentMappings };
+
+      // 기존 매핑 중 연결 관련 항목 제거
+      Object.keys(newMappings).forEach((key) => {
+        if (newMappings[key].includes('.')) {
+          delete newMappings[key];
+        }
+      });
+
+      // 새 연결 추가
+      newConnections.forEach((conn) => {
+        const sourceItem = sourceItems.find(
+          (item) => item.id === conn.sourceId
+        );
+        if (sourceItem && sourceItem.data) {
+          newMappings[conn.targetLabel] = sourceItem.data.fullPath;
+        }
+      });
+
+      setCurrentMappings(newMappings);
+    };
+
+    return (
+      <div
+        className="modal-overlay"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+        }}
+      >
+        <div
+          className="modal-content"
+          style={{
+            backgroundColor: 'white',
+            padding: '20px',
+            borderRadius: '8px',
+            width: '80%',
+            maxWidth: '900px',
+            maxHeight: '80vh',
+            overflow: 'auto',
+          }}
+        >
+          <h3 style={{ marginTop: 0 }}>파라미터 매핑 - {currentStep.name}</h3>
+
+          <ParameterMappingCanvas
+            sourceItems={sourceItems}
+            targetItems={targetItems}
+            connections={connections}
+            onConnectionsChange={handleConnectionsChange}
+            sourceTitle="이전 작업 출력 파라미터"
+            targetTitle="현재 작업 입력 파라미터"
+            containerStyle={{ minHeight: '400px' }}
+          />
+
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '10px',
+              marginTop: '20px',
+            }}
+          >
+            <Button onClick={() => handleSaveMappings(currentMappings)}>
+              저장
+            </Button>
+            <Button
+              onClick={() => {
+                setShowMappingDialog(false);
+                setMappingStepIndex(null);
+              }}
+              style={{ backgroundColor: '#6c757d' }}
+            >
+              취소
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
     <FullPageContainer>
-      <Title>인터페이스 관리</Title>
-      <Description>
-        RFC 함수와 SQL 쿼리를 조합하여 인터페이스를 구성합니다.
-      </Description>
-
       <FlexContainer>
-        {/* 왼쪽 인터페이스 목록 패널 */}
         <SidePanel>
           <SidePanelHeader>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                width: '100%',
-              }}
-            >
-              <SelectGroup style={{ marginBottom: 0 }}>
-                <SmallSelect value={sortType} onChange={handleSortTypeChange}>
-                  <option value="name">이름순</option>
-                  <option value="createdAt">생성시간순</option>
-                  <option value="updatedAt">수정시간순</option>
-                </SmallSelect>
-              </SelectGroup>
-
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'flex-center',
-                }}
+            <h3>인터페이스 목록</h3>
+            <div style={{ display: 'flex', marginBottom: '10px' }}>
+              <Input
+                type="text"
+                placeholder="검색..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ flex: 1, marginRight: '5px' }}
+              />
+              <SmallSelect
+                value={sortType}
+                onChange={(e) => setSortType(e.target.value as SortType)}
+                style={{ width: '80px', marginRight: '5px' }}
               >
-                <Input
-                  type="text"
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  placeholder="검색..."
-                  style={{
-                    width: '150px',
-                    padding: '5px',
-                    fontSize: '0.9rem',
-                    height: '30px',
-                  }}
-                />
-              </div>
+                <option value="name">이름</option>
+                <option value="createdAt">생성일</option>
+                <option value="updatedAt">수정일</option>
+              </SmallSelect>
+              <Button
+                onClick={() =>
+                  setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+                }
+                style={{ padding: '3px 8px' }}
+              >
+                {sortDirection === 'asc' ? '↑' : '↓'}
+              </Button>
             </div>
           </SidePanelHeader>
-
           <SidePanelContent>
-            {filteredAndSortedInterfaces.length === 0 ? (
-              <div
-                style={{ padding: '15px', textAlign: 'center', color: '#999' }}
-              >
-                {searchTerm
-                  ? '검색 결과가 없습니다.'
-                  : '등록된 인터페이스가 없습니다.'}
-              </div>
-            ) : (
-              filteredAndSortedInterfaces.map((item) => (
+            {getSortedAndFilteredInterfaces().length > 0 ? (
+              getSortedAndFilteredInterfaces().map((item) => (
                 <ListItem
                   key={item.id}
                   active={item.id === settings.selectedInterfaceId}
                   onClick={() => handleSelectInterface(item.id)}
                 >
-                  <strong>{item.name}</strong>
-                  <div style={{ fontSize: '0.9rem', color: '#777' }}>
-                    {item.description && (
-                      <div>
-                        {item.description.slice(0, 30)}
-                        {item.description.length > 30 ? '...' : ''}
-                      </div>
-                    )}
-                    {`단계: ${item.steps.length}개`}
-                  </div>
+                  <div style={{ fontWeight: 'bold' }}>{item.name}</div>
                   <MetaInfo>
-                    {sortType === 'name' ? (
-                      <> 생성: {formatDateTime(item.createdAt)}</>
-                    ) : sortType === 'createdAt' ? (
-                      <> 생성: {formatDateTime(item.createdAt)}</>
-                    ) : (
-                      <> 수정: {formatDateTime(item.updatedAt)}</>
-                    )}
+                    생성: {item.createdAt}
+                    <br />
+                    수정: {item.updatedAt}
                   </MetaInfo>
                 </ListItem>
               ))
+            ) : (
+              <div
+                style={{ padding: '10px', color: '#666', textAlign: 'center' }}
+              >
+                {searchTerm
+                  ? '검색 결과가 없습니다.'
+                  : '등록된 인터페이스가 없습니다.'}
+              </div>
             )}
           </SidePanelContent>
         </SidePanel>
 
-        {/* 오른쪽 인터페이스 정보 패널 */}
         <MainPanel>
-          <Section>
+          <Section style={{ height: '280px' }}>
             <SectionTitle>인터페이스 정보</SectionTitle>
-
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-              <div style={{ flex: 1 }}>
-                <LeftAlignedLabel>인터페이스 이름</LeftAlignedLabel>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '15px',
+                width: '100%',
+              }}
+            >
+              <div style={{ width: '200px' }}>
+                <Label>인터페이스 이름</Label>
                 <Input
+                  type="text"
                   value={newInterface.name}
                   onChange={(e) =>
                     setNewInterface({ ...newInterface, name: e.target.value })
                   }
-                  placeholder="인터페이스 이름 입력"
-                  style={{ width: '100%', maxWidth: 'none' }}
+                  placeholder="인터페이스 이름을 입력하세요"
                 />
               </div>
-              <div style={{ flex: 2 }}>
-                <LeftAlignedLabel>설명</LeftAlignedLabel>
+              <div style={{ flex: '1', width: 'auto' }}>
+                <Label>설명</Label>
                 <Input
                   value={newInterface.description}
                   onChange={(e) =>
@@ -625,267 +664,266 @@ export default function InterfaceManagement() {
                       description: e.target.value,
                     })
                   }
-                  placeholder="인터페이스에 대한 설명"
-                  style={{ width: '100%', maxWidth: 'none' }}
+                  placeholder="인터페이스에 대한 설명을 입력하세요"
                 />
               </div>
-            </div>
-
-            {/* 생성/수정 시간 표시 */}
-            {newInterface.createdAt && (
               <div
                 style={{
-                  marginBottom: '10px',
-                  fontSize: '0.9rem',
+                  fontSize: '0.8rem',
                   color: '#666',
+                  whiteSpace: 'nowrap',
+                  marginTop: '20px',
                 }}
               >
-                <div>생성: {formatDateTime(newInterface.createdAt)}</div>
-                {newInterface.updatedAt &&
-                  newInterface.updatedAt !== newInterface.createdAt && (
-                    <div>수정: {formatDateTime(newInterface.updatedAt)}</div>
-                  )}
+                <div>생성: {newInterface.createdAt || '새 인터페이스'}</div>
+                <div>수정: {newInterface.updatedAt || '새 인터페이스'}</div>
               </div>
-            )}
-
-            {/* 인터페이스 버튼 그룹 */}
-            <ButtonGroup>
-              {!settings.selectedInterfaceId ? (
-                <Button onClick={handleAddInterface}>새 인터페이스 추가</Button>
-              ) : (
-                <>
-                  <Button onClick={handleAddInterface}>
-                    새 인터페이스 추가
-                  </Button>
-                  <Button onClick={handleUpdateInterface}>수정</Button>
-                  <DeleteButton onClick={handleDeleteInterface}>
-                    삭제
-                  </DeleteButton>
-                </>
-              )}
-            </ButtonGroup>
-
-            {/* 단계 섹션 */}
-            {settings.selectedInterfaceId && (
-              <>
-                <SectionTitle style={{ marginTop: '20px' }}>
-                  단계 관리
-                </SectionTitle>
-
-                {/* 단계 추가/수정 폼 */}
-                <div
-                  style={{
-                    marginBottom: '15px',
-                    padding: '10px',
-                    backgroundColor: '#f9f9f9',
-                    borderRadius: '4px',
-                  }}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '10px',
+                  marginTop: '20px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <Button
+                  onClick={handleAddInterface}
+                  style={{ marginRight: '10px' }}
                 >
-                  <div
-                    style={{
-                      display: 'flex',
-                      gap: '10px',
-                      marginBottom: '10px',
-                    }}
-                  >
-                    <div style={{ flex: 1 }}>
-                      <LeftAlignedLabel>단계 유형</LeftAlignedLabel>
-                      <Select
-                        value={newStep.type}
-                        onChange={(e) =>
-                          setNewStep({
-                            ...newStep,
-                            type: e.target.value as 'rfc' | 'sql',
-                            referenceId: '', // 유형 변경 시 참조 ID 초기화
-                          })
-                        }
-                        style={{ width: '100%', maxWidth: 'none' }}
-                      >
-                        <option value="">유형 선택</option>
-                        <option value="rfc">RFC 함수</option>
-                        <option value="sql">SQL 쿼리</option>
-                      </Select>
-                    </div>
-                    <div style={{ flex: 2 }}>
-                      <LeftAlignedLabel>참조 항목</LeftAlignedLabel>
-                      <Select
-                        value={newStep.referenceId}
-                        onChange={(e) => {
-                          setNewStep({
-                            ...newStep,
-                            referenceId: e.target.value,
-                          });
-                          setStepParameters({}); // 참조 항목 변경 시 파라미터 초기화
-                        }}
-                        style={{ width: '100%', maxWidth: 'none' }}
-                        disabled={!newStep.type}
-                      >
-                        <option value="">항목 선택</option>
-                        {getReferenceOptions().map((item: any) => (
-                          <option key={item.id} value={item.id}>
-                            {item.name}
+                  새 인터페이스 추가
+                </Button>
+                <Button
+                  onClick={handleDeleteInterface}
+                  style={{ backgroundColor: '#e74c3c' }}
+                >
+                  삭제
+                </Button>
+              </div>
+            </div>
+          </Section>
+
+          {newInterface.id && (
+            <>
+              <Section>
+                <SectionTitle>작업 관리</SectionTitle>
+                <div style={{ marginBottom: '15px' }}>
+                  <LeftAlignedLabel>작업 유형</LeftAlignedLabel>
+                  <SelectGroup>
+                    <Select
+                      value={newStep.type}
+                      onChange={(e) =>
+                        setNewStep({
+                          ...newStep,
+                          type: e.target.value as 'rfc' | 'sql',
+                          referenceId: '',
+                        })
+                      }
+                    >
+                      <option value="rfc">RFC 함수</option>
+                      <option value="sql">SQL 쿼리</option>
+                    </Select>
+                  </SelectGroup>
+                </div>
+                <div style={{ marginBottom: '15px' }}>
+                  <LeftAlignedLabel>참조 항목</LeftAlignedLabel>
+                  <SelectGroup>
+                    <Select
+                      value={newStep.referenceId}
+                      onChange={(e) =>
+                        setNewStep({
+                          ...newStep,
+                          referenceId: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="">선택하세요</option>
+                      {newStep.type === 'rfc' &&
+                        (settings.rfcFunctions || []).map((func) => (
+                          <option key={func.id} value={func.id}>
+                            {func.name}
                           </option>
                         ))}
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* 파라미터 입력 필드 */}
-                  {newStep.referenceId && (
-                    <div style={{ marginTop: '10px' }}>
-                      <LeftAlignedLabel>파라미터</LeftAlignedLabel>
-                      {getParameterFields().length === 0 ? (
-                        <div
-                          style={{
-                            color: '#666',
-                            fontSize: '0.9rem',
-                            marginTop: '5px',
-                          }}
-                        >
-                          파라미터가 없습니다.
-                        </div>
-                      ) : (
-                        <div
-                          style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1fr 2fr',
-                            gap: '5px',
-                          }}
-                        >
-                          {getParameterFields().map((param: any) => (
-                            <React.Fragment key={param.name || param}>
-                              <div
-                                style={{
-                                  padding: '5px',
-                                  backgroundColor: '#f0f0f0',
-                                  borderRadius: '4px',
-                                }}
-                              >
-                                {param.name || param}
-                              </div>
-                              <Input
-                                value={
-                                  stepParameters[param.name || param] || ''
-                                }
-                                onChange={(e) =>
-                                  handleParameterChange(
-                                    param.name || param,
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="값 입력"
-                                style={{ width: '100%', maxWidth: 'none' }}
-                              />
-                            </React.Fragment>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div
-                    style={{
-                      marginTop: '10px',
-                      display: 'flex',
-                      justifyContent: 'flex-start',
-                    }}
-                  >
-                    {editingStepIndex !== null ? (
-                      <>
-                        <Button
-                          onClick={handleUpdateStep}
-                          style={{ marginRight: '5px' }}
-                        >
-                          단계 수정
-                        </Button>
-                        <Button
-                          onClick={() => {
-                            setNewStep(emptyStep);
-                            setStepParameters({});
-                            setEditingStepIndex(null);
-                          }}
-                          style={{ backgroundColor: '#6c757d' }}
-                        >
-                          취소
-                        </Button>
-                      </>
-                    ) : (
-                      <Button onClick={handleAddStep}>단계 추가</Button>
-                    )}
-                  </div>
+                      {newStep.type === 'sql' &&
+                        (settings.sqlList || []).map((sql) => (
+                          <option key={sql.id} value={sql.id}>
+                            {sql.name}
+                          </option>
+                        ))}
+                    </Select>
+                  </SelectGroup>
                 </div>
+                <div style={{ marginBottom: '15px' }}>
+                  <LeftAlignedLabel>작업 이름</LeftAlignedLabel>
+                  <Input
+                    type="text"
+                    value={newStep.name}
+                    onChange={(e) =>
+                      setNewStep({
+                        ...newStep,
+                        name: e.target.value,
+                      })
+                    }
+                    placeholder="작업 이름을 입력하세요"
+                  />
+                </div>
+                <ButtonGroup>
+                  {!isEditingStep ? (
+                    <Button onClick={handleAddStep}>작업 추가</Button>
+                  ) : (
+                    <>
+                      <Button onClick={handleUpdateStep}>작업 수정</Button>
+                      <Button
+                        onClick={handleCancelEdit}
+                        style={{ backgroundColor: '#6c757d' }}
+                      >
+                        취소
+                      </Button>
+                    </>
+                  )}
+                </ButtonGroup>
+              </Section>
 
-                {/* 단계 목록 */}
+              <Section>
+                <SectionTitle>작업 목록</SectionTitle>
                 {newInterface.steps.length > 0 ? (
-                  <div style={{ marginTop: '10px' }}>
-                    <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
-                      단계 목록 ({newInterface.steps.length}개)
-                    </div>
+                  <div>
                     {newInterface.steps.map((step, index) => (
                       <div
                         key={step.id}
                         style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          padding: '8px',
-                          backgroundColor: '#f5f5f5',
-                          borderRadius: '4px',
-                          marginBottom: '5px',
+                          padding: '10px',
+                          marginBottom: '10px',
                           border: '1px solid #ddd',
+                          borderRadius: '4px',
                         }}
                       >
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 'bold' }}>
-                            {index + 1}. {step.name} (
-                            {step.type === 'rfc' ? 'RFC 함수' : 'SQL 쿼리'})
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '5px',
+                          }}
+                        >
+                          <div>
+                            <strong>
+                              {index + 1}. {step.name}
+                            </strong>
+                            <span
+                              style={{
+                                marginLeft: '10px',
+                                color: '#666',
+                                fontSize: '0.9rem',
+                              }}
+                            >
+                              ({step.type === 'rfc' ? 'RFC 함수' : 'SQL 쿼리'})
+                            </span>
                           </div>
-                          <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                            {getReferenceName(step.type, step.referenceId)}
+                          <div>
+                            <Button
+                              onClick={() => handleOpenMappingDialog(index)}
+                              style={{
+                                padding: '3px 8px',
+                                fontSize: '0.8rem',
+                                marginRight: '5px',
+                                backgroundColor: '#17a2b8',
+                              }}
+                            >
+                              매핑
+                            </Button>
+                            <Button
+                              onClick={() => handleEditStep(index)}
+                              style={{
+                                padding: '3px 8px',
+                                fontSize: '0.8rem',
+                                marginRight: '5px',
+                              }}
+                            >
+                              편집
+                            </Button>
+                            <Button
+                              onClick={() => handleDeleteStep(index)}
+                              style={{
+                                padding: '3px 8px',
+                                fontSize: '0.8rem',
+                                backgroundColor: '#e74c3c',
+                              }}
+                            >
+                              삭제
+                            </Button>
                           </div>
                         </div>
-                        <div style={{ display: 'flex', gap: '5px' }}>
-                          <Button
-                            onClick={() => handleMoveStep(index, 'up')}
-                            disabled={index === 0}
-                            style={{
-                              padding: '3px 8px',
-                              fontSize: '0.8rem',
-                              backgroundColor: '#6c757d',
-                            }}
-                          >
-                            ↑
-                          </Button>
-                          <Button
-                            onClick={() => handleMoveStep(index, 'down')}
-                            disabled={index === newInterface.steps.length - 1}
-                            style={{
-                              padding: '3px 8px',
-                              fontSize: '0.8rem',
-                              backgroundColor: '#6c757d',
-                            }}
-                          >
-                            ↓
-                          </Button>
-                          <Button
-                            onClick={() => handleEditStep(index)}
-                            style={{
-                              padding: '3px 8px',
-                              fontSize: '0.8rem',
-                            }}
-                          >
-                            수정
-                          </Button>
-                          <Button
-                            onClick={() => handleDeleteStep(index)}
-                            style={{
-                              padding: '3px 8px',
-                              fontSize: '0.8rem',
-                              backgroundColor: '#e74c3c',
-                            }}
-                          >
-                            삭제
-                          </Button>
-                        </div>
+
+                        {/* 파라미터 매핑 정보 표시 */}
+                        {step.parameters &&
+                          Object.keys(step.parameters).length > 0 && (
+                            <div
+                              style={{
+                                marginTop: '5px',
+                                padding: '5px',
+                                backgroundColor: '#e8f4fc',
+                                borderRadius: '4px',
+                                fontSize: '0.85rem',
+                              }}
+                            >
+                              <div
+                                style={{
+                                  fontWeight: 'bold',
+                                  marginBottom: '3px',
+                                }}
+                              >
+                                파라미터 매핑:
+                              </div>
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  flexWrap: 'wrap',
+                                  gap: '5px',
+                                }}
+                              >
+                                {Object.entries(step.parameters).map(
+                                  ([paramName, value]) => {
+                                    // 이전 작업의 출력 파라미터인지 확인
+                                    const isReference = value.includes('.');
+                                    return (
+                                      <div
+                                        key={paramName}
+                                        style={{
+                                          padding: '2px 6px',
+                                          backgroundColor: isReference
+                                            ? '#d1ecf1'
+                                            : '#f8f9fa',
+                                          border: `1px solid ${isReference ? '#bee5eb' : '#ddd'}`,
+                                          borderRadius: '3px',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                        }}
+                                      >
+                                        <span style={{ fontWeight: 'bold' }}>
+                                          {paramName}
+                                        </span>
+                                        <span style={{ margin: '0 3px' }}>
+                                          ←
+                                        </span>
+                                        <span
+                                          style={{
+                                            color: isReference
+                                              ? '#0c5460'
+                                              : '#6c757d',
+                                            fontStyle: isReference
+                                              ? 'normal'
+                                              : 'italic',
+                                          }}
+                                        >
+                                          {value}
+                                        </span>
+                                      </div>
+                                    );
+                                  }
+                                )}
+                              </div>
+                            </div>
+                          )}
                       </div>
                     ))}
                   </div>
@@ -897,14 +935,75 @@ export default function InterfaceManagement() {
                       textAlign: 'center',
                     }}
                   >
-                    등록된 단계가 없습니다. 단계를 추가해주세요.
+                    등록된 작업가 없습니다. 작업를 추가해주세요.
                   </div>
                 )}
-              </>
-            )}
-          </Section>
+              </Section>
+            </>
+          )}
         </MainPanel>
       </FlexContainer>
+
+      {/* 파라미터 매핑 다이얼로그 */}
+      {showMappingDialog && mappingStepIndex !== null && (
+        <div
+          className="modal-overlay"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            className="modal-content"
+            style={{
+              backgroundColor: 'white',
+              padding: '20px',
+              borderRadius: '8px',
+              width: '80%',
+              maxWidth: '900px',
+              maxHeight: '80vh',
+              overflow: 'auto',
+            }}
+          >
+            <h3 style={{ marginTop: 0 }}>
+              파라미터 매핑 - {newInterface.steps[mappingStepIndex].name}
+            </h3>
+
+            {/* 파라미터 매핑 캔버스 컴포넌트 */}
+            <ParameterMappingDialog />
+
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '10px',
+                marginTop: '20px',
+              }}
+            >
+              <Button onClick={() => handleSaveMappings(currentMappings)}>
+                저장
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowMappingDialog(false);
+                  setMappingStepIndex(null);
+                }}
+                style={{ backgroundColor: '#6c757d' }}
+              >
+                취소
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </FullPageContainer>
   );
 }
