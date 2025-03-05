@@ -43,7 +43,7 @@ function registerIpcHandlers() {
   console.log('IPC 핸들러 등록 시작');
 
   // 설정 저장 API
-  ipcMain.handle('saveSettings', async (_, settings) => {
+  ipcMain.handle('save-settings', async (_, settings) => {
     const settingsPath = path.join(app.getPath('userData'), 'settings.json');
     const tempPath = path.join(app.getPath('userData'), 'settings.temp.json');
     const backupPath = path.join(
