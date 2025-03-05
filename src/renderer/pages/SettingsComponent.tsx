@@ -32,7 +32,7 @@ const emptyRfc: RfcConnectionInfo = {
 
 const emptyDb: DbConnectionConfig = {
   id: '',
-  name: '',
+  connectionName: '',
   host: '',
   port: '',
   sid: '',
@@ -221,9 +221,9 @@ export default function SettingsComponent() {
   // -------------------------
   // (1) DB 추가
   const addDbConnection = () => {
-    if (newDb.name && newDb.host) {
+    if (newDb.connectionName && newDb.host) {
       const isDuplicate = settings.dbConnections.some(
-        (db) => db.name === newDb.name
+        (db) => db.connectionName === newDb.connectionName
       );
       if (isDuplicate) {
         showMessage('이미 존재하는 연결 이름입니다.', 'error');
@@ -257,10 +257,12 @@ export default function SettingsComponent() {
 
   // (3) DB 수정
   const updateDbConnection = () => {
-    if (settings.selectedDbId && newDb.name && newDb.host) {
+    if (settings.selectedDbId && newDb.connectionName && newDb.host) {
       // 다른 DB와 중복 이름 검사
       const isDuplicate = settings.dbConnections.some(
-        (db) => db.name === newDb.name && db.id !== settings.selectedDbId
+        (db) =>
+          db.connectionName === newDb.connectionName &&
+          db.id !== settings.selectedDbId
       );
       if (isDuplicate) {
         showMessage('이미 존재하는 연결 이름입니다.', 'error');
@@ -297,7 +299,7 @@ export default function SettingsComponent() {
       try {
         const result = await window.api.testDbConnection({
           id: db.id,
-          name: db.name,
+          connectionName: db.connectionName,
           host: db.host,
           port: db.port,
           sid: db.sid,
@@ -305,16 +307,16 @@ export default function SettingsComponent() {
           password: db.password,
         });
         if (result.success) {
-          showMessage(`DB "${db.name}" 연결 테스트 성공`, 'success');
+          showMessage(`DB "${db.connectionName}" 연결 테스트 성공`, 'success');
         } else {
           showMessage(
-            `DB "${db.name}" 연결 테스트 실패: ${result.message || ''}`,
+            `DB "${db.connectionName}" 연결 테스트 실패: ${result.message || ''}`,
             'error'
           );
         }
       } catch (error: any) {
         showMessage(
-          `DB "${db.name}" 연결 테스트 에러: ${error?.message || error}`,
+          `DB "${db.connectionName}" 연결 테스트 에러: ${error?.message || error}`,
           'error'
         );
       }
@@ -520,7 +522,7 @@ export default function SettingsComponent() {
               <option value="">DB 선택</option>
               {settings.dbConnections.map((db) => (
                 <option key={db.id} value={db.id}>
-                  {db.name}
+                  {db.connectionName}
                 </option>
               ))}
             </Select>
@@ -547,8 +549,10 @@ export default function SettingsComponent() {
           <div>
             <Label>연결 이름</Label>
             <Input
-              value={newDb.name}
-              onChange={(e) => setNewDb({ ...newDb, name: e.target.value })}
+              value={newDb.connectionName}
+              onChange={(e) =>
+                setNewDb({ ...newDb, connectionName: e.target.value })
+              }
               placeholder="연결 이름 입력"
             />
             <Label>호스트</Label>

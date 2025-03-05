@@ -37,6 +37,8 @@ import {
   MappingItem,
   MappingConnection,
 } from '../components/ParameterMapping/types';
+import { InterfaceExecutor } from '../components/InterfaceExecutor';
+import { InterfaceExecutorProvider } from '../context/InterfaceExecutorContext';
 
 // 빈 인터페이스 정보
 const emptyInterface: InterfaceInfo = {
@@ -395,8 +397,8 @@ export default function InterfaceManagement() {
       );
       if (!sqlInfo) return [];
 
-      // SQL 문에서 ::파라미터 형태로 된 것들을 추출
-      const paramRegex = /::([A-Za-z0-9_]+)/g;
+      // SQL 문에서 :파라미터 형태로 된 것들을 추출
+      const paramRegex = /:([A-Za-z0-9_]+)/g;
       const sqlText = sqlInfo.sqlText || '';
       const matches = [...sqlText.matchAll(paramRegex)];
 
@@ -711,8 +713,8 @@ export default function InterfaceManagement() {
                   >
                     <option value="">DB 연결 선택</option>
                     {settings.dbConnections.map((db) => (
-                      <option key={db.name} value={db.name}>
-                        {db.name}
+                      <option key={db.connectionName} value={db.connectionName}>
+                        {db.connectionName}
                       </option>
                     ))}
                   </Select>
@@ -1069,6 +1071,23 @@ export default function InterfaceManagement() {
                     등록된 작업이 없습니다. 작업을 추가해주세요.
                   </div>
                 )}
+                {/* 인터페이스 실행기 */}
+                <InterfaceExecutor
+                  rfcFunctions={settings.rfcFunctions || []}
+                  sqlList={settings.sqlList || []}
+                  interface={newInterface}
+                  sapConnections={settings.rfcConnections}
+                  dbConnections={settings.dbConnections}
+                  selectedSapConnection={settings.selectedRfc}
+                  selectedDbConnection={settings.selectedDbId}
+                  onConnectionChange={(type, value) => {
+                    if (type === 'sap') {
+                      updateSettings({ selectedRfc: value });
+                    } else {
+                      updateSettings({ selectedDbId: value });
+                    }
+                  }}
+                />
               </Section>
             </>
           )}

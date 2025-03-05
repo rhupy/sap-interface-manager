@@ -82,7 +82,7 @@ export interface RfcConnectionInfo {
 // DB 접속 정보
 export interface DbConnectionConfig {
   id: string;
-  name: string;
+  connectionName: string;
   host: string;
   port: string;
   sid: string;

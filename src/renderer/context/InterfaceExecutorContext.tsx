@@ -10,6 +10,7 @@ import {
   ExecutionState,
 } from '../types';
 import { useMessage } from './MessageContext';
+import { sql } from 'sql-formatter';
 
 // 컨텍스트 타입 정의
 interface InterfaceExecutorContextType {
@@ -97,10 +98,10 @@ export const InterfaceExecutorProvider: React.FC<{
           const step = interfaceInfo.steps[i];
           setExecutionState((prev) => ({ ...prev, currentStepIndex: i }));
 
-          addLog({
-            level: 'info',
-            message: `단계 ${i + 1} 실행: ${step.type === 'rfc' ? 'RFC' : 'SQL'} (${step.name})`,
-          });
+          // addLog({
+          //   level: 'info',
+          //   message: `단계 ${i + 1} 실행: ${step.type === 'rfc' ? 'RFC' : 'SQL'} (${step.name})`,
+          // });
 
           // 파라미터 매핑 처리
           const mappedParameters: Record<string, any> = {};
@@ -173,7 +174,9 @@ export const InterfaceExecutorProvider: React.FC<{
             // SQL 정보 찾기
             const sqlInfo = sqlList.find((sql) => sql.id === step.referenceId);
             if (!sqlInfo) {
-              throw new Error(`SQL 정보를 찾을 수 없습니다: ${step.name}`);
+              throw new Error(
+                `SQL 정보를 찾을 수 없습니다: ${step.referenceId}`
+              );
             }
 
             // SQL 쿼리 실행
@@ -183,7 +186,7 @@ export const InterfaceExecutorProvider: React.FC<{
             for (const [paramName, paramValue] of Object.entries(
               mappedParameters
             )) {
-              const paramRegex = new RegExp(`::${paramName}`, 'g');
+              const paramRegex = new RegExp(`:${paramName}`, 'g');
               const formattedValue =
                 typeof paramValue === 'string'
                   ? `'${paramValue.replace(/'/g, "''")}'`
@@ -195,10 +198,12 @@ export const InterfaceExecutorProvider: React.FC<{
               );
             }
 
+            // 쿼리 끝의 세미콜론 제거
+            query = query.replace(/;\s*$/, '').replace(/\s+/g, ' ').trim();
+
             addLog({
               level: 'info',
-              message: `SQL 쿼리 실행 중...`,
-              details: { query },
+              message: `SQL 실행 : ${sqlInfo.name}`,
             });
 
             // SQL 실행 API가 없으므로 추가 필요
@@ -225,7 +230,7 @@ export const InterfaceExecutorProvider: React.FC<{
 
           addLog({
             level: 'success',
-            message: `단계 ${i + 1} 실행 완료`,
+            message: `단계 ${i + 1} 실행 완료 : ${step.name}`,
             details: { result: stepResult },
           });
         }

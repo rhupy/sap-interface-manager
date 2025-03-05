@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
-import { useInterfaceExecutor } from './InterfaceExecutorContext';
-import { InterfaceDefinition } from '../../types';
-import { Button, Select, LeftAlignedLabel } from '../../styles/CommonStyles';
+import { useInterfaceExecutor } from '../context/InterfaceExecutorContext';
+import { InterfaceInfo, RfcConnectionInfo, DbConnectionConfig } from '../types';
+import { Button, Select, LeftAlignedLabel } from '../styles/CommonStyles';
 
 interface InterfaceExecutorProps {
-  interface: InterfaceDefinition;
-  sapConnections: any[];
-  dbConnections: any[];
+  interface: InterfaceInfo;
+  sapConnections: RfcConnectionInfo[];
+  dbConnections: DbConnectionConfig[];
   selectedSapConnection?: string;
   selectedDbConnection?: string;
   onConnectionChange?: (type: 'sap' | 'db', connectionName: string) => void;
   showConnectionSelectors?: boolean;
   autoStart?: boolean;
   showLogs?: boolean;
+  rfcFunctions: any[];
+  sqlList: any[];
 }
 
 export const InterfaceExecutor: React.FC<InterfaceExecutorProps> = ({
@@ -22,9 +24,11 @@ export const InterfaceExecutor: React.FC<InterfaceExecutorProps> = ({
   selectedSapConnection,
   selectedDbConnection,
   onConnectionChange,
-  showConnectionSelectors = true,
+  showConnectionSelectors = false,
   autoStart = false,
   showLogs = true,
+  rfcFunctions,
+  sqlList,
 }) => {
   const { executionState, executeInterface, clearLogs } =
     useInterfaceExecutor();
@@ -62,6 +66,7 @@ export const InterfaceExecutor: React.FC<InterfaceExecutorProps> = ({
   };
 
   // 인터페이스 실행 핸들러
+  // 인터페이스 실행 핸들러
   const handleExecute = async () => {
     clearLogs();
 
@@ -72,7 +77,13 @@ export const InterfaceExecutor: React.FC<InterfaceExecutorProps> = ({
       (conn) => conn.connectionName === dbConnection
     );
 
-    await executeInterface(interfaceDefinition, sapConfig, dbConfig);
+    await executeInterface(
+      interfaceDefinition,
+      rfcFunctions, // props에서 받은 rfcFunctions 사용
+      sqlList, // props에서 받은 sqlList 사용
+      sapConfig,
+      dbConfig
+    );
   };
 
   // 로그 렌더링 함수
@@ -170,7 +181,7 @@ export const InterfaceExecutor: React.FC<InterfaceExecutorProps> = ({
             >
               <option value="">DB 연결 선택</option>
               {dbConnections.map((conn) => (
-                <option key={conn.connectionName} value={conn.connectionName}>
+                <option key={conn.id} value={conn.connectionName}>
                   {conn.connectionName}
                 </option>
               ))}
