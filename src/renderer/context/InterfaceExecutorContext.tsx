@@ -289,9 +289,11 @@ export const InterfaceExecutorProvider: React.FC<{
               throw new Error('SQL 실행 API를 사용할 수 없습니다.');
             }
 
+            const parsedQuery = parseQuery(query);
+
             const result = await window.api.executeSql({
               connection: dbConnection,
-              query,
+              query: parsedQuery,
             });
 
             if (!result.success) {
@@ -348,6 +350,26 @@ export const InterfaceExecutorProvider: React.FC<{
     },
     [addLog, showMessage]
   );
+
+  // 쿼리 파싱 함수
+  function parseQuery(query: string): string {
+    console.log('파싱 전 쿼리:', query);
+
+    // :'값' 형식을 '값'으로 변환
+    let parsedQuery = query.replace(/:'([^']*)'/g, "'$1'");
+
+    // :숫자 형식을 숫자로 변환
+    parsedQuery = parsedQuery.replace(/:(\d+(\.\d+)?)/g, '$1');
+
+    // :NULL 형식을 NULL로 변환
+    parsedQuery = parsedQuery.replace(/:NULL/gi, 'NULL');
+
+    // :SYSDATE 형식을 SYSDATE로 변환
+    parsedQuery = parsedQuery.replace(/:SYSDATE/gi, 'SYSDATE');
+
+    console.log('파싱 후 쿼리:', parsedQuery);
+    return parsedQuery;
+  }
 
   return (
     <InterfaceExecutorContext.Provider
