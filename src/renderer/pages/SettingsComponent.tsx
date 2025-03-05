@@ -4,17 +4,16 @@ import { useState, useEffect } from 'react';
 import {
   ContentContainer,
   Title,
-  Button,
   Input,
   Select,
   Label,
   Section,
   SectionTitle,
-  DeleteButton,
 } from '../styles/CommonStyles';
 import { useSettingsContext } from '../context/SettingContext';
 import { useMessage } from '../context/MessageContext';
 import { RfcConnectionInfo, DbConnectionConfig } from '../types';
+import SmartButton from '../components/smartButton';
 
 // RFC/DB를 비웠을 때 사용하기 위한 객체
 const emptyRfc: RfcConnectionInfo = {
@@ -366,7 +365,7 @@ export default function SettingsComponent() {
       >
         <Title>접속 정보</Title>
         {/* 설정 파일 열기 버튼 */}
-        <Button
+        <SmartButton
           onClick={openSettingsFile}
           style={{
             backgroundColor: '#6c757d', // 회색 계열 색상으로 변경
@@ -375,7 +374,7 @@ export default function SettingsComponent() {
           }}
         >
           설정 파일 열기
-        </Button>
+        </SmartButton>
       </div>
       {/* <Description>RFC 및 DB 연결 설정을 관리하세요.</Description> */}
 
@@ -401,18 +400,18 @@ export default function SettingsComponent() {
             {/* RFC가 선택되어 있을 때만 테스트/삭제 버튼 표시 */}
             {settings.selectedRfc && (
               <>
-                <Button
+                <SmartButton
                   onClick={testRfcConnection}
                   style={{ marginRight: '10px' }}
                 >
                   테스트
-                </Button>
-                <DeleteButton
+                </SmartButton>
+                <SmartButton
                   onClick={() => deleteRfcConnection(settings.selectedRfc)}
                   style={{ marginRight: '10px' }}
                 >
                   삭제
-                </DeleteButton>
+                </SmartButton>
               </>
             )}
           </div>
@@ -492,18 +491,20 @@ export default function SettingsComponent() {
             {/* RFC가 선택되어 있을 때만 수정 버튼 표시 */}
             {settings.selectedRfc && (
               <>
-                <Button
+                <SmartButton
                   onClick={addRfcConnection}
                   style={{ marginRight: '10px' }}
                 >
                   RFC 연결 추가
-                </Button>
-                <Button onClick={updateRfcConnection}>수정</Button>
+                </SmartButton>
+                <SmartButton onClick={updateRfcConnection}>수정</SmartButton>
               </>
             )}
             {!settings.selectedRfc && (
               <>
-                <Button onClick={addRfcConnection}>RFC 연결 추가</Button>
+                <SmartButton onClick={addRfcConnection}>
+                  RFC 연결 추가
+                </SmartButton>
               </>
             )}
           </div>
@@ -530,18 +531,18 @@ export default function SettingsComponent() {
             {/* DB가 선택되어 있을 때만 테스트/삭제 버튼 표시 */}
             {settings.selectedDbId && (
               <>
-                <Button
+                <SmartButton
                   onClick={testDbConnection}
                   style={{ marginRight: '10px' }}
                 >
                   테스트
-                </Button>
-                <DeleteButton
+                </SmartButton>
+                <SmartButton
                   onClick={() => deleteDbConnection(settings.selectedDbId)}
                   style={{ marginRight: '10px' }}
                 >
                   삭제
-                </DeleteButton>
+                </SmartButton>
               </>
             )}
           </div>
@@ -591,18 +592,20 @@ export default function SettingsComponent() {
             {/* DB가 선택되어 있을 때만 수정 버튼 표시 */}
             {settings.selectedDbId && (
               <>
-                <Button
+                <SmartButton
                   onClick={addDbConnection}
                   style={{ marginRight: '10px' }}
                 >
                   DB 연결 추가
-                </Button>
-                <Button onClick={updateDbConnection}>수정</Button>
+                </SmartButton>
+                <SmartButton onClick={updateDbConnection}>수정</SmartButton>
               </>
             )}
             {!settings.selectedDbId && (
               <>
-                <Button onClick={addDbConnection}>DB 연결 추가</Button>
+                <SmartButton onClick={addDbConnection}>
+                  DB 연결 추가
+                </SmartButton>
               </>
             )}
           </div>
