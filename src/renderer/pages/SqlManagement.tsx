@@ -228,11 +228,11 @@ export default function SqlManagement() {
       return;
     }
     try {
-      // 파라미터를 임시 문자열로 변환 (::param -> '__PARAM__param') : 파라미터가 포함된 경우 정렬 오류때문
+      // 파라미터를 임시 문자열로 변환 (::param -> __PARAM__param)
       const paramPlaceholderRegex = /::([A-Za-z0-9_]+)/g;
       const tempSql = newSql.sqlText.replace(
         paramPlaceholderRegex,
-        "'__PARAM__$1'"
+        '__PARAM__$1'
       );
 
       // SQL 포맷팅
@@ -243,19 +243,19 @@ export default function SqlManagement() {
         tabWidth: 2,
       });
 
-      // 임시 문자열을 다시 파라미터로 변환 ('__PARAM__param' -> ::param)
+      // 임시 문자열을 다시 파라미터로 변환 (__PARAM__param -> ::param)
       const restoredSql = formatted.replace(
-        /'__PARAM__([A-Za-z0-9_]+)'/g,
+        /__PARAM__([A-Za-z0-9_]+)/g,
         '::$1'
       );
 
       setNewSql({ ...newSql, sqlText: restoredSql });
       const extracted = extractParamsFromSql(restoredSql);
       setParamList(extracted);
-      showMessage('SQL이 정렬되었습니다.', 'success');
+      showMessage('SQL이 정렬되었습니다.');
     } catch (error) {
       console.error('SQL 정렬 오류:', error);
-      showMessage('SQL 정렬 중 오류가 발생했습니다.', 'error');
+      showMessage('SQL 정렬 중 오류가 발생했습니다.');
     }
   };
 

@@ -42,17 +42,55 @@ function createWindow() {
 function registerIpcHandlers() {
   console.log('IPC 핸들러 등록 시작');
 
-  // 설정 저장 핸들러
-  ipcMain.handle('save-settings', async (event, settings) => {
+  // 설정 저장 API
+  ipcMain.handle('saveSettings', async (_, settings) => {
+    const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+    const tempPath = path.join(app.getPath('userData'), 'settings.temp.json');
+    const backupPath = path.join(
+      app.getPath('userData'),
+      'settings.backup.json'
+    );
+
     try {
+      // 1. 기존 설정 파일 백업 (있는 경우)
+      if (fs.existsSync(settingsPath)) {
+        await fs.promises.copyFile(settingsPath, backupPath);
+      }
+
+      // 2. 임시 파일에 새 설정 저장
       await fs.promises.writeFile(
-        settingsPath,
-        JSON.stringify(settings, null, 2)
+        tempPath,
+        JSON.stringify(settings, null, 2),
+        'utf8'
       );
-      return { success: true };
+
+      // 3. 임시 파일을 실제 설정 파일로 이동 (원자적 작업)
+      await fs.promises.rename(tempPath, settingsPath);
+
+      return true;
     } catch (error) {
-      console.error('설정 저장 오류:', error);
-      return { success: false, error: String(error) };
+      console.error('설정 저장 실패:', error);
+
+      // 임시 파일 정리
+      if (fs.existsSync(tempPath)) {
+        try {
+          await fs.promises.unlink(tempPath);
+        } catch (cleanupError) {
+          console.error('임시 파일 정리 실패:', cleanupError);
+        }
+      }
+
+      // 백업에서 복원 시도 (저장 실패 시)
+      if (fs.existsSync(backupPath)) {
+        try {
+          await fs.promises.copyFile(backupPath, settingsPath);
+          console.log('백업에서 설정 복원 완료');
+        } catch (restoreError) {
+          console.error('백업에서 설정 복원 실패:', restoreError);
+        }
+      }
+
+      throw error;
     }
   });
 

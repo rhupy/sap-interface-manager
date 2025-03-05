@@ -10,7 +10,6 @@ import {
   ExecutionState,
 } from '../types';
 import { useMessage } from './MessageContext';
-import { sql } from 'sql-formatter';
 
 // 컨텍스트 타입 정의
 interface InterfaceExecutorContextType {
@@ -98,29 +97,93 @@ export const InterfaceExecutorProvider: React.FC<{
           const step = interfaceInfo.steps[i];
           setExecutionState((prev) => ({ ...prev, currentStepIndex: i }));
 
-          // addLog({
-          //   level: 'info',
-          //   message: `단계 ${i + 1} 실행: ${step.type === 'rfc' ? 'RFC' : 'SQL'} (${step.name})`,
-          // });
-
           // 파라미터 매핑 처리
           const mappedParameters: Record<string, any> = {};
           if (step.parameters) {
             for (const [paramName, paramValue] of Object.entries(
               step.parameters
             )) {
-              // 이전 단계의 결과를 참조하는 경우 (예: "1.DATA1")
+              // 이전 단계의 결과를 참조하는 경우
               if (typeof paramValue === 'string' && paramValue.includes('.')) {
-                const [stepIndex, resultKey] = paramValue.split('.');
-                const stepResult = results[parseInt(stepIndex) - 1];
-                if (stepResult && stepResult[resultKey] !== undefined) {
-                  mappedParameters[paramName] = stepResult[resultKey];
-                } else {
-                  mappedParameters[paramName] = null;
-                  addLog({
-                    level: 'warning',
-                    message: `파라미터 매핑 경고: ${paramValue}를 찾을 수 없습니다.`,
-                  });
+                // 첫 번째 부분은 단계 ID 또는 인덱스
+                const [stepIdentifier, ...pathParts] = paramValue.split('.');
+                const path = pathParts.join('.');
+
+                // 단계 인덱스로 참조하는 경우 (숫자인 경우)
+                if (/^\d+$/.test(stepIdentifier)) {
+                  const stepIndex = parseInt(stepIdentifier) - 1;
+                  const stepResult = results[stepIndex];
+
+                  if (stepResult && path) {
+                    // 중첩된 경로 처리
+                    let value = stepResult;
+                    const parts = path.split('.');
+                    let found = true;
+
+                    for (const part of parts) {
+                      if (value && typeof value === 'object' && part in value) {
+                        value = value[part];
+                      } else {
+                        found = false;
+                        addLog({
+                          level: 'warning',
+                          message: `파라미터 매핑 경고: ${paramValue}를 찾을 수 없습니다.`,
+                        });
+                        break;
+                      }
+                    }
+
+                    if (found) {
+                      mappedParameters[paramName] = value;
+                    } else {
+                      mappedParameters[paramName] = null;
+                    }
+                  } else {
+                    mappedParameters[paramName] = null;
+                    addLog({
+                      level: 'warning',
+                      message: `파라미터 매핑 경고: ${paramValue}를 찾을 수 없습니다.`,
+                    });
+                  }
+                }
+                // 단계 ID로 참조하는 경우
+                else {
+                  // 단계 ID로 결과 찾기
+                  const stepIndex = interfaceInfo.steps.findIndex(
+                    (s) => s.id === stepIdentifier || s.name === stepIdentifier
+                  );
+
+                  if (stepIndex >= 0 && results[stepIndex]) {
+                    // 중첩된 경로 처리
+                    let value = results[stepIndex];
+                    const parts = path.split('.');
+                    let found = true;
+
+                    for (const part of parts) {
+                      if (value && typeof value === 'object' && part in value) {
+                        value = value[part];
+                      } else {
+                        found = false;
+                        addLog({
+                          level: 'warning',
+                          message: `파라미터 매핑 경고: ${stepIdentifier}.${path}를 찾을 수 없습니다.`,
+                        });
+                        break;
+                      }
+                    }
+
+                    if (found) {
+                      mappedParameters[paramName] = value;
+                    } else {
+                      mappedParameters[paramName] = null;
+                    }
+                  } else {
+                    mappedParameters[paramName] = null;
+                    addLog({
+                      level: 'warning',
+                      message: `파라미터 매핑 경고: ${paramValue}를 찾을 수 없습니다.`,
+                    });
+                  }
                 }
               } else {
                 // 상수 값인 경우
@@ -129,8 +192,9 @@ export const InterfaceExecutorProvider: React.FC<{
             }
           }
 
-          // 단계 실행 (RFC 또는 SQL)
-          let stepResult;
+          // 단계 유형에 따라 실행
+          let stepResult: any = {};
+
           if (step.type === 'rfc') {
             if (!sapConnection) {
               throw new Error('SAP 연결이 선택되지 않았습니다.');
@@ -165,7 +229,21 @@ export const InterfaceExecutorProvider: React.FC<{
               throw new Error(`RFC 함수 실행 실패: ${result.message}`);
             }
 
-            stepResult = result.data || {};
+            // 결과 처리: RETURN 구조체의 모든 필드를 최상위로 복사
+            const processedResult = { ...result.data };
+
+            // RETURN 구조체의 필드를 최상위로 복사
+            if (processedResult.result?.RETURN) {
+              // 각 필드를 최상위로 복사
+              for (const field of Object.keys(processedResult.result.RETURN)) {
+                processedResult[field] = processedResult.result.RETURN[field];
+              }
+            }
+
+            // 원본 결과도 유지
+            processedResult.originalResult = result.data;
+
+            stepResult = processedResult;
           } else if (step.type === 'sql') {
             if (!dbConnection) {
               throw new Error('DB 연결이 선택되지 않았습니다.');
@@ -199,7 +277,7 @@ export const InterfaceExecutorProvider: React.FC<{
             }
 
             // 쿼리 끝의 세미콜론 제거
-            query = query.replace(/;\s*$/, '').replace(/\s+/g, ' ').trim();
+            query = query.replace(/;\s*$/, '');
 
             addLog({
               level: 'info',
