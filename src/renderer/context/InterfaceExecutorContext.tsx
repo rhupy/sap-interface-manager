@@ -233,10 +233,10 @@ export const InterfaceExecutorProvider: React.FC<{
             const processedResult = { ...result.data };
 
             // RETURN 구조체의 필드를 최상위로 복사
-            if (processedResult.result?.RETURN) {
+            if (processedResult.RETURN) {
               // 각 필드를 최상위로 복사
-              for (const field of Object.keys(processedResult.result.RETURN)) {
-                processedResult[field] = processedResult.result.RETURN[field];
+              for (const field of Object.keys(processedResult.RETURN)) {
+                processedResult[field] = processedResult.RETURN[field];
               }
             }
 
