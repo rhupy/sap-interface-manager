@@ -66,6 +66,162 @@ export const InterfaceExecutorProvider: React.FC<{
     }));
   }, []);
 
+  // 다중 데이터 매핑 여부 확인 함수
+  function hasMultiDataMapping(step: InterfaceStep, prevResult: any): boolean {
+    if (!step.parameters || !prevResult) return false;
+
+    // 매핑 정보 확인
+    for (const [paramName, mappedFrom] of Object.entries(step.parameters)) {
+      const parts = mappedFrom.split('.');
+      if (parts.length >= 3) {
+        // 작업명.테이블명.컬럼명 형태
+        const jobName = parts[0];
+        const tableName = parts[1];
+
+        // prevResult에서 해당 테이블이 배열인지 확인
+        if (
+          prevResult.originalResult &&
+          prevResult.originalResult[tableName] &&
+          Array.isArray(prevResult.originalResult[tableName]) &&
+          prevResult.originalResult[tableName].length > 0
+        ) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  // 다중 데이터 매핑 정보 추출 함수
+  function extractMultiDataInfo(
+    step: InterfaceStep,
+    prevResult: any
+  ): {
+    tableName: string;
+    data: any[];
+    mappingInfo: Record<string, string>;
+  } | null {
+    if (!step.parameters || !prevResult) return null;
+
+    // 매핑 정보 확인
+    for (const [paramName, mappedFrom] of Object.entries(step.parameters)) {
+      const parts = mappedFrom.split('.');
+      if (parts.length >= 3) {
+        // 작업명.테이블명.컬럼명 형태
+        const jobName = parts[0];
+        const tableName = parts[1];
+
+        // prevResult에서 해당 테이블이 배열인지 확인
+        if (
+          prevResult.originalResult &&
+          prevResult.originalResult[tableName] &&
+          Array.isArray(prevResult.originalResult[tableName]) &&
+          prevResult.originalResult[tableName].length > 0
+        ) {
+          // 매핑 정보 구성
+          const mappingInfo: Record<string, string> = {};
+
+          // 모든 파라미터에 대해 매핑 정보 추출
+          for (const [pName, pMappedFrom] of Object.entries(step.parameters)) {
+            const pParts = pMappedFrom.split('.');
+            if (
+              pParts.length >= 3 &&
+              pParts[0] === jobName &&
+              pParts[1] === tableName
+            ) {
+              // DATA3 -> ZWMS_SC_VENDOR.OUTTAB.MATNR 형태의 매핑에서 MATNR 추출
+              mappingInfo[pName] = pParts[2];
+            }
+          }
+
+          return {
+            tableName,
+            data: prevResult.originalResult[tableName],
+            mappingInfo,
+          };
+        }
+      }
+    }
+
+    return null;
+  }
+
+  // 다중 데이터 SQL 실행 함수
+  async function executeMultiDataSql(
+    connection: any,
+    sqlTemplate: string,
+    tableData: any[],
+    mappingInfo: Record<string, string>,
+    regularParams: Record<string, any> = {} // 일반 매핑 파라미터 추가
+  ): Promise<any> {
+    // 컬럼 매핑 정보를 JSON으로 변환
+    const mappingsJson = Object.entries(mappingInfo).map(
+      ([paramName, jsonPath]) => ({
+        param_name: paramName,
+        json_path: jsonPath,
+      })
+    );
+
+    // 일반 파라미터 정보를 JSON으로 변환
+    const regularParamsJson = Object.entries(regularParams).map(
+      ([paramName, paramValue]) => ({
+        param_name: paramName,
+        param_value: paramValue,
+      })
+    );
+
+    // 프로시저 호출 SQL 생성
+    const procedureCall = `
+    BEGIN
+      EXEC_MULTI_DATA_SQL(
+        p_json_data => '${JSON.stringify(tableData).replace(/'/g, "''")}',
+        p_sql_template => '${sqlTemplate.replace(/'/g, "''")}',
+        p_column_mappings => '${JSON.stringify(mappingsJson).replace(/'/g, "''")}'
+        ${regularParamsJson.length > 0 ? `,p_regular_params => '${JSON.stringify(regularParamsJson).replace(/'/g, "''")}'` : ''}
+      );
+    END;
+    `;
+
+    console.log('다중 데이터 처리 프로시저 호출:', procedureCall);
+
+    if (!window.api?.executeSql) {
+      throw new Error('다중 데이터 SQL 을 사용할 수 없습니다.');
+    }
+
+    // 프로시저 호출
+    return await window.api.executeSql({
+      connection,
+      query: procedureCall,
+    });
+  }
+
+  // 매핑된 값 가져오기 함수
+  function getMappedValue(data: any, path: string): string {
+    if (!data) return 'NULL';
+
+    const parts = path.split('.');
+    let value = data;
+
+    for (const part of parts) {
+      if (value === undefined || value === null) return 'NULL';
+      value = value[part];
+    }
+
+    if (value === undefined || value === null) return 'NULL';
+
+    // 값 타입에 따른 처리
+    if (typeof value === 'string') {
+      return `'${value.replace(/'/g, "''")}'`;
+    } else if (typeof value === 'number') {
+      return value.toString();
+    } else if (value instanceof Date) {
+      return `TO_DATE('${value.toISOString().split('T')[0]}', 'YYYY-MM-DD')`;
+    } else {
+      return `'${String(value).replace(/'/g, "''")}'`;
+    }
+  }
+
   // 인터페이스 실행 함수
   const executeInterface = useCallback(
     async (
@@ -195,6 +351,7 @@ export const InterfaceExecutorProvider: React.FC<{
           // 단계 유형에 따라 실행
           let stepResult: any = {};
 
+          // RFC 작업 실행 ---------------------------------------------------------------
           if (step.type === 'rfc') {
             if (!sapConnection) {
               throw new Error('SAP 연결이 선택되지 않았습니다.');
@@ -245,6 +402,7 @@ export const InterfaceExecutorProvider: React.FC<{
 
             stepResult = processedResult;
           } else if (step.type === 'sql') {
+            // SQL 작업 실행 ---------------------------------------------------------------
             if (!dbConnection) {
               throw new Error('DB 연결이 선택되지 않았습니다.');
             }
@@ -260,6 +418,74 @@ export const InterfaceExecutorProvider: React.FC<{
             // SQL 쿼리 실행
             let query = sqlInfo.sqlText;
 
+            // 이전 단계의 결과 가져오기 (i > 0인 경우에만)
+            const prevResult = i > 0 ? results[i - 1] : null;
+
+            // 다중 데이터 매핑 여부 확인
+            const hasMultiData = hasMultiDataMapping(step, prevResult);
+
+            if (hasMultiData) {
+              // 다중 데이터 정보 추출
+              const multiDataInfo = extractMultiDataInfo(step, prevResult);
+
+              if (multiDataInfo) {
+                addLog({
+                  level: 'info',
+                  message: `다중 데이터 SQL 실행 : ${sqlInfo.name} (${multiDataInfo.data.length}개 행)`,
+                });
+
+                // 쿼리 끝의 세미콜론 제거
+                query = query.replace(/;\s*$/, '');
+
+                // 일반 매핑 파라미터 추출
+                const regularParams: Record<string, any> = {};
+                for (const [paramName, paramValue] of Object.entries(
+                  mappedParameters
+                )) {
+                  // 다중 데이터 매핑이 아닌 파라미터만 추가
+                  if (
+                    !Object.keys(multiDataInfo.mappingInfo).includes(paramName)
+                  ) {
+                    regularParams[paramName] = paramValue;
+                  }
+                }
+
+                // 다중 데이터 SQL 실행
+                const result = await executeMultiDataSql(
+                  dbConnection,
+                  query,
+                  multiDataInfo.data,
+                  multiDataInfo.mappingInfo,
+                  regularParams // 일반 매핑 파라미터 전달
+                );
+
+                if (!result.success) {
+                  throw new Error(
+                    `다중 데이터 SQL 실행 실패: ${result.message}`
+                  );
+                }
+
+                stepResult = {
+                  message: `${multiDataInfo.data.length}개 행에 대한 SQL 실행 완료`,
+                  rowCount: multiDataInfo.data.length,
+                  ...result.data,
+                };
+
+                // 결과 저장
+                results.push(stepResult);
+
+                addLog({
+                  level: 'success',
+                  message: `단계 ${i + 1} 실행 완료 : ${step.name}`,
+                  details: { result: stepResult },
+                });
+
+                // 다음 단계로 진행
+                continue;
+              }
+            }
+
+            // 일반 SQL 실행
             // SQL 파라미터 치환
             for (const [paramName, paramValue] of Object.entries(
               mappedParameters
@@ -284,7 +510,6 @@ export const InterfaceExecutorProvider: React.FC<{
               message: `SQL 실행 : ${sqlInfo.name}`,
             });
 
-            // SQL 실행 API가 없으므로 추가 필요
             if (!window.api?.executeSql) {
               throw new Error('SQL 실행 API를 사용할 수 없습니다.');
             }
@@ -301,7 +526,9 @@ export const InterfaceExecutorProvider: React.FC<{
             }
 
             stepResult = result.data || {};
-          } else {
+          }
+          // RFC / SQL 종료 ---------------------------------------------------------------
+          else {
             throw new Error(`지원하지 않는 단계 유형: ${step.type}`);
           }
 
@@ -351,7 +578,7 @@ export const InterfaceExecutorProvider: React.FC<{
     [addLog, showMessage]
   );
 
-  // 쿼리 파싱 함수
+  // 쿼리 파싱
   function parseQuery(query: string): string {
     console.log('파싱 전 쿼리:', query);
 
