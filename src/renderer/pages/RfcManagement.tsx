@@ -587,7 +587,14 @@ export default function RfcManagement() {
               </div>
             </div>
 
-            <div style={{ marginBottom: '10px' }}>
+            <div
+              style={{
+                marginBottom: '10px',
+                width: '100%',
+                maxWidth: 'none',
+                flex: '1',
+              }}
+            >
               <LeftAlignedLabel>설명</LeftAlignedLabel>
               <Input
                 value={newRfcFunction.description}
@@ -598,7 +605,11 @@ export default function RfcManagement() {
                   })
                 }
                 placeholder="함수에 대한 간단한 설명"
-                style={{ width: '100%', maxWidth: 'none' }}
+                style={{
+                  width: '100%',
+                  maxWidth: 'none',
+                  boxSizing: 'border-box',
+                }}
               />
             </div>
 
@@ -753,49 +764,122 @@ export default function RfcManagement() {
             <div
               style={{
                 border: '1px solid #eee',
-                padding: '10px',
-                marginBottom: '10px',
+                padding: '15px',
+                marginBottom: '15px',
                 backgroundColor: '#f9f9f9',
+                borderRadius: '4px',
               }}
             >
+              {/* 모든 필드를 한 줄로 표현 */}
               <div
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr 1fr',
+                  display: 'flex',
                   gap: '10px',
-                  marginBottom: '10px',
+                  alignItems: 'flex-start',
                 }}
               >
-                <div>
-                  <LeftAlignedLabel>파라미터 이름</LeftAlignedLabel>
+                {/* 파라미터 이름 */}
+                <div style={{ width: '300px' }}>
+                  <div style={{ marginBottom: '5px', fontWeight: '500' }}>
+                    파라미터 이름
+                  </div>
                   <Input
                     value={newParameter.name}
                     onChange={(e) =>
                       setNewParameter({ ...newParameter, name: e.target.value })
                     }
                     placeholder="예) CUSTOMER_ID"
-                    style={{ width: '100%', maxWidth: 'none' }}
+                    style={{ minWidth: '100%', height: '32px' }}
                   />
                 </div>
-                <div>
-                  <LeftAlignedLabel>파라미터 타입</LeftAlignedLabel>
-                  <Select
-                    value={newParameter.type}
+
+                {/* 설명 (두 번째 위치로 이동, 더 넓은 너비) */}
+                <div style={{ flex: '1' }}>
+                  <div style={{ marginBottom: '5px', fontWeight: '500' }}>
+                    설명
+                  </div>
+                  <Input
+                    value={newParameter.description || ''}
                     onChange={(e) =>
                       setNewParameter({
                         ...newParameter,
-                        type: e.target.value as any,
+                        description: e.target.value,
                       })
                     }
-                    style={{ width: '100%', maxWidth: 'none' }}
-                  >
-                    <option value="import">Import</option>
-                    <option value="export">Export</option>
-                    <option value="table">Table</option>
-                  </Select>
+                    placeholder="파라미터에 대한 설명"
+                    style={{ minWidth: '100%', height: '32px' }}
+                  />
                 </div>
-                <div>
-                  <LeftAlignedLabel>데이터 타입</LeftAlignedLabel>
+
+                {/* 파라미터 타입 */}
+                <div style={{ width: '200px' }}>
+                  <div style={{ marginBottom: '5px', fontWeight: '500' }}>
+                    파라미터 타입
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '5px',
+                      height: '37px',
+                      paddingTop: '5px',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setNewParameter({ ...newParameter, type: 'import' })
+                      }
+                      style={{
+                        padding: '0px',
+                        backgroundColor:
+                          newParameter.type === 'import'
+                            ? '#1976d2'
+                            : '#f5f5f5',
+                        color:
+                          newParameter.type === 'import' ? 'white' : 'black',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontWeight:
+                          newParameter.type === 'import' ? 'bold' : 'normal',
+                        flex: 1,
+                        height: '100%',
+                      }}
+                    >
+                      Import
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setNewParameter({ ...newParameter, type: 'export' })
+                      }
+                      style={{
+                        padding: '0px',
+                        backgroundColor:
+                          newParameter.type === 'export'
+                            ? '#1976d2'
+                            : '#f5f5f5',
+                        color:
+                          newParameter.type === 'export' ? 'white' : 'black',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontWeight:
+                          newParameter.type === 'export' ? 'bold' : 'normal',
+                        flex: 1,
+                        height: '100%',
+                      }}
+                    >
+                      Export
+                    </button>
+                  </div>
+                </div>
+
+                {/* 데이터 타입 */}
+                <div style={{ width: '130px' }}>
+                  <div style={{ marginBottom: '5px', fontWeight: '500' }}>
+                    데이터 타입
+                  </div>
                   <Input
                     value={newParameter.dataType}
                     onChange={(e) =>
@@ -805,68 +889,76 @@ export default function RfcManagement() {
                       })
                     }
                     placeholder="예) STRING"
-                    style={{ width: '100%', maxWidth: 'none' }}
+                    style={{ width: '100%', height: '32px' }}
                   />
                 </div>
-              </div>
 
-              <div style={{ marginBottom: '10px' }}>
-                <LeftAlignedLabel>설명</LeftAlignedLabel>
-                <Input
-                  value={newParameter.description || ''}
-                  onChange={(e) =>
-                    setNewParameter({
-                      ...newParameter,
-                      description: e.target.value,
-                    })
-                  }
-                  placeholder="파라미터에 대한 설명"
-                  style={{ width: '100%', maxWidth: 'none' }}
-                />
-              </div>
+                {/* 기본값 */}
+                <div style={{ width: '130px' }}>
+                  <div style={{ marginBottom: '5px', fontWeight: '500' }}>
+                    기본값
+                  </div>
+                  <Input
+                    value={newParameter.defaultValue || ''}
+                    onChange={(e) =>
+                      setNewParameter({
+                        ...newParameter,
+                        defaultValue: e.target.value,
+                      })
+                    }
+                    placeholder="기본값 (선택사항)"
+                    style={{ width: '100%', height: '32px' }}
+                  />
+                </div>
 
-              <div>
-                <LeftAlignedLabel>기본값</LeftAlignedLabel>
-                <Input
-                  value={newParameter.defaultValue || ''}
-                  onChange={(e) =>
-                    setNewParameter({
-                      ...newParameter,
-                      defaultValue: e.target.value,
-                    })
-                  }
-                  placeholder="기본값 (선택사항)"
-                  style={{ width: '100%', maxWidth: 'none' }}
-                />
-              </div>
-
-              <div
-                style={{
-                  marginTop: '10px',
-                  display: 'flex',
-                  justifyContent: 'flex-start',
-                }}
-              >
-                <Button
-                  onClick={handleAddParameter}
-                  style={{ marginRight: '5px' }}
-                >
-                  새 파라미터 추가
-                </Button>
+                {/* 수정 버튼 - 필요한 경우에만 표시 */}
                 {newRfcFunction.parameters.some(
                   (p) => p.name === newParameter.name
                 ) && (
+                  <div style={{ width: '130px', alignSelf: 'flex-end' }}>
+                    <Button
+                      onClick={() => {
+                        const index = newRfcFunction.parameters.findIndex(
+                          (p) => p.name === newParameter.name
+                        );
+                        if (index !== -1) handleUpdateParameter(index);
+                      }}
+                      style={{
+                        backgroundColor: '#1976d2',
+                        color: 'white',
+                        border: 'none',
+                        padding: '0 12px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        height: '32px',
+                        width: '100%',
+                      }}
+                    >
+                      파라미터 수정
+                    </Button>
+                  </div>
+                )}
+
+                {/* 버튼 영역 */}
+                <div style={{ width: '150px', alignSelf: 'flex-end' }}>
                   <Button
-                    onClick={() => {
-                      const index = newRfcFunction.parameters.findIndex(
-                        (p) => p.name === newParameter.name
-                      );
-                      if (index !== -1) handleUpdateParameter(index);
+                    onClick={handleAddParameter}
+                    style={{
+                      backgroundColor: '#1976d2',
+                      color: 'white',
+                      border: 'none',
+                      padding: '0 12px',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      height: '32px',
+                      width: '100%',
                     }}
                   >
-                    파라미터 수정
+                    새 파라미터 추가
                   </Button>
-                )}
+                </div>
               </div>
             </div>
 

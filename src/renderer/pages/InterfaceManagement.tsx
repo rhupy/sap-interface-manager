@@ -414,9 +414,7 @@ export default function InterfaceManagement() {
         (f) => f.id === referenceId
       );
       if (!rfcFunction) return [];
-      return rfcFunction.parameters.filter(
-        (p) => p.type === 'export' || p.type === 'table'
-      );
+      return rfcFunction.parameters.filter((p) => p.type === 'export');
     } else if (type === 'sql') {
       // SQL의 경우 모든 컬럼을 출력 파라미터로 간주
       return ['RESULT'];

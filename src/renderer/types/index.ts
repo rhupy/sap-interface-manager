@@ -115,7 +115,7 @@ export interface RfcFunctionInfo {
 // RFC 파라미터
 export interface RfcParameter {
   name: string;
-  type: 'import' | 'export' | 'table'; // 파라미터 타입
+  type: 'import' | 'export'; // 파라미터 타입 : 'table'은 제거
   dataType: string; // 데이터 타입 (STRING, INT, TABLE 등)
   description?: string;
   defaultValue?: string;

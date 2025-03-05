@@ -254,91 +254,238 @@ export const InterfaceExecutorProvider: React.FC<{
           setExecutionState((prev) => ({ ...prev, currentStepIndex: i }));
 
           // 파라미터 매핑 처리
+          // 파라미터 매핑 처리
           const mappedParameters: Record<string, any> = {};
+          const multiDataMappings: Set<string> = new Set(); // 다중 데이터 매핑 파라미터 추적
+
           if (step.parameters) {
             for (const [paramName, paramValue] of Object.entries(
               step.parameters
             )) {
               // 이전 단계의 결과를 참조하는 경우
               if (typeof paramValue === 'string' && paramValue.includes('.')) {
-                // 첫 번째 부분은 단계 ID 또는 인덱스
-                const [stepIdentifier, ...pathParts] = paramValue.split('.');
-                const path = pathParts.join('.');
+                const parts = paramValue.split('.');
 
-                // 단계 인덱스로 참조하는 경우 (숫자인 경우)
-                if (/^\d+$/.test(stepIdentifier)) {
-                  const stepIndex = parseInt(stepIdentifier) - 1;
-                  const stepResult = results[stepIndex];
+                // 다중 데이터 매핑 확인 (작업명.테이블명.컬럼명 형태)
+                if (parts.length >= 3) {
+                  const jobName = parts[0];
+                  const tableName = parts[1];
+                  const columnName = parts[2];
 
-                  if (stepResult && path) {
-                    // 중첩된 경로 처리
-                    let value = stepResult;
-                    const parts = path.split('.');
-                    let found = true;
+                  // 이전 단계 결과에서 해당 테이블이 배열인지 확인
+                  let foundMultiData = false;
 
-                    for (const part of parts) {
-                      if (value && typeof value === 'object' && part in value) {
-                        value = value[part];
+                  for (let j = 0; j < i; j++) {
+                    const prevResult = results[j];
+                    if (
+                      prevResult &&
+                      prevResult.originalResult &&
+                      prevResult.originalResult[tableName] &&
+                      Array.isArray(prevResult.originalResult[tableName]) &&
+                      prevResult.originalResult[tableName].length > 0
+                    ) {
+                      // 다중 데이터 매핑으로 표시
+                      multiDataMappings.add(paramName);
+                      foundMultiData = true;
+
+                      // 일반 매핑에도 첫 번째 항목의 값을 설정 (필요한 경우)
+                      if (
+                        prevResult.originalResult[tableName][0] &&
+                        columnName in prevResult.originalResult[tableName][0]
+                      ) {
+                        mappedParameters[paramName] =
+                          prevResult.originalResult[tableName][0][columnName];
                       } else {
-                        found = false;
+                        mappedParameters[paramName] = null;
+                      }
+
+                      break;
+                    }
+                  }
+
+                  // 다중 데이터가 아닌 경우 일반 매핑으로 처리
+                  if (!foundMultiData) {
+                    // 첫 번째 부분은 단계 ID 또는 인덱스
+                    const [stepIdentifier, ...pathParts] =
+                      paramValue.split('.');
+                    const path = pathParts.join('.');
+
+                    // 단계 인덱스로 참조하는 경우 (숫자인 경우)
+                    if (/^\d+$/.test(stepIdentifier)) {
+                      const stepIndex = parseInt(stepIdentifier) - 1;
+                      const stepResult = results[stepIndex];
+
+                      if (stepResult && path) {
+                        // 중첩된 경로 처리
+                        let value = stepResult;
+                        const parts = path.split('.');
+                        let found = true;
+
+                        for (const part of parts) {
+                          if (
+                            value &&
+                            typeof value === 'object' &&
+                            part in value
+                          ) {
+                            value = value[part];
+                          } else {
+                            found = false;
+                            addLog({
+                              level: 'warning',
+                              message: `파라미터 매핑 경고: ${paramValue}를 찾을 수 없습니다.`,
+                            });
+                            break;
+                          }
+                        }
+
+                        if (found) {
+                          mappedParameters[paramName] = value;
+                        } else {
+                          mappedParameters[paramName] = null;
+                        }
+                      } else {
+                        mappedParameters[paramName] = null;
                         addLog({
                           level: 'warning',
                           message: `파라미터 매핑 경고: ${paramValue}를 찾을 수 없습니다.`,
                         });
-                        break;
                       }
                     }
+                    // 단계 ID로 참조하는 경우
+                    else {
+                      // 단계 ID로 결과 찾기
+                      const stepIndex = interfaceInfo.steps.findIndex(
+                        (s) =>
+                          s.id === stepIdentifier || s.name === stepIdentifier
+                      );
 
-                    if (found) {
-                      mappedParameters[paramName] = value;
-                    } else {
-                      mappedParameters[paramName] = null;
-                    }
-                  } else {
-                    mappedParameters[paramName] = null;
-                    addLog({
-                      level: 'warning',
-                      message: `파라미터 매핑 경고: ${paramValue}를 찾을 수 없습니다.`,
-                    });
-                  }
-                }
-                // 단계 ID로 참조하는 경우
-                else {
-                  // 단계 ID로 결과 찾기
-                  const stepIndex = interfaceInfo.steps.findIndex(
-                    (s) => s.id === stepIdentifier || s.name === stepIdentifier
-                  );
+                      if (stepIndex >= 0 && results[stepIndex]) {
+                        // 중첩된 경로 처리
+                        let value = results[stepIndex];
+                        const parts = path.split('.');
+                        let found = true;
 
-                  if (stepIndex >= 0 && results[stepIndex]) {
-                    // 중첩된 경로 처리
-                    let value = results[stepIndex];
-                    const parts = path.split('.');
-                    let found = true;
+                        for (const part of parts) {
+                          if (
+                            value &&
+                            typeof value === 'object' &&
+                            part in value
+                          ) {
+                            value = value[part];
+                          } else {
+                            found = false;
+                            addLog({
+                              level: 'warning',
+                              message: `파라미터 매핑 경고: ${stepIdentifier}.${path}를 찾을 수 없습니다.`,
+                            });
+                            break;
+                          }
+                        }
 
-                    for (const part of parts) {
-                      if (value && typeof value === 'object' && part in value) {
-                        value = value[part];
+                        if (found) {
+                          mappedParameters[paramName] = value;
+                        } else {
+                          mappedParameters[paramName] = null;
+                        }
                       } else {
-                        found = false;
+                        mappedParameters[paramName] = null;
                         addLog({
                           level: 'warning',
-                          message: `파라미터 매핑 경고: ${stepIdentifier}.${path}를 찾을 수 없습니다.`,
+                          message: `파라미터 매핑 경고: ${paramValue}를 찾을 수 없습니다.`,
                         });
-                        break;
                       }
                     }
+                  }
+                } else {
+                  // 일반 매핑 처리 (작업명.테이블명.컬럼명 형태가 아닌 경우)
+                  // 첫 번째 부분은 단계 ID 또는 인덱스
+                  const [stepIdentifier, ...pathParts] = paramValue.split('.');
+                  const path = pathParts.join('.');
 
-                    if (found) {
-                      mappedParameters[paramName] = value;
+                  // 단계 인덱스로 참조하는 경우 (숫자인 경우)
+                  if (/^\d+$/.test(stepIdentifier)) {
+                    const stepIndex = parseInt(stepIdentifier) - 1;
+                    const stepResult = results[stepIndex];
+
+                    if (stepResult && path) {
+                      // 중첩된 경로 처리
+                      let value = stepResult;
+                      const parts = path.split('.');
+                      let found = true;
+
+                      for (const part of parts) {
+                        if (
+                          value &&
+                          typeof value === 'object' &&
+                          part in value
+                        ) {
+                          value = value[part];
+                        } else {
+                          found = false;
+                          addLog({
+                            level: 'warning',
+                            message: `파라미터 매핑 경고: ${paramValue}를 찾을 수 없습니다.`,
+                          });
+                          break;
+                        }
+                      }
+
+                      if (found) {
+                        mappedParameters[paramName] = value;
+                      } else {
+                        mappedParameters[paramName] = null;
+                      }
                     } else {
                       mappedParameters[paramName] = null;
+                      addLog({
+                        level: 'warning',
+                        message: `파라미터 매핑 경고: ${paramValue}를 찾을 수 없습니다.`,
+                      });
                     }
-                  } else {
-                    mappedParameters[paramName] = null;
-                    addLog({
-                      level: 'warning',
-                      message: `파라미터 매핑 경고: ${paramValue}를 찾을 수 없습니다.`,
-                    });
+                  }
+                  // 단계 ID로 참조하는 경우
+                  else {
+                    // 단계 ID로 결과 찾기
+                    const stepIndex = interfaceInfo.steps.findIndex(
+                      (s) =>
+                        s.id === stepIdentifier || s.name === stepIdentifier
+                    );
+
+                    if (stepIndex >= 0 && results[stepIndex]) {
+                      // 중첩된 경로 처리
+                      let value = results[stepIndex];
+                      const parts = path.split('.');
+                      let found = true;
+
+                      for (const part of parts) {
+                        if (
+                          value &&
+                          typeof value === 'object' &&
+                          part in value
+                        ) {
+                          value = value[part];
+                        } else {
+                          found = false;
+                          addLog({
+                            level: 'warning',
+                            message: `파라미터 매핑 경고: ${stepIdentifier}.${path}를 찾을 수 없습니다.`,
+                          });
+                          break;
+                        }
+                      }
+
+                      if (found) {
+                        mappedParameters[paramName] = value;
+                      } else {
+                        mappedParameters[paramName] = null;
+                      }
+                    } else {
+                      mappedParameters[paramName] = null;
+                      addLog({
+                        level: 'warning',
+                        message: `파라미터 매핑 경고: ${paramValue}를 찾을 수 없습니다.`,
+                      });
+                    }
                   }
                 }
               } else {
@@ -418,114 +565,119 @@ export const InterfaceExecutorProvider: React.FC<{
             // SQL 쿼리 실행
             let query = sqlInfo.sqlText;
 
-            // 이전 단계의 결과 가져오기 (i > 0인 경우에만)
-            const prevResult = i > 0 ? results[i - 1] : null;
+            // 다중 데이터 매핑 확인
+            let multiDataInfo = null;
 
-            // 다중 데이터 매핑 여부 확인
-            const hasMultiData = hasMultiDataMapping(step, prevResult);
+            // 이전 단계의 결과에서 다중 데이터 테이블 찾기
+            for (let j = 0; j < i; j++) {
+              const prevResult = results[j];
 
-            if (hasMultiData) {
-              // 다중 데이터 정보 추출
-              const multiDataInfo = extractMultiDataInfo(step, prevResult);
+              if (!prevResult || !prevResult.originalResult) continue;
 
-              if (multiDataInfo) {
-                addLog({
-                  level: 'info',
-                  message: `다중 데이터 SQL 실행 : ${sqlInfo.name} (${multiDataInfo.data.length}개 행)`,
-                });
+              // 다중 데이터 테이블 찾기
+              for (const [tableName, tableData] of Object.entries(
+                prevResult.originalResult
+              )) {
+                if (Array.isArray(tableData) && tableData.length > 0) {
+                  // 이 테이블이 매핑에 사용되는지 확인
+                  let isUsed = false;
+                  const mappingInfo: Record<string, string> = {};
 
-                // 쿼리 끝의 세미콜론 제거
-                query = query.replace(/;\s*$/, '');
+                  for (const [paramName, mappedFrom] of Object.entries(
+                    step.parameters || {}
+                  )) {
+                    const parts = mappedFrom.split('.');
+                    if (parts.length >= 3 && parts[1] === tableName) {
+                      isUsed = true;
+                      mappingInfo[paramName] = parts[2]; // 컬럼명 저장
+                    }
+                  }
 
-                // 일반 매핑 파라미터 추출
-                const regularParams: Record<string, any> = {};
-                for (const [paramName, paramValue] of Object.entries(
-                  mappedParameters
-                )) {
-                  // 다중 데이터 매핑이 아닌 파라미터만 추가
-                  if (
-                    !Object.keys(multiDataInfo.mappingInfo).includes(paramName)
-                  ) {
-                    regularParams[paramName] = paramValue;
+                  if (isUsed) {
+                    multiDataInfo = {
+                      tableName,
+                      data: tableData as any[],
+                      mappingInfo,
+                    };
+
+                    break;
                   }
                 }
-
-                // 다중 데이터 SQL 실행
-                const result = await executeMultiDataSql(
-                  dbConnection,
-                  query,
-                  multiDataInfo.data,
-                  multiDataInfo.mappingInfo,
-                  regularParams // 일반 매핑 파라미터 전달
-                );
-
-                if (!result.success) {
-                  throw new Error(
-                    `다중 데이터 SQL 실행 실패: ${result.message}`
-                  );
-                }
-
-                stepResult = {
-                  message: `${multiDataInfo.data.length}개 행에 대한 SQL 실행 완료`,
-                  rowCount: multiDataInfo.data.length,
-                  ...result.data,
-                };
-
-                // 결과 저장
-                results.push(stepResult);
-
-                addLog({
-                  level: 'success',
-                  message: `단계 ${i + 1} 실행 완료 : ${step.name}`,
-                  details: { result: stepResult },
-                });
-
-                // 다음 단계로 진행
-                continue;
               }
+
+              if (multiDataInfo) break;
             }
 
-            // 일반 SQL 실행
-            // SQL 파라미터 치환
-            for (const [paramName, paramValue] of Object.entries(
-              mappedParameters
-            )) {
-              const paramRegex = new RegExp(`:${paramName}`, 'g');
-              const formattedValue =
-                typeof paramValue === 'string'
-                  ? `'${paramValue.replace(/'/g, "''")}'`
-                  : paramValue;
+            if (multiDataInfo) {
+              addLog({
+                level: 'info',
+                message: `다중 데이터 SQL 실행 : ${sqlInfo.name} (${multiDataInfo.data.length}개 행)`,
+              });
 
-              query = query.replace(
-                paramRegex,
-                formattedValue !== null ? String(formattedValue) : 'NULL'
+              // 쿼리 끝의 세미콜론 제거
+              query = query.replace(/;\s*$/, '');
+
+              // 다중 데이터 SQL 실행
+              const result = await executeMultiDataSql(
+                dbConnection,
+                query,
+                multiDataInfo.data,
+                multiDataInfo.mappingInfo,
+                mappedParameters // 일반 매핑 파라미터 전달
               );
+
+              if (!result.success) {
+                throw new Error(`다중 데이터 SQL 실행 실패: ${result.message}`);
+              }
+
+              stepResult = {
+                message: `${multiDataInfo.data.length}개 행에 대한 SQL 실행 완료`,
+                rowCount: multiDataInfo.data.length,
+                ...result.data,
+              };
+            } else {
+              // 일반 SQL 실행
+              // SQL 파라미터 치환
+              for (const [paramName, paramValue] of Object.entries(
+                mappedParameters
+              )) {
+                const paramRegex = new RegExp(`:${paramName}`, 'g');
+                const formattedValue =
+                  typeof paramValue === 'string'
+                    ? `'${paramValue.replace(/'/g, "''")}'`
+                    : paramValue;
+
+                query = query.replace(
+                  paramRegex,
+                  formattedValue !== null ? String(formattedValue) : 'NULL'
+                );
+              }
+
+              // 쿼리 끝의 세미콜론 제거
+              query = query.replace(/;\s*$/, '');
+
+              addLog({
+                level: 'info',
+                message: `SQL 실행 : ${sqlInfo.name}`,
+              });
+
+              if (!window.api?.executeSql) {
+                throw new Error('SQL 실행 API를 사용할 수 없습니다.');
+              }
+
+              const parsedQuery = parseQuery(query);
+
+              const result = await window.api.executeSql({
+                connection: dbConnection,
+                query: parsedQuery,
+              });
+
+              if (!result.success) {
+                throw new Error(`SQL 실행 실패: ${result.message}`);
+              }
+
+              stepResult = result.data || {};
             }
-
-            // 쿼리 끝의 세미콜론 제거
-            query = query.replace(/;\s*$/, '');
-
-            addLog({
-              level: 'info',
-              message: `SQL 실행 : ${sqlInfo.name}`,
-            });
-
-            if (!window.api?.executeSql) {
-              throw new Error('SQL 실행 API를 사용할 수 없습니다.');
-            }
-
-            const parsedQuery = parseQuery(query);
-
-            const result = await window.api.executeSql({
-              connection: dbConnection,
-              query: parsedQuery,
-            });
-
-            if (!result.success) {
-              throw new Error(`SQL 실행 실패: ${result.message}`);
-            }
-
-            stepResult = result.data || {};
           }
           // RFC / SQL 종료 ---------------------------------------------------------------
           else {
