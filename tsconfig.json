@@ -15,7 +15,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/renderer/*"]
-    }
+    },
+    "sourceMap": true
   },
   "include": ["src/**/*", "src/types/**/*.d.ts", "src/main/**/*.ts"], // src/main 포함
   "exclude": ["node_modules", "dist"]
