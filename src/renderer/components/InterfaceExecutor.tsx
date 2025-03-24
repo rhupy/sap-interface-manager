@@ -66,7 +66,6 @@ export const InterfaceExecutor: React.FC<InterfaceExecutorProps> = ({
   };
 
   // 인터페이스 실행 핸들러
-  // 인터페이스 실행 핸들러
   const handleExecute = async () => {
     clearLogs();
 

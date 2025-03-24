@@ -422,18 +422,25 @@ export default function ProjectManagement() {
     showMessage('전체 인터페이스 실행이 완료되었습니다.', 'success');
   };
 
+  // 인터페이스 단일 실행
+  // 로그를 남길 때마다 appendProjectLog IPC를 호출해서 파일에 기록
   const runSingleInterface = async (inf: InterfaceInfo, idx: number) => {
+    // 실행 시작 로그
+    setLogs((prev) => [...prev, `[${inf.name}] 실행 시작`]);
+    // 파일로도 기록
+    appendLogToFile(inf, `[${inf.name}] 실행 시작`);
+
     setRunningIndex(idx);
     setExecutionResults((prev) => ({
       ...prev,
       [inf.id]: { finished: false },
     }));
 
-    setLogs((prev) => [...prev, `[${inf.name}] 실행 시작`]);
-    // 데모: 1.5초 대기
+    // 예시로 1.5초 대기
     await new Promise((res) => setTimeout(res, 1500));
 
-    const isError = Math.random() < 0.3; // 30% 에러
+    // 무작위 에러 시뮬레이션
+    const isError = Math.random() < 0.3;
     setRunningIndex(null);
     setExecutionResults((prev) => ({
       ...prev,
@@ -443,10 +450,40 @@ export default function ProjectManagement() {
         error: isError ? 'Random error' : undefined,
       },
     }));
-    setLogs((prev) => [
-      ...prev,
-      `[${inf.name}] 실행 ${isError ? '실패' : '성공'} (${new Date().toLocaleTimeString()})`,
-    ]);
+
+    // 결과 로그
+    const msg = `[${inf.name}] 실행 ${isError ? '실패' : '성공'} (${new Date().toLocaleTimeString()})`;
+    setLogs((prev) => [...prev, msg]);
+    // 파일 기록
+    appendLogToFile(inf, msg);
+  };
+
+  // 로그 파일에 쓰는 보조 함수
+  const appendLogToFile = async (inf: InterfaceInfo, line: string) => {
+    // logStoragePath, projectName 은 settings 혹은 currentProject에서 가져옴
+    // 예: settings.logStoragePath || 'C:/InterfaceLogs'
+    //     currentProject.name
+    const logPath = settings.logStoragePath || 'C:/InterfaceLogs';
+    const projectName = currentProject.name || 'NoProject';
+
+    // 인터페이스 이름은 현재 runSingleInterface가 파라미터로 받음 => inf.name
+    // 여기서는 “지금 실행 중인 interfaceName”이 필요하므로
+    // => 함수 인자로 interfaceName을 같이 넘기도록 구조를 수정 가능
+
+    if (!window.api?.appendProjectLog) return;
+
+    try {
+      const interfaceName = inf.name; // runSingleInterface 인자로 inf 알 수 있음
+      const logLine = line; // 우리가 남길 로그 문자열
+      await window.api.appendProjectLog({
+        projectName,
+        interfaceName,
+        logStoragePath: logPath,
+        logLine,
+      });
+    } catch (err) {
+      console.error('로그 쓰기 실패:', err);
+    }
   };
 
   if (isLoading) {

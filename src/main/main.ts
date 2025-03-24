@@ -187,6 +187,34 @@ function registerIpcHandlers() {
     }
   });
 
+  // 로그 append 핸들러
+  ipcMain.handle('append-project-log', async (event, args) => {
+    const { projectName, interfaceName, logStoragePath, logLine } = args;
+    // 예) logStoragePath = "C:/InterfaceLogs"
+    // 폴더 구조: logStoragePath / projectName / YYYYMMDD / interfaceName.log
+
+    // 1) 날짜문자: YYYYMMDD
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    // or 다른 방식
+
+    // 2) 폴더 경로
+    const baseDir = logStoragePath || 'C:/InterfaceLogs';
+    const projectDir = path.join(baseDir, projectName);
+    const dateDir = path.join(projectDir, dateStr);
+    const filePath = path.join(dateDir, `${interfaceName}.log`);
+
+    try {
+      // 폴더가 없으면 재귀적으로 생성
+      await fs.promises.mkdir(dateDir, { recursive: true });
+      // 로그 추가 (줄바꿈 포함)
+      await fs.promises.appendFile(filePath, logLine + '\r\n', 'utf8');
+      return { success: true };
+    } catch (error) {
+      console.error('로그 파일 쓰기 실패:', error);
+      return { success: false, message: String(error) };
+    }
+  });
+
   console.log('IPC 핸들러 등록 완료');
 }
 

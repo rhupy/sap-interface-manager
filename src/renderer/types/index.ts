@@ -63,6 +63,14 @@ export interface ElectronAPI {
 
   // 설정 파일 열기
   openSettingsFile?: () => Promise<{ success: boolean; message?: string }>;
+
+  // 프로젝트 로그 추가 (파일 Append)
+  appendProjectLog?: (args: {
+    projectName: string;
+    interfaceName: string;
+    logStoragePath: string;
+    logLine: string;
+  }) => Promise<{ success: boolean; message?: string }>;
 }
 
 // Window 인터페이스 확장
