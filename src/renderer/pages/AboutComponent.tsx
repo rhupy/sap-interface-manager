@@ -104,7 +104,7 @@ export default function AboutComponent() {
       </Section>
 
       <VersionInfo>
-        <div>버전: 0.0.3</div>
+        <div>버전: 0.9.0</div>
         <div>빌드 날짜: 2024-02-27</div>
         <div>© 2024 김성진. All rights reserved.</div>
       </VersionInfo>
