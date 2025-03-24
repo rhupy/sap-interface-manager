@@ -452,7 +452,7 @@ export default function ProjectManagement() {
     }));
 
     // 결과 로그
-    const msg = `[${inf.name}] 실행 ${isError ? '실패' : '성공'} (${new Date().toLocaleTimeString()})`;
+    const msg = `[${inf.name}] 실행 ${isError ? '실패' : '성공'}`;
     setLogs((prev) => [...prev, msg]);
     // 파일 기록
     appendLogToFile(inf, msg);

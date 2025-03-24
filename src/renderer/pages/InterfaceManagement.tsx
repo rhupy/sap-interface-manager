@@ -610,7 +610,6 @@ export default function InterfaceManagement() {
       <FlexContainer>
         <SidePanel>
           <SidePanelHeader>
-            <h3>인터페이스 목록</h3>
             <div style={{ display: 'flex', marginBottom: '10px' }}>
               <Input
                 type="text"

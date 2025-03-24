@@ -187,27 +187,38 @@ function registerIpcHandlers() {
     }
   });
 
+  function sanitizeFilename(name: string) {
+    // 정규식으로 Windows에서 허용되지 않는 문자들을 제거 :  <>:"/\|?*
+    return name.replace(/[<>:"/\\|?*]/g, '_');
+  }
+
   // 로그 append 핸들러
   ipcMain.handle('append-project-log', async (event, args) => {
     const { projectName, interfaceName, logStoragePath, logLine } = args;
-    // 예) logStoragePath = "C:/InterfaceLogs"
-    // 폴더 구조: logStoragePath / projectName / YYYYMMDD / interfaceName.log
+    const now = new Date();
+    // 24시간 형식 HH:mm:ss (예: 15:58:58)
+    const timeStr = now.toLocaleTimeString('ko-KR', {
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
 
-    // 1) 날짜문자: YYYYMMDD
-    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    // or 다른 방식
+    // 최종 로그: [15:58:58] 로그 내용
+    const logToWrite = `[${timeStr}] ${logLine}`;
 
-    // 2) 폴더 경로
+    // 폴더 경로 구성 (필요시 프로젝트명과 날짜도 sanitize 적용)
+    const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
     const baseDir = logStoragePath || 'C:/InterfaceLogs';
-    const projectDir = path.join(baseDir, projectName);
+    const safeProjectName = sanitizeFilename(projectName);
+    const safeInterfaceName = sanitizeFilename(interfaceName);
+    const projectDir = path.join(baseDir, safeProjectName);
     const dateDir = path.join(projectDir, dateStr);
-    const filePath = path.join(dateDir, `${interfaceName}.log`);
+    const filePath = path.join(dateDir, `${safeInterfaceName}.log`);
 
     try {
-      // 폴더가 없으면 재귀적으로 생성
       await fs.promises.mkdir(dateDir, { recursive: true });
-      // 로그 추가 (줄바꿈 포함)
-      await fs.promises.appendFile(filePath, logLine + '\r\n', 'utf8');
+      await fs.promises.appendFile(filePath, logToWrite + '\r\n', 'utf8');
       return { success: true };
     } catch (error) {
       console.error('로그 파일 쓰기 실패:', error);
