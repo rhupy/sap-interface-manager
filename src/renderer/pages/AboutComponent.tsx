@@ -52,6 +52,12 @@ export default function AboutComponent() {
         도구입니다.
       </Description>
 
+      <img
+        src={`../guide.png`}
+        alt="Guide"
+        style={{ maxWidth: '100%', padding: '3px', paddingBottom: '20px' }}
+      />
+
       <Section>
         <SectionTitle>프로그램 소개</SectionTitle>
         SAP Interface Manager 는 비개발자를 포함한 누구나 쉽고 빠르게 데이터
