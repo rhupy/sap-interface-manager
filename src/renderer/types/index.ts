@@ -171,7 +171,11 @@ export interface ProjectInfo {
   selectedDbId: string;
   createdAt: string;
   updatedAt: string;
-  interfaceIds: string[]; // 프로젝트에 포함된 interface의 ID 목록
+  interfaceConfigs: ProjectInterfaceConfig[]; // 프로젝트에 포함된 interface의 ID 목록
+}
+
+export interface ProjectInterfaceConfig {
+  id: string; // InterfaceInfo.id
   enabled: boolean; // 활성화 여부 (체크박스)
   scheduleMin: number; // 자동실행 주기 (분)
 }

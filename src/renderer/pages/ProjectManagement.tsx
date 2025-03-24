@@ -15,21 +15,20 @@ import {
   MetaInfo,
   Label,
   Select,
+  LeftAlignedLabel,
 } from '../styles/CommonStyles';
 import Button from '../components/smartButton';
 import { useSettingsContext } from '../context/SettingContext';
 import { useMessage } from '../context/MessageContext';
-import { ProjectInfo, InterfaceInfo } from '../types';
+import { ProjectInfo, InterfaceInfo, ProjectInterfaceConfig } from '../types';
 import { v4 as uuidv4 } from 'uuid';
-// react-icons/fi를 이용한 로더 아이콘
-import { FiLoader } from 'react-icons/fi';
+import { FiLoader } from 'react-icons/fi'; // 로딩 아이콘용
 
-// 로딩 아이콘에 회전 애니메이션을 주기 위한 CSS 클래스
+// 로딩 아이콘 회전 애니메이션
 const spinnerStyle: React.CSSProperties = {
-  animation: 'spin 1s linear infinite', // 1초마다 360도 회전
+  animation: 'spin 1s linear infinite',
 };
-
-// 전역에 keyframes 추가 (JSX 인라인으로도 가능하지만, 필요한 경우 styled-components 등 사용)
+// globalStyles: @keyframes spin
 const globalStyles = `
 @keyframes spin {
   100% {
@@ -40,6 +39,7 @@ const globalStyles = `
 
 type SortType = 'name' | 'createdAt' | 'updatedAt';
 
+// ProjectInfo 기본값
 const emptyProject: ProjectInfo = {
   id: '',
   name: '',
@@ -48,7 +48,7 @@ const emptyProject: ProjectInfo = {
   selectedDbId: '',
   createdAt: '',
   updatedAt: '',
-  interfaceIds: [],
+  interfaceConfigs: [], // 실제 사용
 };
 
 export default function ProjectManagement() {
@@ -60,16 +60,16 @@ export default function ProjectManagement() {
   const [sortType, setSortType] = useState<SortType>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  // 현재 선택/편집중인 프로젝트
+  // 현재 선택/편집 프로젝트
   const [currentProject, setCurrentProject] =
     useState<ProjectInfo>(emptyProject);
-  // 프로젝트 삭제 확인 모달
+  // 삭제 모달
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // 인터페이스 목록 검색
   const [interfaceSearch, setInterfaceSearch] = useState('');
 
-  // 실행 관련 State (예시)
+  // 실행(데모)
   const [runningIndex, setRunningIndex] = useState<number | null>(null);
   const [executionResults, setExecutionResults] = useState<{
     [key: string]: {
@@ -78,11 +78,9 @@ export default function ProjectManagement() {
       error?: string;
     };
   }>({});
-
-  // 로그를 전체 페이지 우측에 표시
   const [logs, setLogs] = useState<string[]>([]);
 
-  // keyframes를 페이지에 삽입 (react-icons/fi 아이콘 회전용)
+  // @keyframes spin 등록
   useEffect(() => {
     const styleEl = document.createElement('style');
     styleEl.innerHTML = globalStyles;
@@ -92,10 +90,10 @@ export default function ProjectManagement() {
     };
   }, []);
 
-  // Settings에서 프로젝트 목록
+  // Settings에서 project 목록
   const projects = settings.projects || [];
 
-  // selectedProjectId 변화 시 currentProject 갱신
+  // selectedProjectId 변화 시 currentProject 동기화
   useEffect(() => {
     if (settings.selectedProjectId) {
       const found = projects.find((p) => p.id === settings.selectedProjectId);
@@ -105,9 +103,7 @@ export default function ProjectManagement() {
     }
   }, [settings.selectedProjectId, projects]);
 
-  // -------------------------
-  // 날짜포맷
-  // -------------------------
+  // 날짜 포맷
   const formatDateTime = (iso?: string) => {
     if (!iso) return '';
     const d = new Date(iso);
@@ -121,9 +117,7 @@ export default function ProjectManagement() {
     });
   };
 
-  // -------------------------
   // 프로젝트 목록 필터+정렬
-  // -------------------------
   const sortedFilteredProjects = useMemo(() => {
     const filtered = projects.filter(
       (p) =>
@@ -144,7 +138,6 @@ export default function ProjectManagement() {
         valA = a.updatedAt;
         valB = b.updatedAt;
       }
-
       if (sortDirection === 'asc') {
         return valA > valB ? 1 : -1;
       } else {
@@ -153,9 +146,7 @@ export default function ProjectManagement() {
     });
   }, [projects, searchTerm, sortType, sortDirection]);
 
-  // -------------------------
   // 프로젝트 선택
-  // -------------------------
   const handleSelectProject = (id: string) => {
     const found = projects.find((p) => p.id === id);
     if (found) {
@@ -164,29 +155,27 @@ export default function ProjectManagement() {
     }
   };
 
-  // -------------------------
   // 프로젝트 추가
-  // -------------------------
   const handleAddProject = () => {
     if (!currentProject.name.trim()) {
       showMessage('프로젝트 이름을 입력하세요.', 'error');
       return;
     }
-    const now = new Date().toISOString();
-    const newId = uuidv4();
-
     // 중복 검사
-    const isDuplicate = projects.some((p) => p.name === currentProject.name);
-    if (isDuplicate) {
+    const isDup = projects.some((p) => p.name === currentProject.name);
+    if (isDup) {
       showMessage('이미 같은 이름의 프로젝트가 있습니다.', 'error');
       return;
     }
 
+    const now = new Date().toISOString();
+    const newId = uuidv4();
     const newProj: ProjectInfo = {
       ...currentProject,
       id: newId,
       createdAt: now,
       updatedAt: now,
+      interfaceConfigs: [],
     };
     updateSettings((prev) => ({
       ...prev,
@@ -197,9 +186,7 @@ export default function ProjectManagement() {
     showMessage('프로젝트가 추가되었습니다.', 'success');
   };
 
-  // -------------------------
   // 프로젝트 수정
-  // -------------------------
   const handleUpdateProject = () => {
     if (!currentProject.id) {
       showMessage('수정할 프로젝트가 선택되지 않았습니다.', 'error');
@@ -209,12 +196,11 @@ export default function ProjectManagement() {
       showMessage('프로젝트 이름을 입력하세요.', 'error');
       return;
     }
-
-    // 중복 검사 (자기 자신 제외)
-    const isDuplicate = projects.some(
+    // 중복 이름 검사 (자기 자신 제외)
+    const isDup = projects.some(
       (p) => p.name === currentProject.name && p.id !== currentProject.id
     );
-    if (isDuplicate) {
+    if (isDup) {
       showMessage('이미 같은 이름의 프로젝트가 있습니다.', 'error');
       return;
     }
@@ -232,9 +218,7 @@ export default function ProjectManagement() {
     showMessage('프로젝트가 수정되었습니다.', 'success');
   };
 
-  // -------------------------
   // 프로젝트 삭제
-  // -------------------------
   const handleDeleteProjectClick = () => {
     if (!currentProject.id) {
       showMessage('삭제할 프로젝트가 선택되지 않았습니다.', 'error');
@@ -245,22 +229,21 @@ export default function ProjectManagement() {
   const handleDeleteProject = () => {
     if (!currentProject.id) return;
     const updated = projects.filter((p) => p.id !== currentProject.id);
-
     updateSettings({
       projects: updated,
       selectedProjectId: updated.length > 0 ? updated[0].id : '',
     });
     setShowDeleteConfirm(false);
     showMessage('프로젝트가 삭제되었습니다.', 'success');
+
     if (updated.length > 0) setCurrentProject(updated[0]);
     else setCurrentProject(emptyProject);
   };
 
-  // -------------------------
-  // 인터페이스 목록
-  // -------------------------
+  // 전체 인터페이스 목록
   const allInterfaces = settings.interfaces || [];
-  const includedIds = currentProject.interfaceIds || [];
+  // 현재 프로젝트의 interfaceConfigs
+  const interfaceConfigs = currentProject.interfaceConfigs || [];
 
   // 좌측 목록에서 검색
   const filteredInterfaces = useMemo(() => {
@@ -271,98 +254,133 @@ export default function ProjectManagement() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [allInterfaces, interfaceSearch]);
 
-  // -------------------------
-  // 인터페이스 추가 / 제거
-  // -------------------------
+  // interfaceConfigs 업데이트 헬퍼
+  const saveProject = (proj: ProjectInfo) => {
+    updateSettings((prev) => ({
+      ...prev,
+      projects: (prev.projects || []).map((p) => (p.id === proj.id ? proj : p)),
+    }));
+    setCurrentProject(proj);
+  };
+
+  // 인터페이스 추가
   const handleAddInterfaceToProject = (infId: string) => {
     if (!currentProject.id) {
       showMessage('프로젝트를 먼저 선택하세요.', 'error');
       return;
     }
-    if (includedIds.includes(infId)) {
+    const exists = interfaceConfigs.some((c) => c.id === infId);
+    if (exists) {
       showMessage('이미 추가된 인터페이스입니다.', 'warning');
       return;
     }
 
+    const newConfig: ProjectInterfaceConfig = {
+      id: infId,
+      enabled: true,
+      scheduleMin: 0, // 기본
+    };
     const updatedProj = {
       ...currentProject,
-      interfaceIds: [...includedIds, infId],
+      interfaceConfigs: [...interfaceConfigs, newConfig],
       updatedAt: new Date().toISOString(),
     };
-
-    updateSettings((prev) => ({
-      ...prev,
-      projects: (prev.projects || []).map((p) =>
-        p.id === updatedProj.id ? updatedProj : p
-      ),
-    }));
-    setCurrentProject(updatedProj);
+    saveProject(updatedProj);
     showMessage('인터페이스를 프로젝트에 추가했습니다.', 'success');
   };
 
+  // 인터페이스 제거
   const handleRemoveInterfaceFromProject = (infId: string) => {
     if (!currentProject.id) return;
     const updatedProj = {
       ...currentProject,
-      interfaceIds: includedIds.filter((id) => id !== infId),
+      interfaceConfigs: interfaceConfigs.filter((c) => c.id !== infId),
       updatedAt: new Date().toISOString(),
     };
-
-    updateSettings((prev) => ({
-      ...prev,
-      projects: (prev.projects || []).map((p) =>
-        p.id === updatedProj.id ? updatedProj : p
-      ),
-    }));
-    setCurrentProject(updatedProj);
+    saveProject(updatedProj);
     showMessage('해당 인터페이스를 제거했습니다.', 'success');
   };
 
-  // -------------------------
-  // 순서 변경
-  // -------------------------
+  // 순서변경
   const moveInterfaceUp = (index: number) => {
     if (index <= 0) return;
-    const arr = [...includedIds];
+    const arr = [...interfaceConfigs];
     [arr[index - 1], arr[index]] = [arr[index], arr[index - 1]];
-    saveInterfaceOrder(arr);
-  };
-  const moveInterfaceDown = (index: number) => {
-    if (index >= includedIds.length - 1) return;
-    const arr = [...includedIds];
-    [arr[index], arr[index + 1]] = [arr[index + 1], arr[index]];
-    saveInterfaceOrder(arr);
-  };
-  const saveInterfaceOrder = (newOrder: string[]) => {
     const updatedProj = {
       ...currentProject,
-      interfaceIds: newOrder,
+      interfaceConfigs: arr,
       updatedAt: new Date().toISOString(),
     };
-    updateSettings((prev) => ({
-      ...prev,
-      projects: (prev.projects || []).map((p) =>
-        p.id === updatedProj.id ? updatedProj : p
-      ),
-    }));
-    setCurrentProject(updatedProj);
+    saveProject(updatedProj);
+  };
+  const moveInterfaceDown = (index: number) => {
+    if (index >= interfaceConfigs.length - 1) return;
+    const arr = [...interfaceConfigs];
+    [arr[index], arr[index + 1]] = [arr[index + 1], arr[index]];
+    const updatedProj = {
+      ...currentProject,
+      interfaceConfigs: arr,
+      updatedAt: new Date().toISOString(),
+    };
+    saveProject(updatedProj);
   };
 
-  // -------------------------
-  // 실행 로직 (데모)
-  // -------------------------
-  const projectInterfaces: InterfaceInfo[] = includedIds
-    .map((id) => allInterfaces.find((inf) => inf.id === id))
-    .filter(Boolean) as InterfaceInfo[];
+  // 활성화 체크박스
+  const handleToggleEnabled = (index: number, value: boolean) => {
+    const arr = [...interfaceConfigs];
+    arr[index] = { ...arr[index], enabled: value };
+    const updatedProj = {
+      ...currentProject,
+      interfaceConfigs: arr,
+      updatedAt: new Date().toISOString(),
+    };
+    saveProject(updatedProj);
+  };
 
+  // 전체 활성/비활성
+  const handleToggleAll = (checked: boolean) => {
+    const arr = interfaceConfigs.map((c) => ({ ...c, enabled: checked }));
+    const updatedProj = {
+      ...currentProject,
+      interfaceConfigs: arr,
+      updatedAt: new Date().toISOString(),
+    };
+    saveProject(updatedProj);
+  };
+
+  // 자동실행(m)
+  const handleScheduleChange = (index: number, schedule: number) => {
+    const arr = [...interfaceConfigs];
+    arr[index] = { ...arr[index], scheduleMin: schedule };
+    const updatedProj = {
+      ...currentProject,
+      interfaceConfigs: arr,
+      updatedAt: new Date().toISOString(),
+    };
+    saveProject(updatedProj);
+  };
+
+  // project.interfaceConfigs => 실제 인터페이스 정보 join
+  const projectInterfaces: Array<{
+    config: ProjectInterfaceConfig;
+    info: InterfaceInfo | null;
+  }> = interfaceConfigs.map((cfg) => ({
+    config: cfg,
+    info: allInterfaces.find((inf) => inf.id === cfg.id) || null,
+  }));
+
+  // 실행 로직 (활성화된 인터페이스만)
   const runAllInterfaces = async () => {
-    if (!projectInterfaces.length) {
-      showMessage('추가된 인터페이스가 없습니다.', 'info');
+    const enabledList = projectInterfaces.filter((p) => p.config.enabled);
+    if (!enabledList.length) {
+      showMessage('활성화된 인터페이스가 없습니다.', 'info');
       return;
     }
     setLogs([]);
-    for (let i = 0; i < projectInterfaces.length; i++) {
-      await runSingleInterface(projectInterfaces[i], i);
+    for (let i = 0; i < enabledList.length; i++) {
+      const { info } = enabledList[i];
+      if (!info) continue;
+      await runSingleInterface(info, i);
     }
     showMessage('전체 인터페이스 실행이 완료되었습니다.', 'success');
   };
@@ -375,10 +393,10 @@ export default function ProjectManagement() {
     }));
 
     setLogs((prev) => [...prev, `[${inf.name}] 실행 시작`]);
-    // 예시로 2초 대기
-    await new Promise((res) => setTimeout(res, 2000));
-    const isError = Math.random() < 0.3;
+    // 데모: 1.5초 대기
+    await new Promise((res) => setTimeout(res, 1500));
 
+    const isError = Math.random() < 0.3; // 30% 에러
     setRunningIndex(null);
     setExecutionResults((prev) => ({
       ...prev,
@@ -400,12 +418,11 @@ export default function ProjectManagement() {
 
   return (
     <FullPageContainer>
-      {/* 전체 높이 사용 + 좌우 분할 */}
       <div style={{ display: 'flex', height: '100%' }}>
-        {/* 왼쪽 영역: 기존 프로젝트/인터페이스 UI */}
+        {/* 왼쪽 UI */}
         <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
           <FlexContainer style={{ height: '100%' }}>
-            {/* 프로젝트 목록 (좌측 패널) */}
+            {/* 왼쪽 패널: 프로젝트 목록 */}
             <SidePanel>
               <SidePanelHeader>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -470,153 +487,185 @@ export default function ProjectManagement() {
               </SidePanelContent>
             </SidePanel>
 
-            {/* 메인패널: 프로젝트 상세정보 + 인터페이스 테이블 */}
+            {/* 메인 패널: 프로젝트 정보 + 인터페이스 테이블 */}
             <MainPanel style={{ display: 'flex', flexDirection: 'column' }}>
-              {/* 상단: 프로젝트 정보 */}
+              {/* 컨테이너: 상단 2줄 */}
               <div
                 style={{
                   display: 'flex',
-                  flexWrap: 'wrap',
-                  alignItems: 'flex-start',
-                  marginBottom: '10px',
+                  flexDirection: 'column',
+                  gap: '10px',
                   borderBottom: '1px solid #eee',
-                  paddingBottom: '10px',
+                  paddingBottom: '15px',
+                  padding: '10px',
                 }}
               >
-                {/* 왼쪽 입력영역 */}
-                <div style={{ flex: '1 1 auto' }}>
-                  <SectionTitle style={{ marginBottom: '8px' }}>
-                    프로젝트 정보
-                  </SectionTitle>
+                {/* 첫 줄: 프로젝트 이름 / 설명 / RFC / DB */}
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '20px',
+                    flexWrap: 'wrap',
+                    alignItems: 'flex-end',
+                  }}
+                >
+                  {/* 프로젝트 이름 (400px 고정) */}
                   <div
                     style={{
                       display: 'flex',
-                      gap: '10px',
-                      marginBottom: '6px',
+                      flex: 1,
+                      flexDirection: 'column',
                     }}
                   >
-                    {/* 프로젝트 이름 */}
-                    <div style={{ flex: 1 }}>
-                      <Label>프로젝트 이름</Label>
-                      <Input
-                        value={currentProject.name}
-                        onChange={(e) =>
-                          setCurrentProject({
-                            ...currentProject,
-                            name: e.target.value,
-                          })
-                        }
-                        placeholder="예) 테스트 프로젝트"
-                      />
-                    </div>
-                    {/* 설명 */}
-                    <div style={{ flex: 2 }}>
-                      <Label>설명</Label>
-                      <Input
-                        value={currentProject.description}
-                        onChange={(e) =>
-                          setCurrentProject({
-                            ...currentProject,
-                            description: e.target.value,
-                          })
-                        }
-                        placeholder="프로젝트에 대한 설명"
-                      />
-                    </div>
+                    <LeftAlignedLabel>프로젝트 이름</LeftAlignedLabel>
+                    <Input
+                      style={{
+                        width: '100%',
+                        boxSizing: 'border-box', // ← 이 부분이 중요
+                      }}
+                      value={currentProject.name}
+                      onChange={(e) =>
+                        setCurrentProject({
+                          ...currentProject,
+                          name: e.target.value,
+                        })
+                      }
+                      placeholder="예) 테스트 프로젝트"
+                    />
                   </div>
 
+                  {/* 설명 (남은 공간을 전부 사용) */}
                   <div
                     style={{
                       display: 'flex',
-                      gap: '10px',
-                      marginBottom: '6px',
+                      flexDirection: 'column',
+                      flex: 1,
                     }}
                   >
-                    {/* RFC 연결 */}
-                    <div style={{ flex: 1 }}>
-                      <Label>RFC 연결</Label>
-                      <Select
-                        value={currentProject.selectedRfc}
-                        onChange={(e) =>
-                          setCurrentProject({
-                            ...currentProject,
-                            selectedRfc: e.target.value,
-                          })
-                        }
-                      >
-                        <option value="">선택</option>
-                        {(settings.rfcConnections || []).map((rfc) => (
-                          <option
-                            key={rfc.connectionName}
-                            value={rfc.connectionName}
-                          >
-                            {rfc.connectionName}
-                          </option>
-                        ))}
-                      </Select>
-                    </div>
-                    {/* DB 연결 */}
-                    <div style={{ flex: 1 }}>
-                      <Label>DB 연결</Label>
-                      <Select
-                        value={currentProject.selectedDbId}
-                        onChange={(e) =>
-                          setCurrentProject({
-                            ...currentProject,
-                            selectedDbId: e.target.value,
-                          })
-                        }
-                      >
-                        <option value="">선택</option>
-                        {(settings.dbConnections || []).map((db) => (
-                          <option key={db.id} value={db.id}>
-                            {db.connectionName}
-                          </option>
-                        ))}
-                      </Select>
-                    </div>
+                    <LeftAlignedLabel>설명</LeftAlignedLabel>
+                    <Input
+                      style={{ width: '100%' }}
+                      value={currentProject.description}
+                      onChange={(e) =>
+                        setCurrentProject({
+                          ...currentProject,
+                          description: e.target.value,
+                        })
+                      }
+                      placeholder="프로젝트에 대한 설명"
+                    />
+                  </div>
+
+                  {/* RFC 연결 (150px) */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      width: '150px',
+                    }}
+                  >
+                    <LeftAlignedLabel>RFC 연결</LeftAlignedLabel>
+                    <Select
+                      value={currentProject.selectedRfc}
+                      onChange={(e) =>
+                        setCurrentProject({
+                          ...currentProject,
+                          selectedRfc: e.target.value,
+                        })
+                      }
+                      style={{ width: '100%' }}
+                    >
+                      <option value="">선택</option>
+                      {(settings.rfcConnections || []).map((rfc) => (
+                        <option
+                          key={rfc.connectionName}
+                          value={rfc.connectionName}
+                        >
+                          {rfc.connectionName}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+
+                  {/* DB 연결 (150px) */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      width: '150px',
+                    }}
+                  >
+                    <LeftAlignedLabel>DB 연결</LeftAlignedLabel>
+                    <Select
+                      value={currentProject.selectedDbId}
+                      onChange={(e) =>
+                        setCurrentProject({
+                          ...currentProject,
+                          selectedDbId: e.target.value,
+                        })
+                      }
+                      style={{ width: '100%' }}
+                    >
+                      <option value="">선택</option>
+                      {(settings.dbConnections || []).map((db) => (
+                        <option key={db.id} value={db.id}>
+                          {db.connectionName}
+                        </option>
+                      ))}
+                    </Select>
                   </div>
                 </div>
 
-                {/* 오른쪽: 생성/수정 + 버튼 */}
-                <div style={{ flex: '0 0 auto', marginLeft: 'auto' }}>
-                  <div
-                    style={{
-                      fontSize: '0.85rem',
-                      color: '#666',
-                      textAlign: 'right',
-                    }}
-                  >
-                    <div>생성: {formatDateTime(currentProject.createdAt)}</div>
-                    <div>수정: {formatDateTime(currentProject.updatedAt)}</div>
-                  </div>
-                  <div style={{ marginTop: '10px', textAlign: 'right' }}>
-                    {!currentProject.id ? (
-                      <Button onClick={handleAddProject}>프로젝트 추가</Button>
-                    ) : (
-                      <>
-                        <Button
-                          onClick={handleUpdateProject}
-                          style={{ marginRight: '5px' }}
-                        >
-                          프로젝트 수정
-                        </Button>
-                        <Button
-                          onClick={handleDeleteProjectClick}
-                          style={{ backgroundColor: '#e74c3c' }}
-                        >
-                          프로젝트 삭제
-                        </Button>
-                      </>
-                    )}
-                  </div>
+                {/* 두 번째 줄: 버튼들 (오른쪽 정렬) */}
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: '8px',
+                  }}
+                >
+                  {currentProject.id && (
+                    <Button
+                      style={{ backgroundColor: '#6c757d' }}
+                      onClick={() => {
+                        setCurrentProject({ ...emptyProject });
+                        updateSettings({ selectedProjectId: '' });
+                      }}
+                    >
+                      새 프로젝트
+                    </Button>
+                  )}
+
+                  {!currentProject.id ? (
+                    <Button
+                      onClick={handleAddProject}
+                      style={{ backgroundColor: '#007bff', color: '#fff' }}
+                    >
+                      + 프로젝트 추가
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        onClick={handleUpdateProject}
+                        style={{ backgroundColor: '#007bff', color: '#fff' }}
+                      >
+                        프로젝트 수정
+                      </Button>
+                      <Button
+                        onClick={handleDeleteProjectClick}
+                        style={{ backgroundColor: '#e74c3c', color: '#fff' }}
+                      >
+                        프로젝트 삭제
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
 
-              {/* 하단: 좌/우로 인터페이스 목록 & 테이블 (좌: 전체인터페이스 / 우: 테이블) */}
+              {/* 하단: 좌(전체인터페이스 목록) + 우(테이블) */}
               {currentProject.id && (
                 <div style={{ flex: '1', display: 'flex', gap: '20px' }}>
-                  {/* 좌측 인터페이스 목록 */}
+                  {/* 좌측: 인터페이스 목록 */}
                   <div
                     style={{
                       width: '300px',
@@ -659,7 +708,9 @@ export default function ProjectManagement() {
                         </div>
                       ) : (
                         filteredInterfaces.map((inf) => {
-                          const isIncluded = includedIds.includes(inf.id);
+                          const exists = interfaceConfigs.some(
+                            (c) => c.id === inf.id
+                          );
                           return (
                             <ListItem key={inf.id} active={false}>
                               <div
@@ -670,7 +721,7 @@ export default function ProjectManagement() {
                                 }}
                               >
                                 <span>{inf.name}</span>
-                                {!isIncluded && (
+                                {!exists && (
                                   <Button
                                     style={{
                                       padding: '2px 6px',
@@ -691,16 +742,15 @@ export default function ProjectManagement() {
                     </div>
                   </div>
 
-                  {/* 우측: 인터페이스 테이블 */}
+                  {/* 우측: 테이블 */}
                   <div
                     style={{
                       flex: '1',
                       display: 'flex',
                       flexDirection: 'column',
-                      overflow: 'hidden',
                     }}
                   >
-                    {/* 상단 헤더 (테이블 + 전체 실행 버튼) */}
+                    {/* 헤더 */}
                     <div
                       style={{
                         padding: '10px',
@@ -711,48 +761,55 @@ export default function ProjectManagement() {
                     >
                       <strong>프로젝트에 포함된 인터페이스</strong>
                       <Button
-                        style={{ marginLeft: 'auto' }}
+                        style={{ marginLeft: 'auto', marginRight: '10px' }}
                         onClick={runAllInterfaces}
                       >
                         전체 실행
                       </Button>
                     </div>
 
-                    {/* 인터페이스 테이블 */}
+                    {/* 테이블 */}
                     <div style={{ padding: '10px', overflowY: 'auto' }}>
                       <table
                         style={{ width: '100%', borderCollapse: 'collapse' }}
                       >
                         <thead>
                           <tr style={{ borderBottom: '1px solid #ccc' }}>
+                            <th style={{ width: '40px', padding: '5px' }}>
+                              순번
+                            </th>
+                            <th
+                              style={{
+                                width: '60px',
+                                padding: '5px',
+                                textAlign: 'center',
+                              }}
+                            >
+                              <input
+                                aria-label="전체 선택"
+                                type="checkbox"
+                                checked={
+                                  interfaceConfigs.length > 0 &&
+                                  interfaceConfigs.every((c) => c.enabled)
+                                }
+                                onChange={(e) =>
+                                  handleToggleAll(e.target.checked)
+                                }
+                              />
+                            </th>
                             <th style={{ textAlign: 'left', padding: '5px' }}>
                               이름
                             </th>
-                            <th
-                              style={{
-                                textAlign: 'left',
-                                padding: '5px',
-                                width: '120px',
-                              }}
-                            >
+                            <th style={{ width: '80px', padding: '5px' }}>
                               동작상태
                             </th>
-                            <th
-                              style={{
-                                textAlign: 'left',
-                                padding: '5px',
-                                width: '140px',
-                              }}
-                            >
+                            <th style={{ width: '100px', padding: '5px' }}>
+                              자동실행(m)
+                            </th>
+                            <th style={{ width: '140px', padding: '5px' }}>
                               최종성공시간
                             </th>
-                            <th
-                              style={{
-                                textAlign: 'left',
-                                padding: '5px',
-                                width: '110px',
-                              }}
-                            >
+                            <th style={{ width: '90px', padding: '5px' }}>
                               최종결과
                             </th>
                             <th
@@ -770,7 +827,7 @@ export default function ProjectManagement() {
                           {projectInterfaces.length === 0 ? (
                             <tr>
                               <td
-                                colSpan={5}
+                                colSpan={8}
                                 style={{
                                   textAlign: 'center',
                                   padding: '10px',
@@ -781,30 +838,62 @@ export default function ProjectManagement() {
                               </td>
                             </tr>
                           ) : (
-                            projectInterfaces.map((inf, idx) => {
+                            projectInterfaces.map(({ config, info }, idx) => {
                               const isRunning = runningIndex === idx;
-                              const result = executionResults[inf.id] || {};
+                              const result = executionResults[config.id] || {};
                               const hasError = !!result.error;
+                              const showSpinner = config.enabled && isRunning;
 
                               return (
                                 <tr
-                                  key={inf.id}
+                                  key={config.id}
                                   style={{ borderBottom: '1px solid #eee' }}
                                 >
-                                  {/* 이름 */}
-                                  <td style={{ padding: '5px' }}>{inf.name}</td>
-
-                                  {/* 동작상태: FiLoader 아이콘으로 회전 or 완료 표시 */}
+                                  {/* 순번 */}
                                   <td
                                     style={{
                                       padding: '5px',
-                                      verticalAlign: 'middle',
+                                      textAlign: 'center',
                                     }}
                                   >
-                                    {isRunning ? (
+                                    {idx + 1}
+                                  </td>
+                                  {/* 활성화 */}
+                                  <td
+                                    style={{
+                                      padding: '5px',
+                                      textAlign: 'center',
+                                    }}
+                                  >
+                                    <input
+                                      aria-label="인터페이스 활성화"
+                                      type="checkbox"
+                                      checked={config.enabled}
+                                      onChange={(e) =>
+                                        handleToggleEnabled(
+                                          idx,
+                                          e.target.checked
+                                        )
+                                      }
+                                    />
+                                  </td>
+                                  {/* 이름 */}
+                                  <td style={{ padding: '5px' }}>
+                                    {info ? info.name : '(알 수 없음)'}
+                                  </td>
+                                  {/* 동작상태 */}
+                                  <td
+                                    style={{
+                                      padding: '5px',
+                                      textAlign: 'center',
+                                    }}
+                                  >
+                                    {!config.enabled ? (
+                                      '미사용'
+                                    ) : showSpinner ? (
                                       <FiLoader
                                         style={spinnerStyle}
-                                        size={20}
+                                        size={18}
                                       />
                                     ) : result.finished ? (
                                       '완료'
@@ -812,14 +901,43 @@ export default function ProjectManagement() {
                                       '-'
                                     )}
                                   </td>
-
+                                  {/* 자동실행(m) */}
+                                  <td
+                                    style={{
+                                      padding: '5px',
+                                      textAlign: 'center',
+                                    }}
+                                  >
+                                    <input
+                                      aria-label="자동실행 시간"
+                                      type="number"
+                                      style={{ width: '60px' }}
+                                      value={config.scheduleMin}
+                                      min={0}
+                                      onChange={(e) =>
+                                        handleScheduleChange(
+                                          idx,
+                                          parseInt(e.target.value) || 0
+                                        )
+                                      }
+                                    />
+                                  </td>
                                   {/* 최종성공시간 */}
-                                  <td style={{ padding: '5px' }}>
+                                  <td
+                                    style={{
+                                      padding: '5px',
+                                      textAlign: 'center',
+                                    }}
+                                  >
                                     {result.finishedTime || '-'}
                                   </td>
-
                                   {/* 최종결과 */}
-                                  <td style={{ padding: '5px' }}>
+                                  <td
+                                    style={{
+                                      padding: '5px',
+                                      textAlign: 'center',
+                                    }}
+                                  >
                                     {!result.finished ? (
                                       '-'
                                     ) : hasError ? (
@@ -842,8 +960,7 @@ export default function ProjectManagement() {
                                       </span>
                                     )}
                                   </td>
-
-                                  {/* 순서변경/삭제 (우측 정렬) */}
+                                  {/* 순서/삭제 */}
                                   <td
                                     style={{
                                       textAlign: 'right',
@@ -872,7 +989,9 @@ export default function ProjectManagement() {
                                     </Button>
                                     <Button
                                       onClick={() =>
-                                        handleRemoveInterfaceFromProject(inf.id)
+                                        handleRemoveInterfaceFromProject(
+                                          config.id
+                                        )
                                       }
                                       style={{
                                         padding: '2px 6px',
@@ -900,7 +1019,7 @@ export default function ProjectManagement() {
         {/* 오른쪽: 실행 로그 전체 높이 */}
         <div
           style={{
-            width: '400px', // 원하는 너비
+            width: '400px',
             borderLeft: '1px solid #ccc',
             display: 'flex',
             flexDirection: 'column',
@@ -941,7 +1060,7 @@ export default function ProjectManagement() {
         </div>
       </div>
 
-      {/* 프로젝트 삭제 확인 모달 */}
+      {/* 프로젝트 삭제 모달 */}
       {showDeleteConfirm && (
         <div
           style={{

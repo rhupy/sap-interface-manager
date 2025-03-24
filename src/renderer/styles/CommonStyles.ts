@@ -85,8 +85,8 @@ export const Input = styled.input`
   margin: 5px 0;
   border: 1px solid #ccc;
   border-radius: 4px;
-  width: 250px; // 고정된 너비
-  max-width: 250px; // 최대 너비 제한
+  /* width: 250px; // 고정된 너비 */
+  /* max-width: 250px; // 최대 너비 제한 */
 `;
 
 export const Select = styled.select`
