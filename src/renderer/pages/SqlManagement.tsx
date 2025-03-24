@@ -1,5 +1,5 @@
 // src/renderer/pages/SqlManagement.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Section,
   SectionTitle,
@@ -21,6 +21,7 @@ import {
   FullPageContainer,
   DeleteButton,
   LeftAlignedLabel,
+  Select,
 } from '../styles/CommonStyles';
 import { format } from 'sql-formatter';
 import { useSettingsContext } from '../context/SettingContext';
@@ -55,7 +56,10 @@ type SortType = 'name' | 'createdAt' | 'updatedAt';
 export default function SqlManagement() {
   const { showMessage } = useMessage();
 
+  // 프로젝트 목록 검색/정렬
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortType, setSortType] = useState<SortType>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const [showHighlighter, setShowHighlighter] = useState(false);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -63,9 +67,6 @@ export default function SqlManagement() {
   const { settings, updateSettings, isLoading } = useSettingsContext();
   const [newSql, setNewSql] = useState<SqlInfo>(emptySqlInfo);
   const [paramList, setParamList] = useState<string[]>([]);
-
-  // 정렬 상태 추가
-  const [sortType, setSortType] = useState<SortType>('name');
 
   // 정렬 및 검색 적용된 SQL 목록
   const filteredAndSortedSqlList = React.useMemo(() => {
@@ -95,10 +96,34 @@ export default function SqlManagement() {
     });
   }, [settings.sqlList, searchTerm, sortType]);
 
-  // 검색어 변경 핸들러
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
+  // 목록 필터+정렬
+  const sortedFilteredProjects = useMemo(() => {
+    const filtered = filteredAndSortedSqlList.filter(
+      (p) =>
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    return filtered.sort((a, b) => {
+      let valA = '';
+      let valB = '';
+
+      if (sortType === 'name') {
+        valA = a.name.toLowerCase();
+        valB = b.name.toLowerCase();
+      } else if (sortType === 'createdAt') {
+        valA = a.createdAt;
+        valB = b.createdAt;
+      } else {
+        valA = a.updatedAt;
+        valB = b.updatedAt;
+      }
+      if (sortDirection === 'asc') {
+        return valA > valB ? 1 : -1;
+      } else {
+        return valA < valB ? 1 : -1;
+      }
+    });
+  }, [filteredAndSortedSqlList, searchTerm, sortType, sortDirection]);
 
   // 구문 강조 적용
   useEffect(() => {
@@ -398,7 +423,7 @@ export default function SqlManagement() {
       <FlexContainer>
         {/* 왼쪽 SQL 목록 패널 */}
         <SidePanel>
-          <SidePanelHeader>
+          {/* <SidePanelHeader>
             <div
               style={{
                 display: 'flex',
@@ -436,10 +461,43 @@ export default function SqlManagement() {
                 />
               </div>
             </div>
+          </SidePanelHeader> */}
+          <SidePanelHeader>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                marginLeft: '-10px',
+              }}
+            >
+              <Input
+                type="text"
+                placeholder="검색..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ flex: 1 }}
+              />
+              <Select
+                value={sortType}
+                onChange={(e) => setSortType(e.target.value as SortType)}
+                style={{ width: '80px', marginRight: '5px' }}
+              >
+                <option value="name">이름</option>
+                <option value="createdAt">생성</option>
+                <option value="updatedAt">수정</option>
+              </Select>
+              <Button
+                onClick={() =>
+                  setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+                }
+                style={{ padding: '3px 8px' }}
+              >
+                {sortDirection === 'asc' ? '↑' : '↓'}
+              </Button>
+            </div>
           </SidePanelHeader>
-
           <SidePanelContent>
-            {filteredAndSortedSqlList.length === 0 ? (
+            {sortedFilteredProjects.length === 0 ? (
               <div
                 style={{ padding: '15px', textAlign: 'center', color: '#999' }}
               >
@@ -448,7 +506,7 @@ export default function SqlManagement() {
                   : '등록된 SQL이 없습니다.'}
               </div>
             ) : (
-              filteredAndSortedSqlList.map((item) => (
+              sortedFilteredProjects.map((item) => (
                 <ListItem
                   key={item.id}
                   active={item.id === settings.selectedSqlId}

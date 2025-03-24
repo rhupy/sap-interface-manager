@@ -610,23 +610,29 @@ export default function InterfaceManagement() {
       <FlexContainer>
         <SidePanel>
           <SidePanelHeader>
-            <div style={{ display: 'flex', marginBottom: '10px' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                marginLeft: '-10px',
+              }}
+            >
               <Input
                 type="text"
                 placeholder="검색..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ flex: 1, marginRight: '5px' }}
+                style={{ flex: 1 }}
               />
-              <SmallSelect
+              <Select
                 value={sortType}
                 onChange={(e) => setSortType(e.target.value as SortType)}
                 style={{ width: '80px', marginRight: '5px' }}
               >
                 <option value="name">이름</option>
-                <option value="createdAt">생성일</option>
-                <option value="updatedAt">수정일</option>
-              </SmallSelect>
+                <option value="createdAt">생성</option>
+                <option value="updatedAt">수정</option>
+              </Select>
               <Button
                 onClick={() =>
                   setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')

@@ -499,28 +499,34 @@ export default function ProjectManagement() {
             {/* 왼쪽 패널: 프로젝트 목록 */}
             <SidePanel>
               <SidePanelHeader>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    marginLeft: '-10px',
+                  }}
+                >
                   <Input
                     type="text"
                     placeholder="검색..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{ flex: 1, marginRight: '5px' }}
+                    style={{ flex: 1 }}
                   />
-                  <SmallSelect
+                  <Select
                     value={sortType}
                     onChange={(e) => setSortType(e.target.value as SortType)}
-                    style={{ width: '70px', marginRight: '5px' }}
+                    style={{ width: '80px', marginRight: '5px' }}
                   >
                     <option value="name">이름</option>
                     <option value="createdAt">생성</option>
                     <option value="updatedAt">수정</option>
-                  </SmallSelect>
+                  </Select>
                   <Button
                     onClick={() =>
                       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
                     }
-                    style={{ padding: '3px 6px' }}
+                    style={{ padding: '3px 8px' }}
                   >
                     {sortDirection === 'asc' ? '↑' : '↓'}
                   </Button>

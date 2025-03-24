@@ -375,28 +375,6 @@ export default function SettingsComponent() {
   // -------------------------
   return (
     <>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '10px',
-        }}
-      >
-        {/* 설정 파일 열기 버튼 */}
-        <Button
-          onClick={openSettingsFile}
-          style={{
-            backgroundColor: '#6c757d', // 회색 계열 색상으로 변경
-            padding: '6px 12px', // 버튼 크기 축소
-            fontSize: '0.9rem', // 글자 크기 축소
-          }}
-        >
-          설정 파일 열기
-        </Button>
-      </div>
-      {/* <Description>RFC 및 DB 연결 설정을 관리하세요.</Description> */}
-
       <ContentContainer style={{ flex: 'none' }}>
         {/* ---------- RFC 영역 ---------- */}
         <Section style={{ width: '800px', height: '380px' }}>
@@ -647,6 +625,27 @@ export default function SettingsComponent() {
           </p>
         </Section>
       </ContentContainer>
+
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '10px',
+        }}
+      >
+        {/* 설정 파일 열기 버튼 */}
+        <Button
+          onClick={openSettingsFile}
+          style={{
+            backgroundColor: '#6c757d', // 회색 계열 색상으로 변경
+            padding: '6px 12px', // 버튼 크기 축소
+            fontSize: '0.9rem', // 글자 크기 축소
+          }}
+        >
+          설정 파일 열기
+        </Button>
+      </div>
     </>
   );
 }

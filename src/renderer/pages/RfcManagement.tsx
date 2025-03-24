@@ -1,5 +1,5 @@
 // src/renderer/pages/RfcManagement.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Section,
   SectionTitle,
@@ -54,7 +54,6 @@ type SortType = 'name' | 'createdAt' | 'updatedAt';
 export default function RfcManagement() {
   const { showMessage } = useMessage();
 
-  const [searchTerm, setSearchTerm] = useState('');
   const { settings, updateSettings, isLoading } = useSettingsContext();
   const [newRfcFunction, setNewRfcFunction] =
     useState<RfcFunctionInfo>(emptyRfcFunction);
@@ -62,7 +61,9 @@ export default function RfcManagement() {
     useState<RfcParameter>(emptyParameter);
 
   // 정렬 상태 추가
+  const [searchTerm, setSearchTerm] = useState('');
   const [sortType, setSortType] = useState<SortType>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   // 검색어 변경 핸들러
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -404,6 +405,35 @@ export default function RfcManagement() {
     return '';
   };
 
+  // 목록 필터+정렬
+  const sortedFilteredProjects = useMemo(() => {
+    const filtered = filteredAndSortedRfcFunctions.filter(
+      (p) =>
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    return filtered.sort((a, b) => {
+      let valA = '';
+      let valB = '';
+
+      if (sortType === 'name') {
+        valA = a.name.toLowerCase();
+        valB = b.name.toLowerCase();
+      } else if (sortType === 'createdAt') {
+        valA = a.createdAt;
+        valB = b.createdAt;
+      } else {
+        valA = a.updatedAt;
+        valB = b.updatedAt;
+      }
+      if (sortDirection === 'asc') {
+        return valA > valB ? 1 : -1;
+      } else {
+        return valA < valB ? 1 : -1;
+      }
+    });
+  }, [filteredAndSortedRfcFunctions, searchTerm, sortType, sortDirection]);
+
   // 로딩 중 표시
   if (isLoading) {
     return <div>RFC 설정을 불러오는 중...</div>;
@@ -411,33 +441,6 @@ export default function RfcManagement() {
 
   return (
     <FullPageContainer>
-      {/* <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '10px',
-        }}
-      >
-        <Title>RFC 관리</Title>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Label style={{ marginRight: '10px' }}>테스트 RFC :</Label>
-          <Select
-            value={settings.selectedRfc}
-            onChange={(e) => updateSettings({ selectedRfc: e.target.value })}
-            style={{ width: '200px' }}
-          >
-            <option value="">RFC 연결 선택</option>
-            {settings.rfcConnections.map((rfc) => (
-              <option key={rfc.connectionName} value={rfc.connectionName}>
-                {rfc.connectionName}
-              </option>
-            ))}
-          </Select>
-        </div>
-      </div>
-      <Description>등록된 RFC 함수 목록 및 수정/추가/삭제 기능</Description> */}
-
       <FlexContainer>
         {/* 왼쪽 RFC 함수 목록 패널 */}
         <SidePanel>
@@ -445,44 +448,39 @@ export default function RfcManagement() {
             <div
               style={{
                 display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'center',
-                width: '100%',
+                marginLeft: '-10px',
               }}
             >
-              <SelectGroup style={{ marginBottom: 0 }}>
-                <SmallSelect value={sortType} onChange={handleSortTypeChange}>
-                  <option value="name">이름순</option>
-                  <option value="createdAt">생성시간순</option>
-                  <option value="updatedAt">수정시간순</option>
-                </SmallSelect>
-              </SelectGroup>
-
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'flex-center',
-                }}
+              <Input
+                type="text"
+                placeholder="검색..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ flex: 1 }}
+              />
+              <Select
+                value={sortType}
+                onChange={(e) => setSortType(e.target.value as SortType)}
+                style={{ width: '80px', marginRight: '5px' }}
               >
-                <Input
-                  type="text"
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  placeholder="검색..."
-                  style={{
-                    width: '150px',
-                    padding: '5px',
-                    fontSize: '0.9rem',
-                    height: '30px',
-                  }}
-                />
-              </div>
+                <option value="name">이름</option>
+                <option value="createdAt">생성</option>
+                <option value="updatedAt">수정</option>
+              </Select>
+              <Button
+                onClick={() =>
+                  setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+                }
+                style={{ padding: '3px 8px' }}
+              >
+                {sortDirection === 'asc' ? '↑' : '↓'}
+              </Button>
             </div>
           </SidePanelHeader>
 
           <SidePanelContent>
-            {filteredAndSortedRfcFunctions.length === 0 ? (
+            {sortedFilteredProjects.length === 0 ? (
               <div
                 style={{ padding: '15px', textAlign: 'center', color: '#999' }}
               >
@@ -491,7 +489,7 @@ export default function RfcManagement() {
                   : '등록된 RFC 함수가 없습니다.'}
               </div>
             ) : (
-              filteredAndSortedRfcFunctions.map((item) => (
+              sortedFilteredProjects.map((item) => (
                 <ListItem
                   key={item.id}
                   active={item.id === settings.selectedRfcFunctionId}
