@@ -5,7 +5,6 @@ import {
   SectionTitle,
   Label,
   Input,
-  Button,
   Title,
   Description,
   FlexContainer,
@@ -27,6 +26,7 @@ import {
 import { useSettingsContext } from '../context/SettingContext';
 import { useMessage } from '../context/MessageContext';
 import { RfcFunctionInfo, RfcParameter } from '../types';
+import Button from '../components/smartButton';
 
 // RFC 함수 정보 기본값
 const emptyRfcFunction: RfcFunctionInfo = {

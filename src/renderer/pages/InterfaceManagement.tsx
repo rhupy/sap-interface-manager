@@ -10,7 +10,6 @@ import {
   SectionTitle,
   ListItem,
   Input,
-  Button,
   DeleteButton,
   Label,
   LeftAlignedLabel,
@@ -38,7 +37,7 @@ import {
   MappingConnection,
 } from '../components/ParameterMapping/types';
 import { InterfaceExecutor } from '../components/InterfaceExecutor';
-import { InterfaceExecutorProvider } from '../context/InterfaceExecutorContext';
+import Button from '../components/smartButton';
 
 // 빈 인터페이스 정보
 const emptyInterface: InterfaceInfo = {

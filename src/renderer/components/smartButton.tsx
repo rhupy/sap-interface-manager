@@ -9,7 +9,7 @@ import {
   FiRefreshCw,
   FiCheck,
 } from 'react-icons/fi';
-import { Button } from '../styles/CommonStyles';
+import { Button as Btn } from '../styles/CommonStyles';
 
 // 버튼 유형에 따른 배경색 정의
 const getButtonColor = (text: string): string => {
@@ -114,11 +114,7 @@ interface SmartButtonProps
 }
 
 // 스마트 버튼 컴포넌트
-const SmartButton: React.FC<SmartButtonProps> = ({
-  children,
-  style,
-  ...props
-}) => {
+const Button: React.FC<SmartButtonProps> = ({ children, style, ...props }) => {
   // 버튼 텍스트에 따라 아이콘과 색상 결정
   const buttonText = String(children || '');
   const icon = getIconForText(buttonText);
@@ -126,7 +122,7 @@ const SmartButton: React.FC<SmartButtonProps> = ({
   const hoverColor = getHoverColor(backgroundColor);
 
   return (
-    <Button
+    <Btn
       style={{
         display: 'inline-flex',
         alignItems: 'center',
@@ -148,8 +144,8 @@ const SmartButton: React.FC<SmartButtonProps> = ({
     >
       {icon}
       {children}
-    </Button>
+    </Btn>
   );
 };
 
-export default SmartButton;
+export default Button;

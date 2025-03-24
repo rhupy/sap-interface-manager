@@ -1,5 +1,4 @@
 // src/renderer/pages/AboutComponent.tsx
-import React from 'react';
 import styled from 'styled-components';
 import { Title, Description } from '../styles/CommonStyles';
 

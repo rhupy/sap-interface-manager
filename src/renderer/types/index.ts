@@ -6,17 +6,21 @@ export interface Settings {
   selectedRfc: string;
   selectedDbId: string;
 
-  // SQL 관리 관련 필드
+  // SQL 관리
   sqlList?: SqlInfo[];
   selectedSqlId?: string;
 
-  // RFC 함수 관리 관련 필드
+  // RFC 함수 관리
   rfcFunctions?: RfcFunctionInfo[];
   selectedRfcFunctionId?: string;
 
-  // 인터페이스 관리 관련 필드
+  // 인터페이스 관리
   interfaces?: InterfaceInfo[];
   selectedInterfaceId?: string;
+
+  // 프로젝트 관리
+  projects?: ProjectInfo[]; // 프로젝트 목록
+  selectedProjectId?: string; // 현재 선택된 프로젝트 ID
 }
 
 // API 인터페이스
@@ -156,4 +160,16 @@ export interface ExecutionState {
   logs: ExecutionLog[];
   results: any[];
   error?: string;
+}
+
+// 프로젝트 관리
+export interface ProjectInfo {
+  id: string;
+  name: string;
+  description: string;
+  selectedRfc: string;
+  selectedDbId: string;
+  createdAt: string;
+  updatedAt: string;
+  interfaceIds: string[]; // 프로젝트에 포함된 interface의 ID 목록
 }

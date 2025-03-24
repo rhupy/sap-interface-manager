@@ -4,7 +4,6 @@ import {
   Section,
   SectionTitle,
   Input,
-  Button,
   Title,
   Description,
   FlexContainer,
@@ -23,7 +22,6 @@ import {
   DeleteButton,
   LeftAlignedLabel,
 } from '../styles/CommonStyles';
-
 import { format } from 'sql-formatter';
 import { useSettingsContext } from '../context/SettingContext';
 import { useMessage } from '../context/MessageContext';
@@ -31,6 +29,7 @@ import { SqlInfo } from '../types';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism-tomorrow.css';
 import 'prismjs/components/prism-sql';
+import Button from '../components/smartButton';
 
 const emptySqlInfo: SqlInfo = {
   id: '',

@@ -19,6 +19,7 @@ import { SettingsProvider } from './context/SettingContext';
 import { InterfaceExecutorProvider } from './context/InterfaceExecutorContext';
 import { FaQuestion, FaInfoCircle } from 'react-icons/fa';
 import AboutComponent from './pages/AboutComponent';
+import ProjectManagement from './pages/ProjectManagement';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<
@@ -79,7 +80,7 @@ export default function App() {
                 </RightTabGroup>
               </TabContainer>
               <ContentContainer>
-                {activeTab === 'project' && <Profile />}
+                {activeTab === 'project' && <ProjectManagement />}
                 {activeTab === 'interface' && <InterfaceManagement />}
                 {activeTab === 'rfc' && <RfcManagement />}
                 {activeTab === 'sql' && <SqlManagement />}
