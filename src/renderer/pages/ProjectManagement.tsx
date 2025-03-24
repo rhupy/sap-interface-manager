@@ -22,7 +22,7 @@ import { useSettingsContext } from '../context/SettingContext';
 import { useMessage } from '../context/MessageContext';
 import { ProjectInfo, InterfaceInfo, ProjectInterfaceConfig } from '../types';
 import { v4 as uuidv4 } from 'uuid';
-import { FiLoader } from 'react-icons/fi'; // 로딩 아이콘용
+import { FiLoader } from 'react-icons/fi';
 
 // 로딩 아이콘 회전 애니메이션
 const spinnerStyle: React.CSSProperties = {

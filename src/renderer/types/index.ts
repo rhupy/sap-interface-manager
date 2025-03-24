@@ -21,6 +21,9 @@ export interface Settings {
   // 프로젝트 관리
   projects?: ProjectInfo[]; // 프로젝트 목록
   selectedProjectId?: string; // 현재 선택된 프로젝트 ID
+
+  // 로그 저장 경로
+  logStoragePath?: string; // 로그 저장 경로, 없으면 기본값 C:\InterfaceLogs
 }
 
 // API 인터페이스

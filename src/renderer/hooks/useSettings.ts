@@ -12,6 +12,7 @@ const initialSettings: Settings = {
   dbConnections: [],
   selectedRfc: '',
   selectedDbId: '',
+  logStoragePath: '',
 };
 
 /**
@@ -73,6 +74,7 @@ export function useSettings(
         dbConnections: savedSettings.dbConnections || [],
         selectedRfc: savedSettings.selectedRfc || '',
         selectedDbId: savedSettings.selectedDbId || '',
+        logStoragePath: savedSettings.logStoragePath || '',
       };
 
       setSettingsState(loadedSettings);

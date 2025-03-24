@@ -99,6 +99,7 @@ function registerIpcHandlers() {
     try {
       if (fs.existsSync(settingsPath)) {
         const data = await fs.promises.readFile(settingsPath, 'utf8');
+        // console.log(data);
         return JSON.parse(data);
       }
       return null;

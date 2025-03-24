@@ -15,6 +15,8 @@ import { useMessage } from '../context/MessageContext';
 import { RfcConnectionInfo, DbConnectionConfig } from '../types';
 import Button from '../components/smartButton';
 
+export const defaultLogPath = 'C:/InterfaceLogs';
+
 // RFC/DB를 비웠을 때 사용하기 위한 객체
 const emptyRfc: RfcConnectionInfo = {
   id: '',
@@ -53,6 +55,8 @@ export default function SettingsComponent() {
   // 현재 편집 중인 RFC/DB 정보
   const [newRfc, setNewRfc] = useState<RfcConnectionInfo>(emptyRfc);
   const [newDb, setNewDb] = useState<DbConnectionConfig>(emptyDb);
+  // 로그 경로
+  const [logStoragePath, setLogStoragePath] = useState<string>('');
 
   // -------------------------
   // 3) selectedRfc, selectedDbId 변화에 따라
@@ -83,6 +87,15 @@ export default function SettingsComponent() {
       else setNewDb(emptyDb);
     }
   }, [settings.selectedDbId]);
+
+  useEffect(() => {
+    if (settings.logStoragePath) {
+      // 'RFC 선택'인 경우 입력창 초기화
+      setLogStoragePath(settings.logStoragePath);
+    } else {
+      setLogStoragePath('');
+    }
+  }, [settings.logStoragePath]);
 
   // -------------------------
   // 4) 이벤트 핸들러(드롭다운)
@@ -343,6 +356,13 @@ export default function SettingsComponent() {
     }
   };
 
+  const handleSaveLogPath = () => {
+    updateSettings({
+      logStoragePath: logStoragePath ? logStoragePath : defaultLogPath,
+    });
+    showMessage('로그 폴더 경로가 저장되었습니다.', 'success');
+  };
+
   // -------------------------
   // 로딩 중 처리
   // -------------------------
@@ -363,7 +383,6 @@ export default function SettingsComponent() {
           marginBottom: '10px',
         }}
       >
-        <Title>접속 정보</Title>
         {/* 설정 파일 열기 버튼 */}
         <Button
           onClick={openSettingsFile}
@@ -605,6 +624,27 @@ export default function SettingsComponent() {
               </>
             )}
           </div>
+        </Section>
+
+        {/* ---------- 프로젝트 로그 저장소 영역 ---------- */}
+        <Section style={{ width: '800px', height: '150px' }}>
+          <SectionTitle>프로젝트 로그 저장 경로</SectionTitle>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <Input
+              type="text"
+              value={logStoragePath}
+              style={{ width: '500px' }}
+              placeholder={defaultLogPath}
+              onChange={(e) => setLogStoragePath(e.target.value)}
+            />
+            <Button onClick={handleSaveLogPath} style={{ marginLeft: '10px' }}>
+              저장
+            </Button>
+          </div>
+          <p style={{ marginTop: '10px', color: '#666', fontSize: '0.9rem' }}>
+            프로젝트 실행 로그를 "[프로젝트명]/[YYYYMMDD]/[인터페이스명].log"
+            형태로 이 폴더에 저장합니다.
+          </p>
         </Section>
       </ContentContainer>
     </>
