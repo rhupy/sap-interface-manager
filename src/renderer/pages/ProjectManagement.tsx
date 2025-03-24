@@ -55,6 +55,10 @@ export default function ProjectManagement() {
   const { settings, updateSettings, isLoading } = useSettingsContext();
   const { showMessage } = useMessage();
 
+  // 프로젝트 이름/설명 입력을 위한 로컬 state
+  const [tempProjectName, setTempProjectName] = useState('');
+  const [tempProjectDesc, setTempProjectDesc] = useState('');
+
   // 프로젝트 목록 검색/정렬
   const [searchTerm, setSearchTerm] = useState('');
   const [sortType, setSortType] = useState<SortType>('name');
@@ -92,16 +96,6 @@ export default function ProjectManagement() {
 
   // Settings에서 project 목록
   const projects = settings.projects || [];
-
-  // selectedProjectId 변화 시 currentProject 동기화
-  useEffect(() => {
-    if (settings.selectedProjectId) {
-      const found = projects.find((p) => p.id === settings.selectedProjectId);
-      if (found) setCurrentProject(found);
-    } else {
-      setCurrentProject(emptyProject);
-    }
-  }, [settings.selectedProjectId, projects]);
 
   // 날짜 포맷
   const formatDateTime = (iso?: string) => {
@@ -146,23 +140,30 @@ export default function ProjectManagement() {
     });
   }, [projects, searchTerm, sortType, sortDirection]);
 
-  // 프로젝트 선택
+  // -----------------------------
+  // 좌측 프로젝트 리스트에서 선택
+  // -----------------------------
   const handleSelectProject = (id: string) => {
     const found = projects.find((p) => p.id === id);
     if (found) {
       setCurrentProject(found);
+      // 로컬 state 동기화
+      setTempProjectName(found.name);
+      setTempProjectDesc(found.description);
       updateSettings({ selectedProjectId: id });
     }
   };
 
-  // 프로젝트 추가
+  // -----------------------------
+  // "프로젝트 추가" => name, desc 등 로컬 state를 새 프로젝트로
+  // -----------------------------
   const handleAddProject = () => {
-    if (!currentProject.name.trim()) {
+    if (!tempProjectName.trim()) {
       showMessage('프로젝트 이름을 입력하세요.', 'error');
       return;
     }
-    // 중복 검사
-    const isDup = projects.some((p) => p.name === currentProject.name);
+    // 중복 이름
+    const isDup = projects.some((p) => p.name === tempProjectName);
     if (isDup) {
       showMessage('이미 같은 이름의 프로젝트가 있습니다.', 'error');
       return;
@@ -171,34 +172,41 @@ export default function ProjectManagement() {
     const now = new Date().toISOString();
     const newId = uuidv4();
     const newProj: ProjectInfo = {
-      ...currentProject,
       id: newId,
+      name: tempProjectName,
+      description: tempProjectDesc,
+      selectedRfc: '',
+      selectedDbId: '',
       createdAt: now,
       updatedAt: now,
       interfaceConfigs: [],
     };
+
     updateSettings((prev) => ({
       ...prev,
       projects: [...(prev.projects || []), newProj],
       selectedProjectId: newId,
     }));
+
     setCurrentProject(newProj);
     showMessage('프로젝트가 추가되었습니다.', 'success');
   };
 
-  // 프로젝트 수정
+  // -----------------------------
+  // "프로젝트 수정" => currentProject와 Settings에 반영
+  // -----------------------------
   const handleUpdateProject = () => {
     if (!currentProject.id) {
       showMessage('수정할 프로젝트가 선택되지 않았습니다.', 'error');
       return;
     }
-    if (!currentProject.name.trim()) {
+    if (!tempProjectName.trim()) {
       showMessage('프로젝트 이름을 입력하세요.', 'error');
       return;
     }
-    // 중복 이름 검사 (자기 자신 제외)
+    // 중복 검사 (자기 자신 제외)
     const isDup = projects.some(
-      (p) => p.name === currentProject.name && p.id !== currentProject.id
+      (p) => p.name === tempProjectName && p.id !== currentProject.id
     );
     if (isDup) {
       showMessage('이미 같은 이름의 프로젝트가 있습니다.', 'error');
@@ -206,19 +214,38 @@ export default function ProjectManagement() {
     }
 
     const now = new Date().toISOString();
-    const updatedProj = { ...currentProject, updatedAt: now };
+    const updatedProj: ProjectInfo = {
+      ...currentProject,
+      name: tempProjectName,
+      description: tempProjectDesc,
+      updatedAt: now,
+    };
 
+    // Settings.projects를 갱신
     updateSettings((prev) => ({
       ...prev,
       projects: (prev.projects || []).map((p) =>
         p.id === updatedProj.id ? updatedProj : p
       ),
     }));
+
     setCurrentProject(updatedProj);
     showMessage('프로젝트가 수정되었습니다.', 'success');
   };
 
+  // -----------------------------
+  // "새 프로젝트" 버튼 => currentProject, 로컬 state 초기화
+  // -----------------------------
+  const handleNewProject = () => {
+    setCurrentProject(emptyProject);
+    setTempProjectName('');
+    setTempProjectDesc('');
+    updateSettings({ selectedProjectId: '' });
+  };
+
+  // -----------------------------
   // 프로젝트 삭제
+  // -----------------------------
   const handleDeleteProjectClick = () => {
     if (!currentProject.id) {
       showMessage('삭제할 프로젝트가 선택되지 않았습니다.', 'error');
@@ -226,18 +253,28 @@ export default function ProjectManagement() {
     }
     setShowDeleteConfirm(true);
   };
+
   const handleDeleteProject = () => {
     if (!currentProject.id) return;
     const updated = projects.filter((p) => p.id !== currentProject.id);
+
     updateSettings({
       projects: updated,
       selectedProjectId: updated.length > 0 ? updated[0].id : '',
     });
+
     setShowDeleteConfirm(false);
     showMessage('프로젝트가 삭제되었습니다.', 'success');
 
-    if (updated.length > 0) setCurrentProject(updated[0]);
-    else setCurrentProject(emptyProject);
+    if (updated.length > 0) {
+      setCurrentProject(updated[0]);
+      setTempProjectName(updated[0].name);
+      setTempProjectDesc(updated[0].description);
+    } else {
+      setCurrentProject(emptyProject);
+      setTempProjectName('');
+      setTempProjectDesc('');
+    }
   };
 
   // 전체 인터페이스 목록
@@ -509,7 +546,7 @@ export default function ProjectManagement() {
                     alignItems: 'flex-end',
                   }}
                 >
-                  {/* 프로젝트 이름 (400px 고정) */}
+                  {/* 프로젝트 이름 */}
                   <div
                     style={{
                       display: 'flex',
@@ -519,22 +556,14 @@ export default function ProjectManagement() {
                   >
                     <LeftAlignedLabel>프로젝트 이름</LeftAlignedLabel>
                     <Input
-                      style={{
-                        width: '100%',
-                        boxSizing: 'border-box', // ← 이 부분이 중요
-                      }}
-                      value={currentProject.name}
-                      onChange={(e) =>
-                        setCurrentProject({
-                          ...currentProject,
-                          name: e.target.value,
-                        })
-                      }
+                      style={{ width: '100%', boxSizing: 'border-box' }}
+                      value={tempProjectName}
+                      onChange={(e) => setTempProjectName(e.target.value)}
                       placeholder="예) 테스트 프로젝트"
                     />
                   </div>
 
-                  {/* 설명 (남은 공간을 전부 사용) */}
+                  {/* 프로젝트 설명 */}
                   <div
                     style={{
                       display: 'flex',
@@ -545,13 +574,8 @@ export default function ProjectManagement() {
                     <LeftAlignedLabel>설명</LeftAlignedLabel>
                     <Input
                       style={{ width: '100%' }}
-                      value={currentProject.description}
-                      onChange={(e) =>
-                        setCurrentProject({
-                          ...currentProject,
-                          description: e.target.value,
-                        })
-                      }
+                      value={tempProjectDesc}
+                      onChange={(e) => setTempProjectDesc(e.target.value)}
                       placeholder="프로젝트에 대한 설명"
                     />
                   </div>
