@@ -788,8 +788,7 @@ export default function InterfaceManagement() {
 
           {newInterface.id && (
             <>
-              <Section style={{ height: '140px', minHeight: '140px' }}>
-                <SectionTitle>작업 관리</SectionTitle>
+              <Section style={{ height: '100px', minHeight: '100px' }}>
                 <div
                   style={{
                     display: 'flex',
@@ -930,7 +929,7 @@ export default function InterfaceManagement() {
               </Section>
 
               <Section style={{ flex: 1, overflow: 'auto' }}>
-                <SectionTitle>작업 목록</SectionTitle>
+                {/* <SectionTitle>작업 목록</SectionTitle> */}
                 {newInterface.steps.length > 0 ? (
                   <div>
                     {newInterface.steps.map((step, index) => (
