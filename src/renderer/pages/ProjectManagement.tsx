@@ -52,6 +52,9 @@ const emptyProject: ProjectInfo = {
 export default function ProjectManagement() {
   const { settings, updateSettings, isLoading } = useSettingsContext();
   const { showMessage } = useMessage();
+  const [intervalIds, setIntervalIds] = useState<{
+    [key: string]: NodeJS.Timeout;
+  }>({});
 
   // 프로젝트 이름/설명 입력을 위한 로컬 state
   const [tempProjectName, setTempProjectName] = useState('');
@@ -179,13 +182,28 @@ export default function ProjectManagement() {
     );
   };
 
+  // 프로젝트 자동실행 토글
   const toggleAutoRun = (projectId: string) => {
     const updated = projects.map((p) => {
       if (p.id === projectId) {
-        return { ...p, autoRun: !p.autoRun };
+        const updatedProject = { ...p, autoRun: !p.autoRun };
+
+        // 자동실행이 켜지면 인터페이스 실행
+        if (updatedProject.autoRun) {
+          runInterfacesWithSchedule(); // 주기적으로 실행
+        } else {
+          // 자동실행이 꺼지면 실행 중인 인터페이스의 반복 실행을 멈춤
+          Object.values(intervalIds).forEach((intervalId) =>
+            clearInterval(intervalId)
+          );
+          setIntervalIds({}); // intervalIds 초기화
+        }
+
+        return updatedProject;
       }
       return p;
     });
+
     updateSettings({ projects: updated });
   };
 
@@ -442,7 +460,7 @@ export default function ProjectManagement() {
     info: allInterfaces.find((inf) => inf.id === cfg.id) || null,
   }));
 
-  // 실행 로직 (활성화된 인터페이스만)
+  // 전체 실행 : 1회 (활성화된 인터페이스만)
   const runAllInterfaces = async () => {
     const enabledList = projectInterfaces.filter((p) => p.config.enabled);
     if (!enabledList.length) {
@@ -458,13 +476,36 @@ export default function ProjectManagement() {
     showMessage('전체 인터페이스 실행이 완료되었습니다.', 'success');
   };
 
+  // 스케줄에 따라 전체 실행
+  const runInterfacesWithSchedule = () => {
+    const enabledInterfaces = projectInterfaces.filter((p) => p.config.enabled);
+
+    enabledInterfaces.forEach((interfaceItem, idx) => {
+      const { config, info } = interfaceItem;
+
+      if (!info) return;
+
+      // 처음에는 순차적으로 실행
+      runSingleInterface(info, idx).then(() => {
+        // 주기 설정에 맞춰 반복 실행
+        const intervalId = setInterval(() => {
+          runSingleInterface(info, idx);
+        }, config.scheduleSec * 1000);
+
+        // intervalId를 상태에 저장
+        setIntervalIds((prev) => ({
+          ...prev,
+          [info.id]: intervalId, // 인터페이스 ID를 키로 설정
+        }));
+      });
+    });
+  };
+
   // 인터페이스 단일 실행
   // 로그를 남길 때마다 appendProjectLog IPC를 호출해서 파일에 기록
   const runSingleInterface = async (inf: InterfaceInfo, idx: number) => {
     // 실행 시작 로그
     setLogs((prev) => [...prev, `[${inf.name}] 실행 시작`]);
-    // 파일로도 기록
-    appendLogToFile(inf, `[${inf.name}] 실행 시작`);
 
     setRunningIndex(idx);
     setExecutionResults((prev) => ({
@@ -472,11 +513,11 @@ export default function ProjectManagement() {
       [inf.id]: { finished: false },
     }));
 
-    // 예시로 1.5초 대기
     await new Promise((res) => setTimeout(res, 1500));
 
-    // 무작위 에러 시뮬레이션
-    const isError = Math.random() < 0.3;
+    // 예시로 1.5초 대기 후 실행
+    const isError = Math.random() < 0.3; // 무작위 에러 발생
+
     setRunningIndex(null);
     setExecutionResults((prev) => ({
       ...prev,
@@ -487,11 +528,10 @@ export default function ProjectManagement() {
       },
     }));
 
-    // 결과 로그
-    const msg = `[${inf.name}] 실행 ${isError ? '실패' : '성공'}`;
-    setLogs((prev) => [...prev, msg]);
-    // 파일 기록
-    appendLogToFile(inf, msg);
+    setLogs((prev) => [
+      ...prev,
+      `[${inf.name}] 실행 ${isError ? '실패' : '성공'}`,
+    ]);
   };
 
   // 로그 파일에 쓰는 보조 함수
