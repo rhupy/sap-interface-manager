@@ -53,7 +53,7 @@ export default function AboutComponent() {
       </Description>
 
       <img
-        src={`../guide.png`}
+        src="/guide.png"
         alt="Guide"
         style={{ maxWidth: '100%', padding: '3px', paddingBottom: '20px' }}
       />
