@@ -19,7 +19,7 @@ import { useSettingsContext } from '../context/SettingContext';
 import { useMessage } from '../context/MessageContext';
 import { ProjectInfo, InterfaceInfo, ProjectInterfaceConfig } from '../types';
 import { v4 as uuidv4 } from 'uuid';
-import { FiLoader } from 'react-icons/fi';
+import { FiLoader, FiToggleLeft, FiToggleRight } from 'react-icons/fi';
 
 // 로딩 아이콘 회전 애니메이션
 const spinnerStyle: React.CSSProperties = {
@@ -46,6 +46,7 @@ const emptyProject: ProjectInfo = {
   createdAt: '',
   updatedAt: '',
   interfaceConfigs: [], // 실제 사용
+  autoRun: false,
 };
 
 export default function ProjectManagement() {
@@ -151,6 +152,43 @@ export default function ProjectManagement() {
     }
   };
 
+  // 프로젝트 자동 on/off 스위치
+  const Switch = ({
+    isOn,
+    toggleSwitch,
+  }: {
+    isOn: boolean;
+    toggleSwitch: () => void;
+  }) => {
+    return (
+      <div
+        onClick={toggleSwitch}
+        style={{
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          marginTop: '-10px',
+        }}
+      >
+        {isOn ? (
+          <FiToggleRight size={40} color="green" />
+        ) : (
+          <FiToggleLeft size={40} color="gray" />
+        )}
+      </div>
+    );
+  };
+
+  const toggleAutoRun = (projectId: string) => {
+    const updated = projects.map((p) => {
+      if (p.id === projectId) {
+        return { ...p, autoRun: !p.autoRun };
+      }
+      return p;
+    });
+    updateSettings({ projects: updated });
+  };
+
   // -----------------------------
   // "프로젝트 추가" => name, desc 등 로컬 state를 새 프로젝트로
   // -----------------------------
@@ -177,6 +215,7 @@ export default function ProjectManagement() {
       createdAt: now,
       updatedAt: now,
       interfaceConfigs: [],
+      autoRun: false,
     };
 
     updateSettings((prev) => ({
@@ -549,7 +588,20 @@ export default function ProjectManagement() {
                       active={project.id === currentProject.id}
                       onClick={() => handleSelectProject(project.id)}
                     >
-                      <strong>{project.name}</strong>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <strong>{project.name}</strong>
+                        {/* 자동실행 여부 스위치 추가 */}
+                        <Switch
+                          isOn={project.autoRun}
+                          toggleSwitch={() => toggleAutoRun(project.id)}
+                        />
+                      </div>
+
                       <div style={{ fontSize: '0.9rem', color: '#777' }}>
                         {project.description.slice(0, 30)}
                         {project.description.length > 30 ? '...' : ''}
