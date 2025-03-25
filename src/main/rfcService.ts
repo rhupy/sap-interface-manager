@@ -56,32 +56,32 @@ export async function testSapRfcFunction(params: {
 
     // 실제 RFC 함수 호출
     let result = await client.call(functionName, parameters);
-    // TEMP. RFC 결과 테스트
-    result = {
-      ...result,
-      OUTTAB: [
-        {
-          MATNR: '1234567890',
-          MAKTX: '테스트 상품',
-        },
-        {
-          MATNR: '1234567891',
-          MAKTX: '테스트 상품2',
-        },
-        {
-          MATNR: '1234567892',
-          MAKTX: '테스트 상품3',
-        },
-        {
-          MATNR: '1234567893',
-          MAKTX: '테스트 상품4',
-        },
-        {
-          MATNR: '1234567894',
-          MAKTX: '테스트 상품5',
-        },
-      ],
-    };
+    // TEMP. 출력 파라미터 메뉴얼 추가
+    // result = {
+    //   ...result,
+    //   OUTTAB: [
+    //     {
+    //       MATNR: '1234567890',
+    //       MAKTX: '테스트 상품',
+    //     },
+    //     {
+    //       MATNR: '1234567891',
+    //       MAKTX: '테스트 상품2',
+    //     },
+    //     {
+    //       MATNR: '1234567892',
+    //       MAKTX: '테스트 상품3',
+    //     },
+    //     {
+    //       MATNR: '1234567893',
+    //       MAKTX: '테스트 상품4',
+    //     },
+    //     {
+    //       MATNR: '1234567894',
+    //       MAKTX: '테스트 상품5',
+    //     },
+    //   ],
+    // };
 
     console.log('RFC 함수 호출 결과:', result);
     return result;
