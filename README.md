@@ -87,7 +87,7 @@ cd sap-interface-manager
 ### Oracle DB 사용 시, 다중 SQL문 처리를 위한 아래 Stored Procedure 를 사전 생성 (EXEC_MULTI_DATA_SQL)
 
 ```bash
-CREATE OR REPLACE PROCEDURE WMSRDC.EXEC_MULTI_DATA_SQL(
+CREATE OR REPLACE PROCEDURE EXEC_MULTI_DATA_SQL(
   p_json_data CLOB,
   p_sql_template CLOB,
   p_column_mappings CLOB,
