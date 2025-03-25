@@ -1028,43 +1028,47 @@ export default function ProjectManagement() {
                                   <td
                                     style={{
                                       textAlign: 'right',
-                                      padding: '5px',
+                                      padding: '0px',
                                     }}
                                   >
-                                    <Button
-                                      onClick={() => moveInterfaceUp(idx)}
-                                      style={{
-                                        padding: '2px 6px',
-                                        fontSize: '0.8rem',
-                                        marginRight: '3px',
-                                      }}
+                                    <div
+                                      style={{ display: 'flex', gap: '3px' }}
                                     >
-                                      ↑
-                                    </Button>
-                                    <Button
-                                      onClick={() => moveInterfaceDown(idx)}
-                                      style={{
-                                        padding: '2px 6px',
-                                        fontSize: '0.8rem',
-                                        marginRight: '3px',
-                                      }}
-                                    >
-                                      ↓
-                                    </Button>
-                                    <Button
-                                      onClick={() =>
-                                        handleRemoveInterfaceFromProject(
-                                          config.id
-                                        )
-                                      }
-                                      style={{
-                                        padding: '2px 6px',
-                                        fontSize: '0.8rem',
-                                        backgroundColor: '#e74c3c',
-                                      }}
-                                    >
-                                      삭제
-                                    </Button>
+                                      <Button
+                                        onClick={() => moveInterfaceUp(idx)}
+                                        style={{
+                                          padding: '2px 4px',
+                                          fontSize: '0.8rem',
+                                          marginRight: '3px',
+                                        }}
+                                      >
+                                        ↑
+                                      </Button>
+                                      <Button
+                                        onClick={() => moveInterfaceDown(idx)}
+                                        style={{
+                                          padding: '2px 4px',
+                                          fontSize: '0.8rem',
+                                          marginRight: '3px',
+                                        }}
+                                      >
+                                        ↓
+                                      </Button>
+                                      <Button
+                                        onClick={() =>
+                                          handleRemoveInterfaceFromProject(
+                                            config.id
+                                          )
+                                        }
+                                        style={{
+                                          padding: '2px 6px',
+                                          fontSize: '0.8rem',
+                                          backgroundColor: '#e74c3c',
+                                        }}
+                                      >
+                                        삭제
+                                      </Button>
+                                    </div>
                                   </td>
                                 </tr>
                               );
