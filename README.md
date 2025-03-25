@@ -77,9 +77,90 @@
 ### 저장소 클론 시
 
 ```bash
-git clone https://github.com/rhupy/sap-interface-manager.git
+git clone https:://github.com/rhupy/sap-interface-manager.git
 cd sap-interface-manager
 ```
 
 - **Node.js** (v16.x 이상)
 - **npm** (v7.x 이상)
+
+### Oracle DB 사용 시, 다중 SQL문 처리를 위한 아래 Stored Procedure 를 사전 생성 (EXEC_MULTI_DATA_SQL)
+
+```bash
+CREATE OR REPLACE PROCEDURE WMSRDC.EXEC_MULTI_DATA_SQL(
+  p_json_data CLOB,
+  p_sql_template CLOB,
+  p_column_mappings CLOB,
+  p_regular_params CLOB
+) AS
+  v_sql CLOB;
+  v_data_count NUMBER;
+  v_current_sql CLOB;
+  v_column_name VARCHAR2(100);
+  v_column_value VARCHAR2(4000);
+  v_param_name VARCHAR2(100);
+  v_param_value VARCHAR2(4000);
+BEGIN
+  -- 데이터 행 수 계산
+  SELECT COUNT(*)
+  INTO v_data_count
+  FROM JSON_TABLE(p_json_data, '$[*]'
+    COLUMNS (dummy PATH '$.MATNR'));
+
+  v_current_sql := p_sql_template;
+
+  -- 일반 파라미터 대체
+  IF p_regular_params IS NOT NULL THEN
+    FOR param IN (SELECT param_name, param_value
+                  FROM JSON_TABLE(p_regular_params, '$[*]' COLUMNS (
+                    param_name VARCHAR2(100) PATH '$.param_name',
+                    param_value VARCHAR2(4000) PATH '$.param_value'
+                  ))) LOOP
+      v_param_name := param.param_name;
+      v_param_value := param.param_value;
+      -- 값이 문자열이면 따옴표 추가
+      IF REGEXP_LIKE(v_param_value, '^[0-9]+(\.[0-9]+)?$') THEN
+        v_current_sql := REPLACE(v_current_sql, '::' || v_param_name, v_param_value);
+      ELSE
+        v_current_sql := REPLACE(v_current_sql, '::' || v_param_name, '''' || REPLACE(v_param_value, '''', '''''') || '''');
+      END IF;
+      DBMS_OUTPUT.PUT_LINE('Regular param replaced: ::' || v_param_name || ' -> ' || v_param_value);
+    END LOOP;
+  END IF;
+
+  -- 각 데이터 행 처리
+  FOR i IN 0..v_data_count-1 LOOP
+    v_sql := v_current_sql;
+
+    FOR mapping IN (SELECT param_name, json_path
+                    FROM JSON_TABLE(p_column_mappings, '$[*]' COLUMNS (
+                      param_name VARCHAR2(100) PATH '$.param_name',
+                      json_path VARCHAR2(100) PATH '$.json_path'
+                    ))) LOOP
+      v_column_name := mapping.param_name;
+      v_column_value := JSON_VALUE(p_json_data, '$[' || i || '].' || mapping.json_path);
+
+      IF v_column_value IS NULL THEN
+        v_column_value := 'NULL';
+      ELSE
+        IF REGEXP_LIKE(v_column_value, '^[0-9]+(\.[0-9]+)?$') = FALSE THEN
+          v_column_value := '''' || REPLACE(v_column_value, '''', '''''') || '''';
+        END IF;
+      END IF;
+
+      v_sql := REPLACE(v_sql, '::' || v_column_name, v_column_value);
+      DBMS_OUTPUT.PUT_LINE('Column replaced: ::' || v_column_name || ' -> ' || v_column_value);
+    END LOOP;
+
+    -- 생성된 SQL 출력 및 실행
+    DBMS_OUTPUT.PUT_LINE('Generated SQL: ' || v_sql);
+    EXECUTE IMMEDIATE v_sql;
+  END LOOP;
+
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    RAISE_APPLICATION_ERROR(-20001, 'Error in EXEC_MULTI_DATA_SQL: ' || SQLERRM);
+END;
+```
