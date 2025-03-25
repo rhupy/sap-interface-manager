@@ -75,7 +75,10 @@ export function useSettings(
         dbConnections: savedSettings.dbConnections || [],
         selectedRfc: savedSettings.selectedRfc || '',
         selectedDbId: savedSettings.selectedDbId || '',
-        projects: savedSettings.projects || [],
+        projects: (savedSettings.projects || []).map((project) => ({
+          ...project,
+          autoRun: false, // 모든 프로젝트의 autoRun을 false로 초기화
+        })),
         logStoragePath: savedSettings.logStoragePath || '',
       };
 

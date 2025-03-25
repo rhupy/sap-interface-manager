@@ -1086,6 +1086,7 @@ export default function ProjectManagement() {
                                     style={{
                                       padding: '5px',
                                       textAlign: 'center',
+                                      fontSize: '0.8rem',
                                     }}
                                   >
                                     {result.finishedTime || '-'}
