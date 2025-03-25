@@ -480,13 +480,14 @@ export default function ProjectManagement() {
   const runInterfacesWithSchedule = () => {
     const enabledInterfaces = projectInterfaces.filter((p) => p.config.enabled);
 
-    enabledInterfaces.forEach((interfaceItem, idx) => {
+    // 모든 활성화된 인터페이스를 병렬로 실행
+    const promises = enabledInterfaces.map((interfaceItem, idx) => {
       const { config, info } = interfaceItem;
 
-      if (!info) return;
+      if (!info) return Promise.resolve(); // info가 없으면 빈 Promise 반환
 
       // 처음에는 순차적으로 실행
-      runSingleInterface(info, idx).then(() => {
+      return runSingleInterface(info, idx).then(() => {
         // 주기 설정에 맞춰 반복 실행
         const intervalId = setInterval(() => {
           runSingleInterface(info, idx);
@@ -499,26 +500,28 @@ export default function ProjectManagement() {
         }));
       });
     });
+
+    // 병렬 실행
+    Promise.all(promises).then(() => {
+      console.log('모든 인터페이스 실행 완료');
+    });
   };
 
   // 인터페이스 단일 실행
   // 로그를 남길 때마다 appendProjectLog IPC를 호출해서 파일에 기록
   const runSingleInterface = async (inf: InterfaceInfo, idx: number) => {
-    // 실행 시작 로그
     setLogs((prev) => [...prev, `[${inf.name}] 실행 시작`]);
 
-    setRunningIndex(idx);
     setExecutionResults((prev) => ({
       ...prev,
-      [inf.id]: { finished: false },
+      [inf.id]: { finished: false }, // 실행 중인 상태 업데이트
     }));
 
-    await new Promise((res) => setTimeout(res, 1500));
+    await new Promise((res) => setTimeout(res, 1500)); // 1.5초 대기 후 실행
 
-    // 예시로 1.5초 대기 후 실행
     const isError = Math.random() < 0.3; // 무작위 에러 발생
 
-    setRunningIndex(null);
+    // 실행 결과 업데이트
     setExecutionResults((prev) => ({
       ...prev,
       [inf.id]: {
@@ -560,6 +563,15 @@ export default function ProjectManagement() {
     } catch (err) {
       console.error('로그 쓰기 실패:', err);
     }
+  };
+
+  // 테이블에서 로딩 상태 표시
+  const showSpinner = (config: ProjectInterfaceConfig, idx: number) => {
+    const result = executionResults[config.id];
+    const isRunning = result && !result.finished; // 실행 중인 상태를 확인
+    return config.enabled && isRunning ? (
+      <FiLoader style={spinnerStyle} size={18} />
+    ) : null;
   };
 
   if (isLoading) {
@@ -995,10 +1007,8 @@ export default function ProjectManagement() {
                             </tr>
                           ) : (
                             projectInterfaces.map(({ config, info }, idx) => {
-                              const isRunning = runningIndex === idx;
                               const result = executionResults[config.id] || {};
                               const hasError = !!result.error;
-                              const showSpinner = config.enabled && isRunning;
 
                               return (
                                 <tr
@@ -1044,18 +1054,10 @@ export default function ProjectManagement() {
                                       textAlign: 'center',
                                     }}
                                   >
-                                    {!config.enabled ? (
-                                      '미사용'
-                                    ) : showSpinner ? (
-                                      <FiLoader
-                                        style={spinnerStyle}
-                                        size={18}
-                                      />
-                                    ) : result.finished ? (
-                                      '완료'
-                                    ) : (
-                                      '-'
-                                    )}
+                                    {!config.enabled
+                                      ? '미사용'
+                                      : showSpinner(config, idx) ||
+                                        (result.finished ? '완료' : '-')}
                                   </td>
                                   {/* 자동실행(s) */}
                                   <td
