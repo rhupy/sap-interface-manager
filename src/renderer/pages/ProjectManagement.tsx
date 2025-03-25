@@ -757,7 +757,7 @@ export default function ProjectManagement() {
                       onClick={handleAddProject}
                       style={{ backgroundColor: '#007bff', color: '#fff' }}
                     >
-                      + 프로젝트 추가
+                      프로젝트 추가
                     </Button>
                   ) : (
                     <>
@@ -772,6 +772,12 @@ export default function ProjectManagement() {
                         style={{ backgroundColor: '#e74c3c', color: '#fff' }}
                       >
                         프로젝트 삭제
+                      </Button>
+                      <Button
+                        style={{ marginLeft: 'auto', marginRight: '10px' }}
+                        onClick={runAllInterfaces}
+                      >
+                        전체 실행
                       </Button>
                     </>
                   )}
@@ -875,13 +881,7 @@ export default function ProjectManagement() {
                         alignItems: 'center',
                       }}
                     >
-                      <strong>프로젝트에 포함된 인터페이스</strong>
-                      <Button
-                        style={{ marginLeft: 'auto', marginRight: '10px' }}
-                        onClick={runAllInterfaces}
-                      >
-                        전체 실행
-                      </Button>
+                      {/* <strong></strong> */}
                     </div>
 
                     {/* 테이블 */}
@@ -1027,7 +1027,10 @@ export default function ProjectManagement() {
                                     <input
                                       aria-label="자동실행 시간"
                                       type="number"
-                                      style={{ width: '60px' }}
+                                      style={{
+                                        width: '60px',
+                                        textAlign: 'right',
+                                      }}
                                       value={config.scheduleSec}
                                       min={0}
                                       onChange={(e) =>

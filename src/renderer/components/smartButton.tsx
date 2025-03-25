@@ -39,6 +39,7 @@ const getIconForText = (text: string): React.ReactNode => {
   const lowerText = text.toLowerCase();
 
   if (
+    lowerText.includes('새 ') ||
     lowerText.includes('추가') ||
     lowerText.includes('생성') ||
     lowerText.includes('신규') ||
