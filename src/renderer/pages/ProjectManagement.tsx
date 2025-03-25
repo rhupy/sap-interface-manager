@@ -8,12 +8,9 @@ import {
   SidePanelHeader,
   SidePanelContent,
   MainPanel,
-  SectionTitle,
   ListItem,
   Input,
-  SmallSelect,
   MetaInfo,
-  Label,
   Select,
   LeftAlignedLabel,
 } from '../styles/CommonStyles';
