@@ -183,7 +183,7 @@ export interface ProjectInfo {
   createdAt: string;
   updatedAt: string;
   interfaceConfigs: ProjectInterfaceConfig[]; // 프로젝트에 포함된 interface의 ID 목록
-  autoRun: boolean; // 자동실행 여부
+  autoRun: boolean; // 프로젝트 자동실행 여부
 }
 
 export interface ProjectInterfaceConfig {
