@@ -312,7 +312,7 @@ export default function ProjectManagement() {
     const newConfig: ProjectInterfaceConfig = {
       id: infId,
       enabled: true,
-      scheduleMin: 0, // 기본
+      scheduleSec: 0, // 기본
     };
     const updatedProj = {
       ...currentProject,
@@ -382,10 +382,10 @@ export default function ProjectManagement() {
     saveProject(updatedProj);
   };
 
-  // 자동실행(m)
+  // 자동실행(s)
   const handleScheduleChange = (index: number, schedule: number) => {
     const arr = [...interfaceConfigs];
-    arr[index] = { ...arr[index], scheduleMin: schedule };
+    arr[index] = { ...arr[index], scheduleSec: schedule };
     const updatedProj = {
       ...currentProject,
       interfaceConfigs: arr,
@@ -868,7 +868,7 @@ export default function ProjectManagement() {
                               동작상태
                             </th>
                             <th style={{ width: '100px', padding: '5px' }}>
-                              자동실행(m)
+                              자동실행(s)
                             </th>
                             <th style={{ width: '140px', padding: '5px' }}>
                               최종성공시간
@@ -965,7 +965,7 @@ export default function ProjectManagement() {
                                       '-'
                                     )}
                                   </td>
-                                  {/* 자동실행(m) */}
+                                  {/* 자동실행(s) */}
                                   <td
                                     style={{
                                       padding: '5px',
@@ -976,7 +976,7 @@ export default function ProjectManagement() {
                                       aria-label="자동실행 시간"
                                       type="number"
                                       style={{ width: '60px' }}
-                                      value={config.scheduleMin}
+                                      value={config.scheduleSec}
                                       min={0}
                                       onChange={(e) =>
                                         handleScheduleChange(

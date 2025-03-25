@@ -188,5 +188,5 @@ export interface ProjectInfo {
 export interface ProjectInterfaceConfig {
   id: string; // InterfaceInfo.id
   enabled: boolean; // 활성화 여부 (체크박스)
-  scheduleMin: number; // 자동실행 주기 (분)
+  scheduleSec: number; // 자동실행 주기 (초)
 }
