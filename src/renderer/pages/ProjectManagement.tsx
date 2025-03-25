@@ -511,6 +511,8 @@ export default function ProjectManagement() {
   // 로그를 남길 때마다 appendProjectLog IPC를 호출해서 파일에 기록
   const runSingleInterface = async (inf: InterfaceInfo, idx: number) => {
     setLogs((prev) => [...prev, `[${inf.name}] 실행 시작`]);
+    // 파일로도 기록
+    appendLogToFile(inf, `[${inf.name}] 실행 시작`);
 
     setExecutionResults((prev) => ({
       ...prev,
@@ -531,10 +533,10 @@ export default function ProjectManagement() {
       },
     }));
 
-    setLogs((prev) => [
-      ...prev,
-      `[${inf.name}] 실행 ${isError ? '실패' : '성공'}`,
-    ]);
+    const msg = `[${inf.name}] 실행 ${isError ? '실패' : '성공'}`;
+    setLogs((prev) => [...prev, msg]);
+    // 파일 기록
+    appendLogToFile(inf, msg);
   };
 
   // 로그 파일에 쓰는 보조 함수
@@ -1057,7 +1059,7 @@ export default function ProjectManagement() {
                                     {!config.enabled
                                       ? '미사용'
                                       : showSpinner(config, idx) ||
-                                        (result.finished ? '완료' : '-')}
+                                        (result.finished ? '대기' : '-')}
                                   </td>
                                   {/* 자동실행(s) */}
                                   <td
