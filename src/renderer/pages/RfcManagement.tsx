@@ -3,10 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Section,
   SectionTitle,
-  Label,
   Input,
-  Title,
-  Description,
   FlexContainer,
   SidePanel,
   SidePanelHeader,
@@ -14,8 +11,6 @@ import {
   ListItem,
   MainPanel,
   ButtonGroup,
-  SelectGroup,
-  SmallSelect,
   MetaInfo,
   FullPageContainer,
   DeleteButton,
@@ -67,16 +62,6 @@ export default function RfcManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortType, setSortType] = useState<SortType>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-
-  // 검색어 변경 핸들러
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
-  // 정렬 타입 변경 핸들러
-  const handleSortTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSortType(e.target.value as SortType);
-  };
 
   // 초기화: settings에 rfcFunctions가 없으면 빈 배열로 초기화
   useEffect(() => {
