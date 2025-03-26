@@ -211,3 +211,18 @@ export const getCurrentFormattedTime = () => {
   const now = new Date();
   return now.toISOString();
 };
+
+// 로딩 아이콘 회전 애니메이션
+export const spinnerStyle: React.CSSProperties = {
+  animation: 'spin 1s linear infinite',
+};
+// globalStyles: @keyframes spin
+export const globalStyles = `
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+`;
+
+export type SortType = 'name' | 'createdAt' | 'updatedAt';

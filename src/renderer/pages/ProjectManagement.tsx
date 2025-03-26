@@ -17,24 +17,17 @@ import {
 import Button from '../components/smartButton';
 import { useSettingsContext } from '../context/SettingContext';
 import { useMessage } from '../context/MessageContext';
-import { ProjectInfo, InterfaceInfo, ProjectInterfaceConfig } from '../types';
+import {
+  ProjectInfo,
+  InterfaceInfo,
+  ProjectInterfaceConfig,
+  formatDateTime,
+  SortType,
+  globalStyles,
+  spinnerStyle,
+} from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { FiLoader, FiToggleLeft, FiToggleRight } from 'react-icons/fi';
-
-// 로딩 아이콘 회전 애니메이션
-const spinnerStyle: React.CSSProperties = {
-  animation: 'spin 1s linear infinite',
-};
-// globalStyles: @keyframes spin
-const globalStyles = `
-@keyframes spin {
-  100% {
-    transform: rotate(360deg);
-  }
-}
-`;
-
-type SortType = 'name' | 'createdAt' | 'updatedAt';
 
 // ProjectInfo 기본값
 const emptyProject: ProjectInfo = {
@@ -97,20 +90,6 @@ export default function ProjectManagement() {
 
   // Settings에서 project 목록
   const projects = settings.projects || [];
-
-  // 날짜 포맷
-  const formatDateTime = (iso?: string) => {
-    if (!iso) return '';
-    const d = new Date(iso);
-    return d.toLocaleString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
-  };
 
   // 프로젝트 목록 필터+정렬
   const sortedFilteredProjects = useMemo(() => {
