@@ -28,6 +28,7 @@ import {
 } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { FiLoader, FiToggleLeft, FiToggleRight } from 'react-icons/fi';
+import LogDisplay from '../components/LogDisplay'; // LogDisplay 컴포넌트 임포트
 
 // ProjectInfo 기본값
 const emptyProject: ProjectInfo = {
@@ -48,35 +49,22 @@ export default function ProjectManagement() {
   const [intervalIds, setIntervalIds] = useState<{
     [key: string]: NodeJS.Timeout;
   }>({});
-
-  // 프로젝트 이름/설명 입력을 위한 로컬 state
   const [tempProjectName, setTempProjectName] = useState('');
   const [tempProjectDesc, setTempProjectDesc] = useState('');
-
-  // 프로젝트 목록 검색/정렬
   const [searchTerm, setSearchTerm] = useState('');
   const [sortType, setSortType] = useState<SortType>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-
-  // 현재 선택/편집 프로젝트
   const [currentProject, setCurrentProject] =
     useState<ProjectInfo>(emptyProject);
-  // 삭제 모달
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  // 인터페이스 목록 검색
   const [interfaceSearch, setInterfaceSearch] = useState('');
-
-  // 실행(데모)
   const [runningIndex, setRunningIndex] = useState<number | null>(null);
   const [executionResults, setExecutionResults] = useState<{
-    [key: string]: {
-      finished: boolean;
-      finishedTime?: string;
-      error?: string;
-    };
+    [key: string]: { finished: boolean; finishedTime?: string; error?: string };
   }>({});
-  const [logs, setLogs] = useState<string[]>([]);
+  const [logs, setLogs] = useState<
+    { level: string; timestamp: string; message: string; details?: any }[]
+  >([]);
 
   // @keyframes spin 등록
   useEffect(() => {
@@ -88,10 +76,8 @@ export default function ProjectManagement() {
     };
   }, []);
 
-  // Settings에서 project 목록
   const projects = settings.projects || [];
 
-  // 프로젝트 목록 필터+정렬
   const sortedFilteredProjects = useMemo(() => {
     const filtered = projects.filter(
       (p) =>
@@ -101,7 +87,6 @@ export default function ProjectManagement() {
     return filtered.sort((a, b) => {
       let valA = '';
       let valB = '';
-
       if (sortType === 'name') {
         valA = a.name.toLowerCase();
         valB = b.name.toLowerCase();
@@ -120,21 +105,16 @@ export default function ProjectManagement() {
     });
   }, [projects, searchTerm, sortType, sortDirection]);
 
-  // -----------------------------
-  // 좌측 프로젝트 리스트에서 선택
-  // -----------------------------
   const handleSelectProject = (id: string) => {
     const found = projects.find((p) => p.id === id);
     if (found) {
       setCurrentProject(found);
-      // 로컬 state 동기화
       setTempProjectName(found.name);
       setTempProjectDesc(found.description);
       updateSettings({ selectedProjectId: id });
     }
   };
 
-  // 프로젝트 자동 on/off 스위치
   const Switch = ({
     isOn,
     toggleSwitch,
@@ -161,40 +141,44 @@ export default function ProjectManagement() {
     );
   };
 
-  // 프로젝트 자동실행 토글
   const toggleAutoRun = (projectId: string) => {
     const updated = projects.map((p) => {
       if (p.id === projectId) {
         const updatedProject = { ...p, autoRun: !p.autoRun };
-
-        // 자동실행이 켜지면 인터페이스 실행
         if (updatedProject.autoRun) {
-          runInterfacesWithSchedule(); // 주기적으로 실행
+          runInterfacesWithSchedule();
         } else {
-          // 자동실행이 꺼지면 실행 중인 인터페이스의 반복 실행을 멈춤
           Object.values(intervalIds).forEach((intervalId) =>
             clearInterval(intervalId)
           );
-          setIntervalIds({}); // intervalIds 초기화
+          setIntervalIds({});
         }
-
         return updatedProject;
       }
       return p;
     });
-
     updateSettings({ projects: updated });
   };
 
-  // -----------------------------
-  // "프로젝트 추가" => name, desc 등 로컬 state를 새 프로젝트로
-  // -----------------------------
+  const appendLog = (level: string, message: string, details?: any) => {
+    const newLog = {
+      level,
+      timestamp: new Date().toISOString(),
+      message,
+      details,
+    };
+    setLogs((prevLogs) => [...prevLogs, newLog]);
+  };
+
+  const clearLogs = () => {
+    setLogs([]);
+  };
+
   const handleAddProject = () => {
     if (!tempProjectName.trim()) {
       showMessage('프로젝트 이름을 입력하세요.', 'error');
       return;
     }
-    // 중복 이름
     const isDup = projects.some((p) => p.name === tempProjectName);
     if (isDup) {
       showMessage('이미 같은 이름의 프로젝트가 있습니다.', 'error');
@@ -225,9 +209,6 @@ export default function ProjectManagement() {
     showMessage('프로젝트가 추가되었습니다.', 'success');
   };
 
-  // -----------------------------
-  // "프로젝트 수정" => currentProject와 Settings에 반영
-  // -----------------------------
   const handleUpdateProject = () => {
     if (!currentProject.id) {
       showMessage('수정할 프로젝트가 선택되지 않았습니다.', 'error');
@@ -237,7 +218,6 @@ export default function ProjectManagement() {
       showMessage('프로젝트 이름을 입력하세요.', 'error');
       return;
     }
-    // 중복 검사 (자기 자신 제외)
     const isDup = projects.some(
       (p) => p.name === tempProjectName && p.id !== currentProject.id
     );
@@ -254,7 +234,6 @@ export default function ProjectManagement() {
       updatedAt: now,
     };
 
-    // Settings.projects를 갱신
     updateSettings((prev) => ({
       ...prev,
       projects: (prev.projects || []).map((p) =>
@@ -266,9 +245,6 @@ export default function ProjectManagement() {
     showMessage('프로젝트가 수정되었습니다.', 'success');
   };
 
-  // -----------------------------
-  // "새 프로젝트" 버튼 => currentProject, 로컬 state 초기화
-  // -----------------------------
   const handleNewProject = () => {
     setCurrentProject(emptyProject);
     setTempProjectName('');
@@ -276,9 +252,6 @@ export default function ProjectManagement() {
     updateSettings({ selectedProjectId: '' });
   };
 
-  // -----------------------------
-  // 프로젝트 삭제
-  // -----------------------------
   const handleDeleteProjectClick = () => {
     if (!currentProject.id) {
       showMessage('삭제할 프로젝트가 선택되지 않았습니다.', 'error');
@@ -310,12 +283,9 @@ export default function ProjectManagement() {
     }
   };
 
-  // 전체 인터페이스 목록
   const allInterfaces = settings.interfaces || [];
-  // 현재 프로젝트의 interfaceConfigs
   const interfaceConfigs = currentProject.interfaceConfigs || [];
 
-  // 좌측 목록에서 검색
   const filteredInterfaces = useMemo(() => {
     return allInterfaces
       .filter((inf) =>
@@ -324,7 +294,6 @@ export default function ProjectManagement() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [allInterfaces, interfaceSearch]);
 
-  // interfaceConfigs 업데이트 헬퍼
   const saveProject = (proj: ProjectInfo) => {
     updateSettings((prev) => ({
       ...prev,
@@ -333,7 +302,6 @@ export default function ProjectManagement() {
     setCurrentProject(proj);
   };
 
-  // 인터페이스 추가
   const handleAddInterfaceToProject = (infId: string) => {
     if (!currentProject.id) {
       showMessage('프로젝트를 먼저 선택하세요.', 'error');
@@ -359,7 +327,6 @@ export default function ProjectManagement() {
     showMessage('인터페이스를 프로젝트에 추가했습니다.', 'success');
   };
 
-  // 인터페이스 제거
   const handleRemoveInterfaceFromProject = (infId: string) => {
     if (!currentProject.id) return;
     const updatedProj = {
@@ -371,7 +338,6 @@ export default function ProjectManagement() {
     showMessage('해당 인터페이스를 제거했습니다.', 'success');
   };
 
-  // 순서변경
   const moveInterfaceUp = (index: number) => {
     if (index <= 0) return;
     const arr = [...interfaceConfigs];
@@ -383,6 +349,7 @@ export default function ProjectManagement() {
     };
     saveProject(updatedProj);
   };
+
   const moveInterfaceDown = (index: number) => {
     if (index >= interfaceConfigs.length - 1) return;
     const arr = [...interfaceConfigs];
@@ -395,7 +362,6 @@ export default function ProjectManagement() {
     saveProject(updatedProj);
   };
 
-  // 활성화 체크박스
   const handleToggleEnabled = (index: number, value: boolean) => {
     const arr = [...interfaceConfigs];
     arr[index] = { ...arr[index], enabled: value };
@@ -407,7 +373,6 @@ export default function ProjectManagement() {
     saveProject(updatedProj);
   };
 
-  // 전체 활성/비활성
   const handleToggleAll = (checked: boolean) => {
     const arr = interfaceConfigs.map((c) => ({ ...c, enabled: checked }));
     const updatedProj = {
@@ -418,7 +383,6 @@ export default function ProjectManagement() {
     saveProject(updatedProj);
   };
 
-  // 자동실행(s)
   const handleScheduleChange = (index: number, schedule: number) => {
     const arr = [...interfaceConfigs];
     arr[index] = { ...arr[index], scheduleSec: schedule };
@@ -430,7 +394,6 @@ export default function ProjectManagement() {
     saveProject(updatedProj);
   };
 
-  // project.interfaceConfigs => 실제 인터페이스 정보 join
   const projectInterfaces: Array<{
     config: ProjectInterfaceConfig;
     info: InterfaceInfo | null;
@@ -439,7 +402,6 @@ export default function ProjectManagement() {
     info: allInterfaces.find((inf) => inf.id === cfg.id) || null,
   }));
 
-  // 전체 실행 : 1회 (활성화된 인터페이스만)
   const runAllInterfaces = async () => {
     const enabledList = projectInterfaces.filter((p) => p.config.enabled);
     if (!enabledList.length) {
@@ -455,54 +417,43 @@ export default function ProjectManagement() {
     showMessage('전체 인터페이스 실행이 완료되었습니다.', 'success');
   };
 
-  // 스케줄에 따라 전체 실행
   const runInterfacesWithSchedule = () => {
     const enabledInterfaces = projectInterfaces.filter((p) => p.config.enabled);
 
-    // 모든 활성화된 인터페이스를 병렬로 실행
     const promises = enabledInterfaces.map((interfaceItem, idx) => {
       const { config, info } = interfaceItem;
 
-      if (!info) return Promise.resolve(); // info가 없으면 빈 Promise 반환
+      if (!info) return Promise.resolve();
 
-      // 처음에는 순차적으로 실행
       return runSingleInterface(info, idx).then(() => {
-        // 주기 설정에 맞춰 반복 실행
         const intervalId = setInterval(() => {
           runSingleInterface(info, idx);
         }, config.scheduleSec * 1000);
 
-        // intervalId를 상태에 저장
         setIntervalIds((prev) => ({
           ...prev,
-          [info.id]: intervalId, // 인터페이스 ID를 키로 설정
+          [info.id]: intervalId,
         }));
       });
     });
 
-    // 병렬 실행
     Promise.all(promises).then(() => {
       console.log('모든 인터페이스 실행 완료');
     });
   };
 
-  // 인터페이스 단일 실행
-  // 로그를 남길 때마다 appendProjectLog IPC를 호출해서 파일에 기록
   const runSingleInterface = async (inf: InterfaceInfo, idx: number) => {
-    setLogs((prev) => [...prev, `[${inf.name}] 실행 시작`]);
-    // 파일로도 기록
-    appendLogToFile(inf, `[${inf.name}] 실행 시작`);
+    appendLog('info', `[${inf.name}] 실행 시작`);
 
     setExecutionResults((prev) => ({
       ...prev,
-      [inf.id]: { finished: false }, // 실행 중인 상태 업데이트
+      [inf.id]: { finished: false },
     }));
 
-    await new Promise((res) => setTimeout(res, 1500)); // 1.5초 대기 후 실행
+    await new Promise((res) => setTimeout(res, 1500));
 
     const isError = Math.random() < 0.3; // 무작위 에러 발생
 
-    // 실행 결과 업데이트
     setExecutionResults((prev) => ({
       ...prev,
       [inf.id]: {
@@ -512,44 +463,12 @@ export default function ProjectManagement() {
       },
     }));
 
-    const msg = `[${inf.name}] 실행 ${isError ? '실패' : '성공'}`;
-    setLogs((prev) => [...prev, msg]);
-    // 파일 기록
-    appendLogToFile(inf, msg);
+    appendLog('success', `[${inf.name}] 실행 ${isError ? '실패' : '성공'}`);
   };
 
-  // 로그 파일에 쓰는 보조 함수
-  const appendLogToFile = async (inf: InterfaceInfo, line: string) => {
-    // logStoragePath, projectName 은 settings 혹은 currentProject에서 가져옴
-    // 예: settings.logStoragePath || 'C:/InterfaceLogs'
-    //     currentProject.name
-    const logPath = settings.logStoragePath || 'C:/InterfaceLogs';
-    const projectName = currentProject.name || 'NoProject';
-
-    // 인터페이스 이름은 현재 runSingleInterface가 파라미터로 받음 => inf.name
-    // 여기서는 “지금 실행 중인 interfaceName”이 필요하므로
-    // => 함수 인자로 interfaceName을 같이 넘기도록 구조를 수정 가능
-
-    if (!window.api?.appendProjectLog) return;
-
-    try {
-      const interfaceName = inf.name; // runSingleInterface 인자로 inf 알 수 있음
-      const logLine = line; // 우리가 남길 로그 문자열
-      await window.api.appendProjectLog({
-        projectName,
-        interfaceName,
-        logStoragePath: logPath,
-        logLine,
-      });
-    } catch (err) {
-      console.error('로그 쓰기 실패:', err);
-    }
-  };
-
-  // 테이블에서 로딩 상태 표시
   const showSpinner = (config: ProjectInterfaceConfig, idx: number) => {
     const result = executionResults[config.id];
-    const isRunning = result && !result.finished; // 실행 중인 상태를 확인
+    const isRunning = result && !result.finished;
     return config.enabled && isRunning ? (
       <FiLoader style={spinnerStyle} size={18} />
     ) : null;
@@ -905,7 +824,6 @@ export default function ProjectManagement() {
                       flexDirection: 'column',
                     }}
                   >
-                    {/* 헤더 */}
                     <div
                       style={{
                         padding: '10px',
@@ -917,7 +835,6 @@ export default function ProjectManagement() {
                       {/* <strong></strong> */}
                     </div>
 
-                    {/* 테이블 */}
                     <div style={{ padding: '10px', overflowY: 'auto' }}>
                       <table
                         style={{ width: '100%', borderCollapse: 'collapse' }}
@@ -996,7 +913,6 @@ export default function ProjectManagement() {
                                   key={config.id}
                                   style={{ borderBottom: '1px solid #eee' }}
                                 >
-                                  {/* 순번 */}
                                   <td
                                     style={{
                                       padding: '5px',
@@ -1005,7 +921,6 @@ export default function ProjectManagement() {
                                   >
                                     {idx + 1}
                                   </td>
-                                  {/* 활성화 */}
                                   <td
                                     style={{
                                       padding: '5px',
@@ -1024,11 +939,9 @@ export default function ProjectManagement() {
                                       }
                                     />
                                   </td>
-                                  {/* 이름 */}
                                   <td style={{ padding: '5px' }}>
                                     {info ? info.name : '(알 수 없음)'}
                                   </td>
-                                  {/* 동작상태 */}
                                   <td
                                     style={{
                                       padding: '5px',
@@ -1040,7 +953,6 @@ export default function ProjectManagement() {
                                       : showSpinner(config, idx) ||
                                         (result.finished ? '대기' : '-')}
                                   </td>
-                                  {/* 자동실행(s) */}
                                   <td
                                     style={{
                                       padding: '5px',
@@ -1064,7 +976,6 @@ export default function ProjectManagement() {
                                       }
                                     />
                                   </td>
-                                  {/* 최종성공시간 */}
                                   <td
                                     style={{
                                       padding: '5px',
@@ -1074,7 +985,6 @@ export default function ProjectManagement() {
                                   >
                                     {result.finishedTime || '-'}
                                   </td>
-                                  {/* 최종결과 */}
                                   <td
                                     style={{
                                       padding: '5px',
@@ -1103,7 +1013,6 @@ export default function ProjectManagement() {
                                       </span>
                                     )}
                                   </td>
-                                  {/* 순서/삭제 */}
                                   <td
                                     style={{
                                       textAlign: 'right',
@@ -1173,37 +1082,7 @@ export default function ProjectManagement() {
             overflow: 'hidden',
           }}
         >
-          <div
-            style={{
-              padding: '10px',
-              borderBottom: '1px solid #eee',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <strong>실행 로그</strong>
-            <Button
-              style={{ backgroundColor: '#6c757d', fontSize: '0.8rem' }}
-              onClick={() => setLogs([])}
-            >
-              로그 지우기
-            </Button>
-          </div>
-          <div
-            style={{
-              flex: 1,
-              overflowY: 'auto',
-              padding: '10px',
-              fontSize: '0.85rem',
-            }}
-          >
-            {logs.length === 0 ? (
-              <div style={{ color: '#999' }}>로그가 없습니다.</div>
-            ) : (
-              logs.map((line, i) => <div key={i}>{line}</div>)
-            )}
-          </div>
+          <LogDisplay logs={logs} clearLogs={clearLogs} />
         </div>
       </div>
 
