@@ -1,9 +1,15 @@
 // src/components/InterfaceExecutor.tsx
+
 import React, { useState } from 'react';
 import { useInterfaceExecutor } from '../context/InterfaceExecutorContext';
-import { InterfaceInfo, RfcConnectionInfo, DbConnectionConfig } from '../types';
+import {
+  InterfaceInfo,
+  RfcConnectionInfo,
+  DbConnectionConfig,
+  ExecutionLog,
+} from '../types';
 import { Button, Select, LeftAlignedLabel } from '../styles/CommonStyles';
-import LogDisplay from './LogDisplay'; // LogDisplay 컴포넌트 import
+import LogDisplay from './LogDisplay';
 
 interface InterfaceExecutorProps {
   interface: InterfaceInfo;
@@ -41,11 +47,9 @@ export const InterfaceExecutor: React.FC<InterfaceExecutorProps> = ({
     selectedDbConnection || ''
   );
 
-  // 로컬 상태 또는 props에서 연결 정보 가져오기
   const sapConnection = selectedSapConnection || localSapConnection;
   const dbConnection = selectedDbConnection || localDbConnection;
 
-  // SAP 연결 변경 핸들러
   const handleSapConnectionChange = (
     e: React.ChangeEvent<HTMLSelectElement>
   ) => {
@@ -56,7 +60,6 @@ export const InterfaceExecutor: React.FC<InterfaceExecutorProps> = ({
     }
   };
 
-  // DB 연결 변경 핸들러
   const handleDbConnectionChange = (
     e: React.ChangeEvent<HTMLSelectElement>
   ) => {
@@ -67,7 +70,6 @@ export const InterfaceExecutor: React.FC<InterfaceExecutorProps> = ({
     }
   };
 
-  // 인터페이스 실행 핸들러
   const handleExecute = async () => {
     clearLogs();
 
@@ -85,6 +87,15 @@ export const InterfaceExecutor: React.FC<InterfaceExecutorProps> = ({
       sapConfig,
       dbConfig
     );
+
+    // 예시 로그 추가
+    const log: ExecutionLog = {
+      level: 'info', // 'info', 'success', 'error', 'warning' 중 하나로 설정
+      timestamp: new Date().toISOString(),
+      message: `[${interfaceDefinition.name}] 실행 시작`,
+      details: interfaceDefinition.steps,
+    };
+    executionState.logs.push(log); // 로그를 상태에 추가
   };
 
   return (

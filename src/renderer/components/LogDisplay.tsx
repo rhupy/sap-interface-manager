@@ -3,12 +3,11 @@ import React, { useEffect, useRef } from 'react';
 import Button from './smartButton'; // Button 컴포넌트 임포트
 
 interface LogDisplayProps {
-  logs: { level: string; timestamp: string; message: string; details?: any }[]; // 로그 형식 정의
+  logs: { timestamp: string; message: string; details?: any }[]; // 로그 형식 정의
   clearLogs: () => void; // 로그 삭제 함수
 }
 
 const LogDisplay: React.FC<LogDisplayProps> = ({ logs, clearLogs }) => {
-  // 로그 컨테이너의 참조를 사용하여 스크롤을 조작
   const logContainerRef = useRef<HTMLDivElement | null>(null);
 
   // 로그가 변경될 때마다 스크롤을 맨 아래로 이동
@@ -16,7 +15,7 @@ const LogDisplay: React.FC<LogDisplayProps> = ({ logs, clearLogs }) => {
     if (logContainerRef.current) {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
-  }, [logs]); // logs가 업데이트될 때마다 실행
+  }, [logs]);
 
   return (
     <div style={{ marginTop: '20px' }}>
@@ -59,14 +58,11 @@ const LogDisplay: React.FC<LogDisplayProps> = ({ logs, clearLogs }) => {
               key={index}
               style={{
                 marginBottom: '5px',
-                color:
-                  log.level === 'error'
-                    ? '#dc3545'
-                    : log.level === 'success'
-                      ? '#28a745'
-                      : log.level === 'warning'
-                        ? '#ffc107'
-                        : '#212529',
+                color: log.message.includes('경고')
+                  ? '#ffc107' // 경고는 노란색
+                  : log.message.includes('실패')
+                    ? '#dc3545' // 실패는 빨간색
+                    : '#28a745', // 성공은 초록색
               }}
             >
               <span style={{ color: '#6c757d' }}>

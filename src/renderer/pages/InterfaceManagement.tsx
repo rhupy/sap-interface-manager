@@ -10,26 +10,16 @@ import {
   SectionTitle,
   ListItem,
   Input,
-  DeleteButton,
-  Label,
   LeftAlignedLabel,
   Select,
-  SelectGroup,
-  SmallSelect,
-  SmallLabel,
   MetaInfo,
-  ButtonGroup,
-  TextArea,
 } from '../styles/CommonStyles';
-import { Title, Description } from '../styles/CommonStyles';
 import { useSettingsContext } from '../context/SettingContext';
 import { useMessage } from '../context/MessageContext';
 import {
   InterfaceInfo,
   InterfaceStep,
-  RfcFunctionInfo,
-  SqlInfo,
-  RfcParameter,
+  SortType,
   formatDateTime,
 } from '../types';
 import { ParameterMappingCanvas } from '../components/ParameterMapping';
@@ -59,9 +49,6 @@ const emptyStep: InterfaceStep = {
   order: 0,
   parameters: {},
 };
-
-// 정렬 타입
-type SortType = 'name' | 'createdAt' | 'updatedAt';
 
 export default function InterfaceManagement() {
   const { settings, updateSettings } = useSettingsContext();

@@ -26,7 +26,12 @@ import {
 import { format } from 'sql-formatter';
 import { useSettingsContext } from '../context/SettingContext';
 import { useMessage } from '../context/MessageContext';
-import { formatDateTime, getCurrentFormattedTime, SqlInfo } from '../types';
+import {
+  formatDateTime,
+  getCurrentFormattedTime,
+  SortType,
+  SqlInfo,
+} from '../types';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism-tomorrow.css';
 import 'prismjs/components/prism-sql';
@@ -49,9 +54,6 @@ const customStyles = `
     font-weight: bold !important;
   }
 `;
-
-// 정렬 타입 정의
-type SortType = 'name' | 'createdAt' | 'updatedAt';
 
 export default function SqlManagement() {
   const { showMessage } = useMessage();

@@ -30,6 +30,7 @@ import {
   getCurrentFormattedTime,
   RfcFunctionInfo,
   RfcParameter,
+  SortType,
 } from '../types';
 import Button from '../components/smartButton';
 
@@ -52,9 +53,6 @@ const emptyParameter: RfcParameter = {
   description: '',
   defaultValue: '',
 };
-
-// 정렬 타입 정의
-type SortType = 'name' | 'createdAt' | 'updatedAt';
 
 export default function RfcManagement() {
   const { showMessage } = useMessage();

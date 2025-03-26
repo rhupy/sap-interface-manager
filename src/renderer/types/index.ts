@@ -158,10 +158,10 @@ export interface InterfaceStep {
 
 // 실행 로그 타입 정의
 export interface ExecutionLog {
+  level: 'info' | 'success' | 'error' | 'warning'; // 로그 레벨
   timestamp: string;
-  level: 'info' | 'error' | 'success' | 'warning';
   message: string;
-  details?: any;
+  details?: any; // 세부 내용
 }
 
 // 실행 상태 타입 정의
