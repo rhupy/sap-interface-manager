@@ -5,8 +5,6 @@ import {
   TabContainer,
   TabButton,
   ContentContainer,
-  Title,
-  Description,
   RightTabGroup,
 } from './styles/CommonStyles';
 import { MessageProvider } from './context/MessageContext';
@@ -17,13 +15,13 @@ import SqlManagement from './pages/SqlManagement';
 import SettingsComponent from './pages/SettingsComponent';
 import { SettingsProvider } from './context/SettingContext';
 import { InterfaceExecutorProvider } from './context/InterfaceExecutorContext';
-import { FaQuestion, FaInfoCircle } from 'react-icons/fa';
+import { FaQuestion } from 'react-icons/fa';
 import AboutComponent from './pages/AboutComponent';
 import ProjectManagement from './pages/ProjectManagement';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<
-    'project' | 'interface' | 'rfc' | 'sql' | 'process' | 'settings' | 'about'
+    'project' | 'interface' | 'rfc' | 'sql' | 'settings' | 'about'
   >('project');
 
   return (
@@ -58,12 +56,6 @@ export default function App() {
                 >
                   SQL 관리
                 </TabButton>
-                {/* <TabButton
-                active={activeTab === 'process'}
-                onClick={() => setActiveTab('process')}
-              >
-                프로세스 관리
-              </TabButton> */}
                 <TabButton
                   active={activeTab === 'settings'}
                   onClick={() => setActiveTab('settings')}
@@ -80,37 +72,49 @@ export default function App() {
                 </RightTabGroup>
               </TabContainer>
               <ContentContainer>
-                {activeTab === 'project' && <ProjectManagement />}
-                {activeTab === 'interface' && <InterfaceManagement />}
-                {activeTab === 'rfc' && <RfcManagement />}
-                {activeTab === 'sql' && <SqlManagement />}
-                {activeTab === 'process' && <ProcessManagement />}
-                {activeTab === 'settings' && <SettingsComponent />}
-                {activeTab === 'about' && <AboutComponent />}
+                {/* 탭에 따라 컴포넌트를 숨기고 보이도록 설정 */}
+                <div
+                  style={{
+                    display: activeTab === 'project' ? 'block' : 'none',
+                  }}
+                >
+                  <ProjectManagement />
+                </div>
+                <div
+                  style={{
+                    display: activeTab === 'interface' ? 'block' : 'none',
+                  }}
+                >
+                  <InterfaceManagement />
+                </div>
+                <div
+                  style={{ display: activeTab === 'rfc' ? 'block' : 'none' }}
+                >
+                  <RfcManagement />
+                </div>
+                <div
+                  style={{ display: activeTab === 'sql' ? 'block' : 'none' }}
+                >
+                  <SqlManagement />
+                </div>
+                <div
+                  style={{
+                    display: activeTab === 'settings' ? 'block' : 'none',
+                  }}
+                >
+                  <SettingsComponent />
+                </div>
+                <div
+                  style={{ display: activeTab === 'about' ? 'block' : 'none' }}
+                >
+                  <AboutComponent />
+                </div>
               </ContentContainer>
               <MessageDisplay />
             </AppContainer>
           </InterfaceExecutorProvider>
         </MessageProvider>
       </SettingsProvider>
-    </>
-  );
-}
-
-function Profile() {
-  return (
-    <>
-      <Title>프로젝트</Title>
-      <Description>프로젝트 프로 파일...</Description>
-    </>
-  );
-}
-
-function ProcessManagement() {
-  return (
-    <>
-      <Title>프로세스 관리</Title>
-      <Description>프로세스 목록 및 설정...</Description>
     </>
   );
 }
