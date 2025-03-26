@@ -88,7 +88,7 @@ export const InterfaceExecutor: React.FC<InterfaceExecutorProps> = ({
       dbConfig
     );
 
-    // 예시 로그 추가
+    // 로그 추가
     const log: ExecutionLog = {
       level: 'info', // 'info', 'success', 'error', 'warning' 중 하나로 설정
       timestamp: new Date().toISOString(),
@@ -165,7 +165,13 @@ export const InterfaceExecutor: React.FC<InterfaceExecutorProps> = ({
       </div>
 
       {showLogs && (
-        <LogDisplay logs={executionState.logs} clearLogs={clearLogs} />
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          <LogDisplay
+            logs={executionState.logs}
+            clearLogs={clearLogs}
+            maxHeight="calc(100vh - 700px)" // 로그창의 최대 높이를 지정 (미지정 시 기본값: 100%)
+          />
+        </div>
       )}
     </div>
   );

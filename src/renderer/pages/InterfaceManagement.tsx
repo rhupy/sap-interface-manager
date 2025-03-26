@@ -1057,7 +1057,6 @@ export default function InterfaceManagement() {
                 ) : (
                   <div
                     style={{
-                      color: '#666',
                       marginTop: '10px',
                       textAlign: 'center',
                     }}
@@ -1082,23 +1081,6 @@ export default function InterfaceManagement() {
                     }
                   }}
                 />
-                {/* 오른쪽: 실행 로그 전체 높이 */}
-                <div
-                  style={{
-                    width: '400px',
-                    borderLeft: '1px solid #ccc',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <LogDisplay
-                    logs={logs}
-                    clearLogs={() => {
-                      setLogs([]);
-                    }}
-                  />
-                </div>
               </Section>
             </>
           )}

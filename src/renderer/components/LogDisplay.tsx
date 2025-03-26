@@ -4,9 +4,14 @@ import Button from './smartButton'; // Button 컴포넌트 임포트
 interface LogDisplayProps {
   logs: { timestamp: string; message: string; details?: any }[]; // 로그 형식 정의
   clearLogs: () => void; // 로그 삭제 함수
+  maxHeight?: string; // 최대 높이
 }
 
-const LogDisplay: React.FC<LogDisplayProps> = ({ logs, clearLogs }) => {
+const LogDisplay: React.FC<LogDisplayProps> = ({
+  logs,
+  clearLogs,
+  maxHeight = '100%',
+}) => {
   const logContainerRef = useRef<HTMLDivElement | null>(null);
 
   // 로그가 변경될 때마다 스크롤을 맨 아래로 이동
@@ -24,7 +29,7 @@ const LogDisplay: React.FC<LogDisplayProps> = ({ logs, clearLogs }) => {
         paddingBottom: '30px',
         display: 'flex',
         flexDirection: 'column',
-        height: '100%', // 부모 요소에서 크기를 받도록 설정
+        height: '100%',
       }}
     >
       <div
@@ -54,6 +59,7 @@ const LogDisplay: React.FC<LogDisplayProps> = ({ logs, clearLogs }) => {
           backgroundColor: '#f8f9fa',
           fontFamily: 'monospace',
           fontSize: '0.9rem',
+          maxHeight: maxHeight,
         }}
       >
         {logs.length === 0 ? (
