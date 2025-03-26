@@ -126,11 +126,11 @@ export const SectionTitle = styled.h2`
   color: #333;
 `;
 
-// 전체 화면 컨테이너
+// 전체 컨테이너
 export const FullPageContainer = styled.div`
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: calc(100vh - 83px);
   width: 100%;
   overflow: hidden;
 `;

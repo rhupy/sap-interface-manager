@@ -12,11 +12,11 @@ import { MessageDisplay } from './components/MessageDisplay';
 import InterfaceManagement from './pages/InterfaceManagement';
 import RfcManagement from './pages/RfcManagement';
 import SqlManagement from './pages/SqlManagement';
-import SettingsComponent from './pages/SettingsComponent';
+import SettingsManagement from './pages/SettingsManagement';
 import { SettingsProvider } from './context/SettingContext';
 import { InterfaceExecutorProvider } from './context/InterfaceExecutorContext';
 import { FaQuestion } from 'react-icons/fa';
-import AboutComponent from './pages/AboutComponent';
+import AboutHelp from './pages/AboutHelp';
 import ProjectManagement from './pages/ProjectManagement';
 
 export default function App() {
@@ -71,11 +71,21 @@ export default function App() {
                   </TabButton>
                 </RightTabGroup>
               </TabContainer>
-              <ContentContainer>
+
+              <ContentContainer
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  flexGrow: 1,
+                  overflow: 'hidden', // 세로 스크롤을 없애기 위한 설정
+                }}
+              >
                 {/* 탭에 따라 컴포넌트를 숨기고 보이도록 설정 */}
                 <div
                   style={{
                     display: activeTab === 'project' ? 'block' : 'none',
+                    flex: 1, // 세로 크기를 100%로 맞춤
+                    overflow: 'auto', // 세로 스크롤 발생시 스크롤 가능하게 설정
                   }}
                 >
                   <ProjectManagement />
@@ -83,31 +93,47 @@ export default function App() {
                 <div
                   style={{
                     display: activeTab === 'interface' ? 'block' : 'none',
+                    flex: 1,
+                    overflow: 'auto',
                   }}
                 >
                   <InterfaceManagement />
                 </div>
                 <div
-                  style={{ display: activeTab === 'rfc' ? 'block' : 'none' }}
+                  style={{
+                    display: activeTab === 'rfc' ? 'block' : 'none',
+                    flex: 1,
+                    overflow: 'auto',
+                  }}
                 >
                   <RfcManagement />
                 </div>
                 <div
-                  style={{ display: activeTab === 'sql' ? 'block' : 'none' }}
+                  style={{
+                    display: activeTab === 'sql' ? 'block' : 'none',
+                    flex: 1,
+                    overflow: 'auto',
+                  }}
                 >
                   <SqlManagement />
                 </div>
                 <div
                   style={{
                     display: activeTab === 'settings' ? 'block' : 'none',
+                    flex: 1,
+                    overflow: 'auto',
                   }}
                 >
-                  <SettingsComponent />
+                  <SettingsManagement />
                 </div>
                 <div
-                  style={{ display: activeTab === 'about' ? 'block' : 'none' }}
+                  style={{
+                    display: activeTab === 'about' ? 'block' : 'none',
+                    flex: 1,
+                    overflow: 'auto',
+                  }}
                 >
-                  <AboutComponent />
+                  <AboutHelp />
                 </div>
               </ContentContainer>
               <MessageDisplay />

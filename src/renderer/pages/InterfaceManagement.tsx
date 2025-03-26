@@ -29,6 +29,7 @@ import {
 } from '../components/ParameterMapping/types';
 import { InterfaceExecutor } from '../components/InterfaceExecutor';
 import Button from '../components/smartButton';
+import LogDisplay from '@/components/LogDisplay';
 
 // 빈 인터페이스 정보
 const emptyInterface: InterfaceInfo = {
@@ -79,6 +80,10 @@ export default function InterfaceManagement() {
   const [currentMappings, setCurrentMappings] = useState<
     Record<string, string>
   >({});
+  // 로그
+  const [logs, setLogs] = useState<
+    { level: string; timestamp: string; message: string; details?: any }[]
+  >([]);
 
   // 인터페이스 목록 정렬 및 필터링
   const getSortedAndFilteredInterfaces = () => {
@@ -1077,6 +1082,23 @@ export default function InterfaceManagement() {
                     }
                   }}
                 />
+                {/* 오른쪽: 실행 로그 전체 높이 */}
+                <div
+                  style={{
+                    width: '400px',
+                    borderLeft: '1px solid #ccc',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <LogDisplay
+                    logs={logs}
+                    clearLogs={() => {
+                      setLogs([]);
+                    }}
+                  />
+                </div>
               </Section>
             </>
           )}

@@ -1,4 +1,4 @@
-// src/renderer/pages/SettingsComponent.tsx
+// src/renderer/pages/SettingsManagement.tsx
 
 import { useState, useEffect } from 'react';
 import {
@@ -41,7 +41,7 @@ const emptyDb: DbConnectionConfig = {
   password: '',
 };
 
-export default function SettingsComponent() {
+export default function SettingsManagement() {
   const { showMessage } = useMessage();
   // -------------------------
   // 상태 관리
@@ -375,7 +375,7 @@ export default function SettingsComponent() {
   // -------------------------
   return (
     <>
-      <ContentContainer style={{ flex: 'none' }}>
+      <ContentContainer style={{ flex: 'none', marginTop: '-10px' }}>
         {/* ---------- RFC 영역 ---------- */}
         <Section style={{ width: '800px', height: '380px' }}>
           <SectionTitle>RFC 연결 설정</SectionTitle>
@@ -632,6 +632,8 @@ export default function SettingsComponent() {
           justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: '10px',
+          marginTop: '-20px',
+          marginLeft: '20px',
         }}
       >
         {/* 설정 파일 열기 버튼 */}
@@ -643,7 +645,7 @@ export default function SettingsComponent() {
             fontSize: '0.9rem', // 글자 크기 축소
           }}
         >
-          설정 파일 열기
+          이 앱의 설정 파일 열기
         </Button>
       </div>
     </>

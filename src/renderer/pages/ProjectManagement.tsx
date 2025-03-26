@@ -58,7 +58,6 @@ export default function ProjectManagement() {
     useState<ProjectInfo>(emptyProject);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [interfaceSearch, setInterfaceSearch] = useState('');
-  const [runningIndex, setRunningIndex] = useState<number | null>(null);
   const [executionResults, setExecutionResults] = useState<{
     [key: string]: { finished: boolean; finishedTime?: string; error?: string };
   }>({});

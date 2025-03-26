@@ -1,4 +1,4 @@
-// src/renderer/pages/AboutComponent.tsx
+// src/renderer/pages/AboutHelp.tsx
 import styled from 'styled-components';
 import { Title, Description } from '../styles/CommonStyles';
 
@@ -43,7 +43,7 @@ const VersionInfo = styled.div`
   font-family: monospace;
 `;
 
-export default function AboutComponent() {
+export default function AboutHelp() {
   return (
     <AboutContainer>
       <Title>SAP Interface Manager</Title>

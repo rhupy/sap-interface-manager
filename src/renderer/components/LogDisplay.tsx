@@ -1,4 +1,3 @@
-// src/components/LogDisplay.tsx
 import React, { useEffect, useRef } from 'react';
 import Button from './smartButton'; // Button 컴포넌트 임포트
 
@@ -18,7 +17,16 @@ const LogDisplay: React.FC<LogDisplayProps> = ({ logs, clearLogs }) => {
   }, [logs]);
 
   return (
-    <div style={{ marginTop: '20px' }}>
+    <div
+      style={{
+        marginLeft: '10px',
+        marginRight: '10px',
+        paddingBottom: '30px',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%', // 부모 요소에서 크기를 받도록 설정
+      }}
+    >
       <div
         style={{
           display: 'flex',
@@ -38,8 +46,8 @@ const LogDisplay: React.FC<LogDisplayProps> = ({ logs, clearLogs }) => {
       <div
         ref={logContainerRef}
         style={{
-          maxHeight: '300px',
-          overflowY: 'auto',
+          flex: 1, // 부모의 크기를 모두 차지하게 설정
+          overflowY: 'auto', // 내용이 넘치면 스크롤
           border: '1px solid #ddd',
           borderRadius: '4px',
           padding: '10px',
