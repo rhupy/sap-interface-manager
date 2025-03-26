@@ -120,7 +120,7 @@ cd sap-interface-manager
 - **Node.js** (v16.x 이상)
 - **npm** (v7.x 이상)
 
-### Oracle DB 사용 시, 다중 SQL문 처리를 위한 아래 Stored Procedure 를 사전 생성 (EXEC_MULTI_DATA_SQL)
+### [필수] Oracle DB 사용 시, 다중 SQL문 처리를 위한 아래 Stored Procedure 를 사전 생성 (EXEC_MULTI_DATA_SQL)
 
 ```bash
 CREATE OR REPLACE PROCEDURE EXEC_MULTI_DATA_SQL(
