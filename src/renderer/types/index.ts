@@ -191,3 +191,17 @@ export interface ProjectInterfaceConfig {
   enabled: boolean; // 활성화 여부 (체크박스)
   scheduleSec: number; // 자동실행 주기 (초)
 }
+
+// 날짜 포맷
+export const formatDateTime = (iso?: string) => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleString('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+};

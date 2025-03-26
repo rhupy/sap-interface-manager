@@ -25,7 +25,7 @@ import {
 
 import { useSettingsContext } from '../context/SettingContext';
 import { useMessage } from '../context/MessageContext';
-import { RfcFunctionInfo, RfcParameter } from '../types';
+import { formatDateTime, RfcFunctionInfo, RfcParameter } from '../types';
 import Button from '../components/smartButton';
 
 // RFC 함수 정보 기본값
@@ -141,21 +141,6 @@ export default function RfcManagement() {
   function getCurrentFormattedTime() {
     const now = new Date();
     return now.toISOString();
-  }
-
-  // 시간 표시 포맷팅 함수
-  function formatDateTime(isoString: string) {
-    if (!isoString) return '';
-
-    const date = new Date(isoString);
-    return date.toLocaleString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
   }
 
   // RFC 함수 선택 핸들러

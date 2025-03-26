@@ -26,7 +26,7 @@ import {
 import { format } from 'sql-formatter';
 import { useSettingsContext } from '../context/SettingContext';
 import { useMessage } from '../context/MessageContext';
-import { SqlInfo } from '../types';
+import { formatDateTime, SqlInfo } from '../types';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism-tomorrow.css';
 import 'prismjs/components/prism-sql';
@@ -224,23 +224,6 @@ export default function SqlManagement() {
   function getCurrentFormattedTime() {
     const now = new Date();
     return now.toISOString();
-  }
-
-  // -----------------------------
-  // 시간 표시 포맷팅 함수
-  // -----------------------------
-  function formatDateTime(isoString: string) {
-    if (!isoString) return '';
-
-    const date = new Date(isoString);
-    return date.toLocaleString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
   }
 
   // -----------------------------

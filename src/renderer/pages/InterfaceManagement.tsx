@@ -780,7 +780,7 @@ export default function InterfaceManagement() {
                   onClick={handleDeleteInterface}
                   style={{ backgroundColor: '#e74c3c' }}
                 >
-                  삭제
+                  인터페이스 삭제
                 </Button>
               </div>
             </div>
@@ -797,7 +797,7 @@ export default function InterfaceManagement() {
                   }}
                 >
                   <div style={{ flex: 1 }}>
-                    <LeftAlignedLabel>작업 유형</LeftAlignedLabel>
+                    <LeftAlignedLabel>작업 유형 선택</LeftAlignedLabel>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <Button
                         onClick={() =>
@@ -912,7 +912,7 @@ export default function InterfaceManagement() {
                     }}
                   >
                     {!isEditingStep ? (
-                      <Button onClick={handleAddStep}>추가</Button>
+                      <Button onClick={handleAddStep}>작업 추가</Button>
                     ) : (
                       <>
                         <Button onClick={handleUpdateStep}>수정</Button>

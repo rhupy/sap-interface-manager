@@ -1,7 +1,9 @@
+// src/components/InterfaceExecutor.tsx
 import React, { useState } from 'react';
 import { useInterfaceExecutor } from '../context/InterfaceExecutorContext';
 import { InterfaceInfo, RfcConnectionInfo, DbConnectionConfig } from '../types';
 import { Button, Select, LeftAlignedLabel } from '../styles/CommonStyles';
+import LogDisplay from './LogDisplay'; // LogDisplay 컴포넌트 import
 
 interface InterfaceExecutorProps {
   interface: InterfaceInfo;
@@ -85,72 +87,6 @@ export const InterfaceExecutor: React.FC<InterfaceExecutorProps> = ({
     );
   };
 
-  // 로그 렌더링 함수
-  const renderLogs = () => {
-    if (!showLogs) return null;
-
-    return (
-      <div style={{ marginTop: '20px' }}>
-        <h4>실행 로그</h4>
-        <div
-          style={{
-            maxHeight: '300px',
-            overflowY: 'auto',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            padding: '10px',
-            backgroundColor: '#f8f9fa',
-            fontFamily: 'monospace',
-            fontSize: '0.9rem',
-          }}
-        >
-          {executionState.logs.length === 0 ? (
-            <div style={{ color: '#666', textAlign: 'center' }}>
-              로그가 없습니다.
-            </div>
-          ) : (
-            executionState.logs.map((log, index) => (
-              <div
-                key={index}
-                style={{
-                  marginBottom: '5px',
-                  color:
-                    log.level === 'error'
-                      ? '#dc3545'
-                      : log.level === 'success'
-                        ? '#28a745'
-                        : log.level === 'warning'
-                          ? '#ffc107'
-                          : '#212529',
-                }}
-              >
-                <span style={{ color: '#6c757d' }}>
-                  [{new Date(log.timestamp).toLocaleTimeString()}]
-                </span>{' '}
-                {log.message}
-                {log.details && (
-                  <pre
-                    style={{
-                      marginTop: '5px',
-                      marginBottom: '5px',
-                      padding: '5px',
-                      backgroundColor: '#e9ecef',
-                      borderRadius: '3px',
-                      fontSize: '0.8rem',
-                      overflowX: 'auto',
-                    }}
-                  >
-                    {JSON.stringify(log.details, null, 2)}
-                  </pre>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div>
       {showConnectionSelectors && (
@@ -217,7 +153,9 @@ export const InterfaceExecutor: React.FC<InterfaceExecutorProps> = ({
         )}
       </div>
 
-      {renderLogs()}
+      {showLogs && (
+        <LogDisplay logs={executionState.logs} clearLogs={clearLogs} />
+      )}
     </div>
   );
 };
