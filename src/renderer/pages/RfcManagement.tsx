@@ -25,7 +25,12 @@ import {
 
 import { useSettingsContext } from '../context/SettingContext';
 import { useMessage } from '../context/MessageContext';
-import { formatDateTime, RfcFunctionInfo, RfcParameter } from '../types';
+import {
+  formatDateTime,
+  getCurrentFormattedTime,
+  RfcFunctionInfo,
+  RfcParameter,
+} from '../types';
 import Button from '../components/smartButton';
 
 // RFC 함수 정보 기본값
@@ -136,12 +141,6 @@ export default function RfcManagement() {
       setNewParameter(emptyParameter);
     }
   }, [settings.selectedRfcFunctionId, settings.rfcFunctions]);
-
-  // 현재 시간 포맷팅 함수
-  function getCurrentFormattedTime() {
-    const now = new Date();
-    return now.toISOString();
-  }
 
   // RFC 함수 선택 핸들러
   const handleSelectRfcFunction = (id: string) => {

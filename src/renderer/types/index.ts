@@ -205,3 +205,9 @@ export const formatDateTime = (iso?: string) => {
     second: '2-digit',
   });
 };
+
+// 현재 시간 포맷팅 함수
+export const getCurrentFormattedTime = () => {
+  const now = new Date();
+  return now.toISOString();
+};

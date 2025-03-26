@@ -30,6 +30,7 @@ import {
   RfcFunctionInfo,
   SqlInfo,
   RfcParameter,
+  formatDateTime,
 } from '../types';
 import { ParameterMappingCanvas } from '../components/ParameterMapping';
 import {
@@ -653,9 +654,9 @@ export default function InterfaceManagement() {
                 >
                   <div style={{ fontWeight: 'bold' }}>{item.name}</div>
                   <MetaInfo>
-                    생성: {item.createdAt}
+                    생성: {formatDateTime(item.createdAt)}
                     <br />
-                    수정: {item.updatedAt}
+                    수정: {formatDateTime(item.updatedAt)}
                   </MetaInfo>
                 </ListItem>
               ))

@@ -26,7 +26,7 @@ import {
 import { format } from 'sql-formatter';
 import { useSettingsContext } from '../context/SettingContext';
 import { useMessage } from '../context/MessageContext';
-import { formatDateTime, SqlInfo } from '../types';
+import { formatDateTime, getCurrentFormattedTime, SqlInfo } from '../types';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism-tomorrow.css';
 import 'prismjs/components/prism-sql';
@@ -219,14 +219,6 @@ export default function SqlManagement() {
   }
 
   // -----------------------------
-  // 현재 시간 포맷팅 함수
-  // -----------------------------
-  function getCurrentFormattedTime() {
-    const now = new Date();
-    return now.toISOString();
-  }
-
-  // -----------------------------
   // SQL 정렬 (sql-formatter)
   // -----------------------------
   const handleFormatSql = () => {
@@ -406,45 +398,6 @@ export default function SqlManagement() {
       <FlexContainer>
         {/* 왼쪽 SQL 목록 패널 */}
         <SidePanel>
-          {/* <SidePanelHeader>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                width: '100%',
-              }}
-            >
-              <SelectGroup style={{ marginBottom: 0 }}>
-                <SmallSelect value={sortType} onChange={handleSortTypeChange}>
-                  <option value="name">이름순</option>
-                  <option value="createdAt">생성시간순</option>
-                  <option value="updatedAt">수정시간순</option>
-                </SmallSelect>
-              </SelectGroup>
-
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'flex-center',
-                }}
-              >
-                <Input
-                  type="text"
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  placeholder="검색..."
-                  style={{
-                    width: '150px',
-                    padding: '5px',
-                    fontSize: '0.9rem',
-                    height: '30px',
-                  }}
-                />
-              </div>
-            </div>
-          </SidePanelHeader> */}
           <SidePanelHeader>
             <div
               style={{
