@@ -21,7 +21,8 @@ const getButtonColor = (text: string): string => {
   if (
     lowerText.includes('수정') ||
     lowerText.includes('편집') ||
-    lowerText.includes('변경')
+    lowerText.includes('변경') ||
+    lowerText.includes('적용')
   ) {
     return '#95a5a6'; // 회색 (수정 버튼)
   }

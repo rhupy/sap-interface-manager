@@ -494,7 +494,7 @@ export default function SettingsManagement() {
                 >
                   RFC 연결 추가
                 </Button>
-                <Button onClick={updateRfcConnection}>수정</Button>
+                <Button onClick={updateRfcConnection}>변경 사항 적용</Button>
               </>
             )}
             {!settings.selectedRfc && (
@@ -593,7 +593,7 @@ export default function SettingsManagement() {
                 >
                   DB 연결 추가
                 </Button>
-                <Button onClick={updateDbConnection}>수정</Button>
+                <Button onClick={updateDbConnection}>변경 사항 적용</Button>
               </>
             )}
             {!settings.selectedDbId && (

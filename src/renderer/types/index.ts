@@ -114,6 +114,7 @@ export interface SqlInfo {
   createdAt: string; // 생성 시간
   updatedAt: string; // 수정 시간
   parameters: string[]; // 파라미터 목록
+  outputParams: string[]; // 출력 파라미터 목록
 }
 
 // RFC함수 호출 정보

@@ -693,7 +693,6 @@ export default function ProjectManagement() {
                 >
                   {currentProject.id && (
                     <Button
-                      style={{ backgroundColor: '#6c757d' }}
                       onClick={() => {
                         setCurrentProject({ ...emptyProject });
                         updateSettings({ selectedProjectId: '' });
@@ -712,16 +711,10 @@ export default function ProjectManagement() {
                     </Button>
                   ) : (
                     <>
-                      <Button
-                        onClick={handleUpdateProject}
-                        style={{ backgroundColor: '#007bff', color: '#fff' }}
-                      >
+                      <Button onClick={handleUpdateProject}>
                         프로젝트 수정
                       </Button>
-                      <Button
-                        onClick={handleDeleteProjectClick}
-                        style={{ backgroundColor: '#e74c3c', color: '#fff' }}
-                      >
+                      <Button onClick={handleDeleteProjectClick}>
                         프로젝트 삭제
                       </Button>
                       <Button

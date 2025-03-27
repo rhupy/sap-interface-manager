@@ -942,7 +942,9 @@ export default function RfcManagement() {
                   >
                     RFC 함수 테스트
                   </Button>
-                  <Button onClick={handleUpdateRfcFunction}>수정</Button>
+                  <Button onClick={handleUpdateRfcFunction}>
+                    변경 사항 적용
+                  </Button>
                   <DeleteButton onClick={handleDeleteRfcFunction}>
                     삭제
                   </DeleteButton>
